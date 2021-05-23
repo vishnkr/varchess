@@ -1,1 +1,2 @@
-vc-frontend/node_modules
+vc-frontend/node_modules/
+.gitignore
