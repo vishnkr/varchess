@@ -26,8 +26,7 @@
       </v-row>
       <v-dialog
         transition="dialog-bottom-transition"
-        max-width="800px"
-        height="800px"
+        
         hide-overlay
         persistent
       >
@@ -49,8 +48,9 @@
               color="primary"
               dark
             ><h3>Choose Game Setup</h3></v-toolbar>
-             <editor-dialog />
+             
             <v-card-actions class="justify-end">
+              
               <v-btn
                 color="error"
                 @click="dialog.value = false"
@@ -72,9 +72,9 @@
 
 <script>
 
-import EditorDialog from '../components/EditorDialog'
+//import EditorDialog from '../components/EditorDialog'
 export default {
-  components:{EditorDialog},
+  components:{},//EditorDialog},
   data:()=>{
     return {
       createClicked: false,
@@ -84,6 +84,6 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 
 </style>
