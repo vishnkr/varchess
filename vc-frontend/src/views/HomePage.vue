@@ -26,9 +26,7 @@
       </v-row>
       <v-dialog
         transition="dialog-bottom-transition"
-        
-        hide-overlay
-        persistent
+        max-width="600"
       >
         <template v-slot:activator="{ on, attrs }">
           <div class="text-center">
@@ -50,14 +48,26 @@
             ><h3>Choose Game Setup</h3></v-toolbar>
              
             <v-card-actions class="justify-end">
-              
+              <v-radio-group
+                    v-model="mode"
+                    row
+                  >
+                    <v-radio
+                      label="Standard 8x8 board"
+                      value="standard"
+                    ></v-radio>
+                    <v-radio
+                      label="Custom Variant"
+                      value="custom"
+                    ></v-radio>
+                  </v-radio-group>
               <v-btn
                 color="error"
-                @click="dialog.value = false"
+                @click="dialog.value=false"
               >Cancel</v-btn>
               <v-btn
                 color="success"
-                @click="dialog.value = false"
+                @click="enterRoom"
               >Enter Room</v-btn>
             </v-card-actions>
           </v-card>
@@ -71,14 +81,26 @@
 </template>
 
 <script>
+//import EditorBoard from '../components/Editor/EditorBoard.vue';
 
 //import EditorDialog from '../components/EditorDialog'
 export default {
-  components:{},//EditorDialog},
+  components:{},//EditorBoard},//EditorDialog},
+  methods:{
+    redirectToEditor() {
+      this.$router.push({ path: '/editor' });
+    },
+
+    enterRoom(){
+      console.log(this.mode)
+      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: '/game' }) ;
+    }
+  },
   data:()=>{
     return {
       createClicked: false,
-      username: ''
+      username: '',
+      mode:'standard',
     }
   }
 }

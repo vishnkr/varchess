@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 import HomePage from '../views/HomePage'
-import EditorDialog from '../components/EditorDialog'
+import EditorDialog from '../components/Editor/EditorDialog'
 
 Vue.use(Router);
 const routes = [
