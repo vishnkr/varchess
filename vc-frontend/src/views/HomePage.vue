@@ -86,7 +86,18 @@
 //import EditorDialog from '../components/EditorDialog'
 export default {
   components:{},//EditorBoard},//EditorDialog},
+  mounted: function() {
+      this.connectToWebsocket()
+    },
   methods:{
+    connectToWebsocket() {
+        this.ws = new WebSocket( this.serverUrl );
+        this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
+      },
+      onWebsocketOpen() {
+        console.log("connected to WS!");
+      },
+
     redirectToEditor() {
       this.$router.push({ path: '/editor' });
     },
@@ -101,6 +112,8 @@ export default {
       createClicked: false,
       username: '',
       mode:'standard',
+      ws: null,
+      serverUrl: "ws://localhost:5000/ws"
     }
   }
 }
