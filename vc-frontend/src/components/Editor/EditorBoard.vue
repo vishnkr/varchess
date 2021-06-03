@@ -7,7 +7,6 @@
           <square v-else v-on:childToParent="squareClicked" :isDark="!isLight(row,col)" :row="row" :col="col" />
         </div>
       </div>
-        
   </div>
   </div>
 </template>
@@ -20,6 +19,7 @@ export default {
     name:'Board',
     methods:
     {
+      
       squareClicked(row,col){
         
         if(this.boardState.tiles[row-1][col-1].isPiecePresent){
@@ -29,9 +29,9 @@ export default {
           
           this.boardState.tiles[row-1][col-1].isPiecePresent = true;
           this.boardState.tiles[row-1][col-1].pieceColor = this.curPieceColor;
-          console.log(this.curPiece.toLowerCase(), this.pieceList, this.curPiece)
           this.boardState.tiles[row-1][col-1].pieceType = this.pieceList[this.curPiece];
         }
+        this.$emit("sendBoardState",this.boardState)
 
       },
 
@@ -42,9 +42,9 @@ export default {
 
       setupDefaultBoard(){
 
-        for(var col =0;col<this.maxCols;col++){
+        for(var col =0;col<this.colCount;col++){
           this.boardState.tiles.push([])
-          for(var row=0;row<this.maxRows;row++){
+          for(var row=0;row<this.rowCount;row++){
             var tile = {}
             if( (row===0||row==7) && (col===0||col===7)) {
                 tile.pieceType='r';
@@ -73,17 +73,18 @@ export default {
             else{tile.isPiecePresent=false}
             if(col==0||col==1){tile.pieceColor='black'}
             else if(col==6||col==7){tile.pieceColor='white'}
+            
             this.boardState.tiles[col].push(tile)
           }
         }
-        
+        this.$emit("sendBoardState",this.boardState)
       },
       
     },
     computed:{
       cssVar(){
         return {
-        '--size': Math.max(this.maxCols,this.maxRows)
+        '--size': Math.max(this.colCount,this.rowCount)
         }
       }
     },
@@ -96,10 +97,9 @@ export default {
         pieceList : {'pawn':'p','king':'k','queen':'q','bishop':'b','knight':'n','custom':'custom'},
         rowMultiplier:0,
         isMounted: false,
-        maxRows: 15,
-        maxCols: 15,
+        rowCount: 15,
+        colCount: 15,
         boardState: {
-          
           tiles:[],
         }
       }

@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import VuexPersistence from 'vuex-persist'
-
+import state from './state.js'
+import mutations from './mutations.js'
 Vue.use(Vuex)
 
 const vuexLocal = new VuexPersistence({
@@ -9,8 +10,8 @@ const vuexLocal = new VuexPersistence({
 })
 
 const store = new Vuex.Store({
-    //state,
-    //mutations,
+    state,
+    mutations,
     //actions,
     //getters,
     //strict: debug,
