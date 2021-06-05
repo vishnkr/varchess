@@ -3,8 +3,10 @@ import App from './App.vue'
 import vuetify from './plugins/vuetify';
 import router from './router'
 import store from './store';
+import VueChatScroll from 'vue-chat-scroll';
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
+Vue.use(VueChatScroll);
 
 new Vue({
   render: h => h(App),

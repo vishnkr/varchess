@@ -1,10 +1,10 @@
 <template>
   <div class="container">
     <div class="columns">
-        <div class="column">
+        <div class="column board-panel">
           <game-board />
         </div>
-        <div class="column">
+        <div class="column right-panel">
           <chat />
         </div>
     </div>
@@ -21,5 +21,20 @@ export default {
 </script>
 
 <style>
+.columns{
+  display: flex;
+
+}
+
+.board-panel{
+  flex: 2;
+}
+.right-panel{
+
+   max-width:400px;
+   width: 100%;
+   padding: 1em;
+
+}
 
 </style>

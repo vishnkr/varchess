@@ -21,7 +21,7 @@
             v-model="username"
             label="Enter Username"
             solo-inverted
-            @change="setUsername"
+            
           ></v-text-field>
         </v-col>
       </v-row>
@@ -36,9 +36,12 @@
               color="primary"
               v-bind="attrs"
               v-on="on"
-              dark>
+              dark 
+              @click="checkUsername"
+              >
               Create Room
             </v-btn>
+            <span v-if="errorText">{{errorText}}</span>
           </div>
         </template>
         <template v-slot:default="dialog">
@@ -88,13 +91,19 @@
 export default {
   components:{},//EditorBoard},//EditorDialog},
   mounted: function() {
-      this.connectToWebsocket()
+      //this.connectToWebsocket()
       
     },
   methods:{
-    setUsername(){
-      //localStorage.setItem('username',this.username);
-      this.$store.commit("setUsername",this.username);
+    checkUsername(){
+      if(!this.username || this.username==''){
+        this.errorText = 'Enter Username';
+        //dialog.value=false;
+      }
+      else{
+        this.errorText = null;
+        //dialog.value=true;
+      }
     },
     connectToWebsocket() {
         this.ws = new WebSocket( this.serverUrl );
@@ -109,16 +118,19 @@ export default {
     },
 
     enterRoom(){
-      console.log(this.mode)
-      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: '/game/${roomId}' }) ;
+      console.log(this.mode);
+      var roomId="123a";
+      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: `/game/${roomId}` }) ;
     }
   },
   data:()=>{
     return {
       createClicked: false,
-      username: '',
+      username: null,
+      errorText: null,
       mode:'standard',
       ws: null,
+      dialog:true,
       serverUrl: "ws://localhost:5000/ws"
     }
   }
