@@ -1,9 +1,9 @@
 <template>
   <div class="square" :style="cssVar" :class="tileType=='d'? 'dark':'light'"  @click="emitToBoard">
       <div v-if="isPiecePresent">
-      <board-piece  :color="pieceColor" :pieceType="pieceType"/>
+      <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
-      
+
       
   </div>
 </template>
@@ -49,8 +49,8 @@ export default {
    width: 100%;
     height: 0;
     padding-bottom: 100%;
-    grid-column: var(--x);
-    grid-row: var(--y);
+    grid-column: var(--y);
+    grid-row: var(--x);
 }
 
 .dark {

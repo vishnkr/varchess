@@ -1,7 +1,7 @@
 <template>
   <div :style="cssVar" id='board-container'>
       <div id="board">
-        <board-square v-for="square in boardState1D"  :key="square.tileId" :tileType="square.tileType" :isPiecePresent="square.isPiecePresent" :pieceType="square.pieceType" :pieceColor="square.pieceColor" />
+        <board-square v-for="square in boardState1D"  :key="square.tileId" :tileType="square.tileType" :isPiecePresent="square.isPiecePresent" :pieceType="square.pieceType" :pieceColor="square.pieceColor" :row="square.x" :col="square.y"  />
       </div>
   </div>
 </template>
@@ -12,26 +12,29 @@ export default {
   components: { BoardSquare },
   created(){
       this.boardState = this.$store.state.boardState;
-      var row,col,x=1,y=1, tileId=0;
+      var row,tile,x=1,y=1, tileId=0;
       //console.log(this.boardState)
       this.rows = this.boardState.tiles.length
-    
+      
       for(row of this.boardState.tiles){
-          for(col of row){
-            col.tileId = tileId;
+          for(tile of row){
+            tile.tileId = tileId;
             tileId+=1;
             
-            col.x=x;
-            col.y=y;
+            tile.x=x;
+            tile.y=y;
             //col.row=x-1;
             //col.col=y-1;
             y+=1
-            this.boardState1D.push(col);
+            this.boardState1D.push(tile);
           }
           x+=1
+          y=1;
       }
       this.cols = this.boardState.tiles[0].length
-      //console.log("1d",this.boardState1D)
+      /*console.log("1d",this.boardState1D)
+      console.log("cols",this.cols, "rows:",this.rows)
+      console.log('ogbs',this.boardState)*/
   },
   data(){
         return {

@@ -1,11 +1,13 @@
 <template>
     <div :style="cssVars">
-        <img :src="getPieceURL">
+       
+       <img :src="getPieceURL">
     </div>
   
 </template>
 
 <script>
+/* <img :src="getPieceURL"> <h4>r{{row}} c{{col}}</h4>*/
 export default {
     data(){
         return {
@@ -31,6 +33,9 @@ export default {
 </script>
 
 <style scoped>
+h4{
+    color: black;
+}
 div {
         position: relative;
         text-align: center;
