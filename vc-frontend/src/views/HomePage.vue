@@ -21,6 +21,7 @@
             v-model="username"
             label="Enter Username"
             solo-inverted
+            @change="setUsername"
           ></v-text-field>
         </v-col>
       </v-row>
@@ -88,8 +89,13 @@ export default {
   components:{},//EditorBoard},//EditorDialog},
   mounted: function() {
       this.connectToWebsocket()
+      
     },
   methods:{
+    setUsername(){
+      //localStorage.setItem('username',this.username);
+      this.$store.commit("setUsername",this.username);
+    },
     connectToWebsocket() {
         this.ws = new WebSocket( this.serverUrl );
         this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
@@ -104,7 +110,7 @@ export default {
 
     enterRoom(){
       console.log(this.mode)
-      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: '/game' }) ;
+      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: '/game/${roomId}' }) ;
     }
   },
   data:()=>{

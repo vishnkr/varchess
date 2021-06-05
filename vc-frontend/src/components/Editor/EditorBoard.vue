@@ -3,8 +3,8 @@
   <div id="board" >
       <div  v-for="col in cols" :key="col">
         <div v-for="row in rows" :key="row">
-          <square v-if="boardState.tiles[row-1][col-1].isPiecePresent" v-on:childToParent="squareClicked" :isDark="!isLight(row,col)" :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" :pieceType="boardState.tiles[row-1][col-1].pieceType" :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
-          <square v-else v-on:childToParent="squareClicked" :isDark="!isLight(row,col)" :row="row" :col="col" />
+          <square  v-on:childToParent="squareClicked" :tileType="boardState.tiles[row-1][col-1].tileType" :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" :pieceType="boardState.tiles[row-1][col-1].pieceType" :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
+
         </div>
       </div>
   </div>
@@ -46,6 +46,8 @@ export default {
           this.boardState.tiles.push([])
           for(var row=0;row<this.rowCount;row++){
             var tile = {}
+            //console.log(this.isLight(col,row),col,row);
+            tile.tileType = this.isLight(col,row)? 'l' : 'd';
             if( (row===0||row==7) && (col===0||col===7)) {
                 tile.pieceType='r';
                 tile.isPiecePresent=true

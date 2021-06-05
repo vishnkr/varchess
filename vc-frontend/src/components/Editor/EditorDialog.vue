@@ -101,7 +101,7 @@ export default {
   components:{EditorBoard},
   methods:{
     enterRoom(){
-      this.$router.push({ path: '/game' });
+      this.$router.push({ path: '/game/123' });
     },
     updateBoardDimensions(){
       this.setBoardState(this.boardState);

@@ -1,7 +1,7 @@
 <template>
-  <div class="square" :class="tileType=='d'? 'dark':'light'"  @click="emitToBoard">
+  <div class="square" :style="cssVar" :class="tileType=='d'? 'dark':'light'"  @click="emitToBoard">
       <div v-if="isPiecePresent">
-      <piece  :color="pieceColor" :pieceType="pieceType"/>
+      <board-piece  :color="pieceColor" :pieceType="pieceType"/>
       </div>
       
       
@@ -9,9 +9,9 @@
 </template>
 
 <script>
-import Piece from './Piece'
+import BoardPiece from './BoardPiece'
 export default {
-    components:{Piece},
+    components:{BoardPiece},
     methods:{
       toggleIsPiecePresent(){
         this.isPiecePresent = !this.isPiecePresent;
@@ -28,6 +28,14 @@ export default {
         isPiecePresent: Boolean,
         pieceType: String,
         pieceColor: String,
+    },
+    computed:{
+        cssVar(){
+        return {
+        '--x': this.row,
+        '--y': this.col,
+        }
+      }
     }
 }
 </script>
@@ -38,16 +46,11 @@ export default {
 .square {
   background: transparent;
   border: 1px solid transparent;
-  float: left;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 48px;/*48px;*/
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
-  text-align: center;
-  width: 48px;
+   width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    grid-column: var(--x);
+    grid-row: var(--y);
 }
 
 .dark {
