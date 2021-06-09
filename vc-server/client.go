@@ -1,5 +1,17 @@
+
 package main
- 
+import (
+	"github.com/gorilla/websocket"
+)
+
+type Client struct{
+	conn *websocket.Conn
+	//wsServer *WsServer
+	send  chan []byte
+	roomId string
+}
+
+ /*
 import (
 	"fmt"
 	"net/http"
@@ -11,7 +23,7 @@ import (
 const (
 	writeWait = 10 * time.Second 	// Max wait time when writing message to peer
 	pongWait = 60 * time.Second // Max time till next pong from peer
-	pingPeriod = (pingWait * 9) / 10 // Send ping interval, must be less then pong wait time
+	pingPeriod = (pongWait * 9) / 10 // Send ping interval, must be less then pong wait time
 	maxMessageSize = 10000 // Maximum message size allowed from peer.
 )
 
@@ -25,11 +37,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Client struct{
-	conn *websocket.Conn
-	wsServer *WsServer
-	send  chan []byte
-}
+
 
 func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
 	return &Client{
@@ -44,7 +52,7 @@ func (client *Client) disconnect() {
 	/*
 	for room := range client.rooms {
 		room.unregister <- client
-	}*/
+	}
 	close(client.send)
 	client.conn.Close()
 }
@@ -132,3 +140,5 @@ func (client *Client) writeMessage(){
 	}
 }
 
+
+*/
