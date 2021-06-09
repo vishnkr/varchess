@@ -8,6 +8,7 @@
 
 <script>
 import BoardSquare from './BoardSquare.vue';
+import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
   created(){
@@ -32,9 +33,8 @@ export default {
           y=1;
       }
       this.cols = this.boardState.tiles[0].length
-      /*console.log("1d",this.boardState1D)
-      console.log("cols",this.cols, "rows:",this.rows)
-      console.log('ogbs',this.boardState)*/
+      convertBoardStateToFEN(this.boardState,'w','KQkq','-')
+
   },
   data(){
         return {

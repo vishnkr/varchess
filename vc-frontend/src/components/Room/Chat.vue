@@ -13,7 +13,7 @@
                   </div>
               </div>
               <div class="card-action">
-                  <create-message v-on:sendChatMessage="setChatMessage" :username="username" />
+                  <create-message v-on:sendChatMessage="setChatMessage" :username="username" :roomId="roomId" :ws="ws" />
               </div>
           </v-card>
       </div>
@@ -22,26 +22,34 @@
 
 <script>
 import CreateMessage from '../Chat/CreateMessage';
-//import moment from 'moment';<span class="text-secondary time">{{message.timestamp}}</span>
-
+import WS,{msgQueue} from '../../utils/websocket';
 export default {
     components: {CreateMessage},
-    props: ['username'],
+    props: ['username','roomId'],
     data(){
         return{
-            messages: [],
+            ws: WS,
+            messages: [
+            ],
+            count: 0,
         }
     },
-    created(){
-        /*var id=0;
-        var user='Varchess bot';
-        var message=" Welcome to your chatroom!";
-            this.messages.push({
-                id: id,
-                username: user,
-                message: message
-            })
-            */
+    
+    mounted(){
+           this.ws.onmessage = (msg)=>{
+                let apiMsg = JSON.parse(msg.data);
+                if (apiMsg.type==="chatMessage" ){
+                    let msgData = JSON.parse(apiMsg.data);
+                    msgData.id = this.count;
+                    this.count+=1;
+                    //console.log('messages',this.messages,msgData);
+                    this.messages.push(msgData);
+                    
+                }
+                //let msgData = JSON.parse(apiMsg);
+                console.log('here',msgQueue,msg)
+                //this.messages.push({username:msgData.username, message:msgData.message})
+           }
     },
     methods:{
         setChatMessage(messageInfo){

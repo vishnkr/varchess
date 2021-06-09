@@ -86,14 +86,16 @@
 
 <script>
 
-import {sendJSONReq} from '../utils/websocket';
+import WS,{sendJSONReq} from '../utils/websocket';
 import axios from 'axios';
+
 
 export default {
   components:{},
   props:['shared'],
   mounted: function() {
-      this.connectToWebsocket()
+
+      
       },
   methods:{
     checkUsername(){
@@ -109,7 +111,7 @@ export default {
       } 
     },
     connectToWebsocket() {
-      this.ws = new WebSocket( this.serverUrl );
+      this.ws = WS;
       this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
     },
     onWebsocketOpen() {
@@ -127,6 +129,8 @@ export default {
         }, (error) => {
           console.log(error);
         });
+        this.connectToWebsocket()
+        console.log('ws from home',this.ws)
         sendJSONReq(this.ws,'createRoom',this.roomId);
         this.$router.push({path: (this.mode=='custom'? `/editor/${this.username}/${this.roomId}` : `/game/${this.username}/${this.roomId}`) })
       }

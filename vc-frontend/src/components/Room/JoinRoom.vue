@@ -11,7 +11,6 @@
           <v-btn
               rounded
               color="primary"
-              
               dark 
               @click="checkRoom"
               >
@@ -22,18 +21,20 @@
 </template>
 
 <script>
-import {sendJSONReq} from '../../utils/websocket';
+import WS, {sendJSONReq} from '../../utils/websocket';
 export default {
     mounted: function() {
-      this.connectToWebsocket()
+      
       },
     methods:{
         checkRoom(){
+            this.connectToWebsocket()
+            console.log(this.ws)
             sendJSONReq(this.ws,'joinRoom',this.roomId);
             this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
         connectToWebsocket() {
-        this.ws = new WebSocket( this.serverUrl );
+        this.ws = WS
         this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
         },
         onWebsocketOpen() {

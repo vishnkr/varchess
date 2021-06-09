@@ -50,8 +50,8 @@ func main(){
 
 func roomHandler(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json") 
-	fmt.Print("reached here")
-	response:= responseStruct{
+	
+	response:= ResponseStruct{
 		Type: "getRoomId",
 		Data: genRandSeq(6),
 	}
@@ -86,9 +86,15 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 }*/
 
-type responseStruct struct {
+type ResponseStruct struct {
 	Type string `json:"type"`
 	Data string `json:"data,omitempty"`
+}
+
+type ChatMessage struct{
+	RoomId string `json:"roomId"`
+	Message string `json:"message,omitempty"`
+	Username string `json:"username"`
 }
 
 func socketHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,12 +111,8 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
     // The event loop
     for {
         messageType, message, err := conn.ReadMessage()
-        if err != nil {
-            log.Println("Error during message reading:", err)
-            break
-        }
-        log.Printf("Received: %s", message)
-		responseData:=responseStruct{}
+        fmt.Print("received a message",string(message))
+		responseData:=ResponseStruct{}
 		json.Unmarshal([]byte(message),&responseData )
 		fmt.Println("response: ",responseData)
 		switch responseData.Type{
@@ -121,7 +123,7 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
 			c := &Client{conn: conn}
 			c.CreateRoom(roomId)
 			fmt.Println("created room",*c)
-			err = conn.WriteMessage(messageType, []byte("successfully created"))
+			err = conn.WriteMessage(messageType, message)
 			if err != nil {
 				log.Println("Error during message writing:", err)
 				break
@@ -131,12 +133,25 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
 			roomId = responseData.Data
 			c := &Client{conn: conn}
 			c.AddtoRoom(roomId)
-			err = conn.WriteMessage(messageType, []byte("successfully joined"))
+			fmt.Println("join room",*c)
+			err = conn.WriteMessage(messageType, message)
 			if err != nil {
 				log.Println("Error during message writing:", err)
 				break
 			}
 			fmt.Println(RoomList)
+		case "chatMessage":
+			messageData := ChatMessage{}
+			json.Unmarshal([]byte(responseData.Data),&messageData)
+			fmt.Println("messssss",messageData)
+			for client, _ := range RoomList[messageData.RoomId].Clients {
+				fmt.Print("chat clients",*client)
+				if (client.conn!=conn){
+					client.conn.WriteJSON(responseData)
+					fmt.Print("success")
+				}
+			}
+			
 		}
 			/*message,err = json.Marshal(responseData)
 			if err != nil {

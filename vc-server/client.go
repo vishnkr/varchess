@@ -9,6 +9,7 @@ type Client struct{
 	//wsServer *WsServer
 	send  chan []byte
 	roomId string
+	username string
 }
 
  /*
