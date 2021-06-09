@@ -15,7 +15,7 @@
     </v-app-bar>
 
     <v-main>
-      <router-view/>
+      <router-view :shared="shared"/>
     </v-main>
   </v-app>
 </template>
@@ -26,7 +26,9 @@ export default {
   name: 'App',
 
   data: () => ({
-    //
+    shared: {
+      username: null,
+    }
   }),
 };
 </script>

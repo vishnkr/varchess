@@ -3,7 +3,7 @@ import Router from "vue-router";
 import HomePage from '../views/HomePage'
 import EditorDialog from '../components/Editor/EditorDialog'
 import GameRoom from '../components/Room/GameRoom'
-
+import JoinRoom from '../components/Room/JoinRoom'
 Vue.use(Router);
 const routes = [
     { path: '/', 
@@ -11,13 +11,17 @@ const routes = [
      component: HomePage 
     },
     {
-      path: '/editor',
+      path: '/editor/:username/:roomId',
       name: 'Editor',
       component: EditorDialog,
     },
     {
-      path: '/game/:roomId',
+      path: '/game/:username/:roomId',
       component: GameRoom,
+    },
+    {
+      path: '/join/:roomId',
+      component: JoinRoom,
     }
 
   ]

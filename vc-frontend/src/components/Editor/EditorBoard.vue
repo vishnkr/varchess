@@ -127,6 +127,7 @@ export default {
 
 
 #board-container{
+  
 }
 
 #board{

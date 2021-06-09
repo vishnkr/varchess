@@ -77,6 +77,7 @@
                     v-model="pieceSelect"
                     column
                   >
+                    {{username}}
                     <v-radio v-for="piece in pieceList"
                       :key="`${piece.toLowerCase()}`"
                       :label="`${piece}`"
@@ -99,9 +100,10 @@
 import EditorBoard from './EditorBoard';
 export default {
   components:{EditorBoard},
+
   methods:{
     enterRoom(){
-      this.$router.push({ path: '/game/123' });
+      this.$router.push({ path: `/game/${this.username}/${this.roomId}` });
     },
     updateBoardDimensions(){
       this.setBoardState(this.boardState);
@@ -125,6 +127,8 @@ export default {
       pieceSelect: 'pawn',
       isDisableTileOn: false,
       boardState:{},
+      username: this.$route.params.username,
+      roomId: this.$route.params.roomId,
     }
   }
 

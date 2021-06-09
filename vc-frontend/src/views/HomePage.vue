@@ -85,53 +85,64 @@
 </template>
 
 <script>
-//import EditorBoard from '../components/Editor/EditorBoard.vue';
 
-//import EditorDialog from '../components/EditorDialog'
+import {sendJSONReq} from '../utils/websocket';
+import axios from 'axios';
+
 export default {
-  components:{},//EditorBoard},//EditorDialog},
+  components:{},
+  props:['shared'],
   mounted: function() {
-      //this.connectToWebsocket()
-      
-    },
+      this.connectToWebsocket()
+      },
   methods:{
     checkUsername(){
       if(!this.username || this.username==''){
         this.errorText = 'Enter Username';
         //dialog.value=false;
+        return false;
       }
       else{
         this.errorText = null;
+        return true;
         //dialog.value=true;
-      }
+      } 
     },
     connectToWebsocket() {
-        this.ws = new WebSocket( this.serverUrl );
-        this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
-      },
-      onWebsocketOpen() {
-        console.log("connected to WS!");
-      },
-
-    redirectToEditor() {
-      this.$router.push({ path: '/editor' });
+      this.ws = new WebSocket( this.serverUrl );
+      this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
+    },
+    onWebsocketOpen() {
+      console.log("connected to WS!");
+      
+    },
+    async enterRoom(){
+      //console.log(this.roomId);
+      //sendReq(this.ws,'getRoomId');
+      if(this.username){
+        await axios.post('http://localhost:5000/getRoomId')
+        .then((response) => {
+          console.log('response http:',response);
+          this.roomId = response.data.data;
+        }, (error) => {
+          console.log(error);
+        });
+        sendJSONReq(this.ws,'createRoom',this.roomId);
+        this.$router.push({path: (this.mode=='custom'? `/editor/${this.username}/${this.roomId}` : `/game/${this.username}/${this.roomId}`) })
+      }
     },
 
-    enterRoom(){
-      console.log(this.mode);
-      var roomId="123a";
-      this.mode=='custom'? this.redirectToEditor() : this.$router.push({ path: `/game/${roomId}` }) ;
-    }
   },
   data:()=>{
     return {
       createClicked: false,
-      username: null,
       errorText: null,
       mode:'standard',
+      username: null,
       ws: null,
       dialog:true,
-      serverUrl: "ws://localhost:5000/ws"
+      serverUrl: "ws://localhost:5000/ws",
+      roomId: null,
     }
   }
 }

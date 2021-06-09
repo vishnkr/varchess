@@ -13,7 +13,7 @@
 <script>
 
 export default {
-    props: ['name'],
+    props: ['username'],
     data(){
         return{
             newMessage: null,
@@ -22,9 +22,8 @@ export default {
     },
     methods:{
         createMessage(){
-            console.log(this.newMessage)
             if(this.newMessage){
-                var newMessage = {message: this.newMessage, name: this.name};
+                var newMessage = {message: this.newMessage, username: this.username};
                 this.$emit('sendChatMessage',newMessage);
                 this.newMessage=null;
                 this.errorText=null;

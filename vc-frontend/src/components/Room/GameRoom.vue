@@ -5,7 +5,9 @@
           <game-board />
         </div>
         <div class="column right-panel">
-          <chat />
+          <v-text-field v-model="shareLink" id="tocopy" readonly outlined ></v-text-field>
+          <v-btn @click="copyText">Copy Link</v-btn>
+          <chat :username="username"/>
         </div>
     </div>
   </div>
@@ -14,9 +16,29 @@
 <script>
 import GameBoard from '../GameBoard.vue'
 import Chat from './Chat.vue'
+
 export default {
   components: { Chat,GameBoard },
-
+  
+  methods:{
+    getShareUrl(){
+      return `http://localhost:8080/#/join/${this.$route.params.roomId}`
+    },
+    copyText(){
+    let input=document.getElementById("tocopy");
+   input.select();
+         document.execCommand("copy");
+    },
+    
+  },
+  data(){
+    return{
+      serverUrl: "ws://localhost:5000/ws",
+      shareLink: this.getShareUrl(),
+      username: this.$route.params.username,
+      roomId: this.$route.params.roomId,
+    }
+  }
 }
 </script>
 

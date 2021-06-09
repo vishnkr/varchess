@@ -2,18 +2,18 @@
   <div class="chat">
       <div class="card">
           <v-card elevation="2">
-              <p class="text secondary nomessages" v-if="messages.length==0">
-                  [No messages yet!]
+              <p class="nomessages">
+                  <span>Chat</span>
               </p>
               <div class="messages" v-chat-scroll="{always:false, smooth:true}">
                   <div v-for="message in messages" :key="message.id">
-                      <span class="text-info">[{{message.name}}]:</span>
+                      <span class="text-info">[{{message.username}}]:</span>
                       <span>{{message.message}}</span>
                       
                   </div>
               </div>
               <div class="card-action">
-                  <create-message v-on:sendChatMessage="setChatMessage" :name="uname" />
+                  <create-message v-on:sendChatMessage="setChatMessage" :username="username" />
               </div>
           </v-card>
       </div>
@@ -26,22 +26,22 @@ import CreateMessage from '../Chat/CreateMessage';
 
 export default {
     components: {CreateMessage},
-    props: ['name'],
+    props: ['username'],
     data(){
         return{
             messages: [],
-            uname: 'hello',
         }
     },
     created(){
-        var id=0;
-        var user='a';
-        var message="hi1 this";
+        /*var id=0;
+        var user='Varchess bot';
+        var message=" Welcome to your chatroom!";
             this.messages.push({
                 id: id,
-                name: user,
+                username: user,
                 message: message
             })
+            */
     },
     methods:{
         setChatMessage(messageInfo){
@@ -52,6 +52,9 @@ export default {
 </script>
 
 <style scoped>
+.chat{
+    margin: 2%;
+}
 .chat span{
     font-size: 1.2em;
 }
@@ -60,6 +63,9 @@ export default {
     max-height: 300px;
     overflow: auto;
     margin: 30px
+}
+.nomessages{
+    text-align: center;
 }
 
 </style>
