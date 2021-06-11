@@ -13,6 +13,8 @@ type Room struct{
 	Id string
 }
 
+
+
 var RoomList = make(map[string]*Room)
 
 const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -25,6 +27,16 @@ func genRandSeq(length int) string {
 	}
 	return string(b)
   }
+
+func roomHandler(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json") 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	response:= ResponseStruct{
+		Type: "getRoomId",
+		Data: genRandSeq(6),
+	}
+	json.NewEncoder(w).Encode(response)
+}
 
 func (c *Client) CreateRoom(roomId string ){
 	c.roomId = roomId
