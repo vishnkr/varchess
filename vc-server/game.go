@@ -47,80 +47,116 @@ func DisplayBoardState(board *Board){
 	}
 }
 
+func (piece Piece) isBackwardPawnMove(move *Move) bool{
+	if (piece.Color == 'b' && move.DestRow<move.SrcRow) || (piece.Color == 'w' && move.DestRow>move.SrcRow) {
+			return true
+	}
+	return false
+}
 
+//split this function up later once complete logic is done
 func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
-	//check if theres blocks to dest
-	//opens up a discovery check?
-	
-	if(board.getPieceColor(move.SrcRow,move.SrcCol) == board.getPieceColor(move.DestRow,move.DestCol)){
+	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
+	//check if same piece color exists at destination
+	if (board.getPieceColor(move.SrcRow,move.SrcCol) == board.getPieceColor(move.DestRow,move.DestCol)){
 		fmt.Println(board.getPieceColor(move.SrcRow,move.SrcCol),board.getPieceColor(move.DestRow,move.DestCol))
 		return false,"same color piece at dest"
 	}
+
 	switch piece.Type{
+		//doesn't check if move opens up a discovery check yet
 		case Rook: 
-			//horizontal or vertical block
-			if(move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
-				//vertical move
-				start,end := Min(move.SrcRow,move.DestRow),Max(move.SrcRow,move.DestRow)
-				for i:=start+1;i<end;i++{
-					if(!board.IsEmpty(i,move.SrcCol)){
-						return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
-					}
-				}
-				return true,"valid rook move"
-			} else if(move.SrcRow==move.DestRow && move.SrcCol!=move.DestCol){
-				//horizontal move
-				start,end := Min(move.SrcCol,move.DestCol),Max(move.SrcCol,move.DestCol)
-				for i:=start+1;i<end;i++{
-					if(!board.IsEmpty(move.SrcRow,i)){
-						return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
-					}
-				}
-				return true,"valid rook move"
-			} else { return false,"invalid rook move"}
-
+			return isRookMoveValid(piece,board,move)
 		case Bishop:
-			pathLength:= Abs(move.SrcRow - move.DestRow)
-			if pathLength!= Abs(move.SrcCol - move.DestCol){
-				return false, "not diagonal"
-			}
-			for i := 1; i < pathLength; i++{
-				x := move.SrcRow + i;
-				y := move.SrcCol + i;
-				if (!board.IsEmpty(x, y)){
-					// Obstacle found before reaching target: the move is invalid
-					return false,"obstacle in bishop path" 
-				} 
-			}
-			return true,"valid"
-
+			return isBishopMoveValid(piece,board,move)
 		case Knight:
 			if (Abs((move.SrcRow-move.DestRow) * (move.SrcCol-move.DestCol)) ==2){
 				return true,"valid knight"
 			} else{ return false, "invalid knight"}
-		
 		case Pawn:
-			//not considering en passant yet
-			var doubleMoveStartRank int
-			if piece.Color=='b' {
-				doubleMoveStartRank = 1
-			} else {
-				doubleMoveStartRank = board.rows - 2
+			return isPawnMoveValid(piece,board,move)
+		case Queen:
+			rookCheck,res:= isRookMoveValid(piece,board,move)
+			if (!rookCheck){
+				return isBishopMoveValid(piece,board,move)
 			}
-			if(move.DestCol== move.SrcCol && move.SrcRow!=move.DestRow){
-				if (Abs(move.SrcRow-move.DestRow)==2 && move.SrcRow==doubleMoveStartRank){
-					if ( (piece.Color=='b' && board.IsEmpty(move.SrcRow+1,move.SrcCol)) || (piece.Color=='w' && board.IsEmpty(move.SrcRow-1,move.SrcCol))) {
-						fmt.Println(board.tiles[move.SrcRow-1][move.SrcCol],board.IsEmpty(move.SrcRow-1,move.SrcCol))
-						return true,"double pawn move allowed"
-					} else{ return false,"double move blocked"}
-				} else if (Abs(move.SrcRow-move.DestRow)==1){
-					if (board.IsEmpty(move.SrcRow-1,move.SrcCol)){
-						return true,"valid single pawn move"
-					} else { return false, "dest blocked"}
-				} 
-				return true,"more logic to handle here"
-			}
+			return rookCheck,res
 
 	}
 	return true,"good to go"
+}
+
+func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+	//horizontal or vertical block
+	if (move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
+		//vertical move
+		start,end := Min(move.SrcRow,move.DestRow),Max(move.SrcRow,move.DestRow)
+		for i:=start+1;i<end;i++{
+			if(!board.IsEmpty(i,move.SrcCol)){
+				return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
+			}
+		}
+		return true,"valid rook move"
+	} else if(move.SrcRow==move.DestRow && move.SrcCol!=move.DestCol){
+		//horizontal move
+		start,end := Min(move.SrcCol,move.DestCol),Max(move.SrcCol,move.DestCol)
+		for i:=start+1;i<end;i++{
+			if(!board.IsEmpty(move.SrcRow,i)){
+				return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
+			}
+		}
+		return true,"valid rook move"
+	} else { return false,"invalid rook move"}
+}
+
+func isBishopMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+	pathLength:= Abs(move.SrcRow - move.DestRow)
+	if pathLength!= Abs(move.SrcCol - move.DestCol){
+		return false, "not diagonal"
+	}
+	for i := 1; i < pathLength; i++{
+		x := move.SrcRow + i;
+		y := move.SrcCol + i;
+		if (!board.IsEmpty(x, y)){
+			// Obstacle found before reaching target: the move is invalid
+			return false,"obstacle in bishop path" 
+		} 
+	}
+	return true,"valid"
+}
+
+func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+	//not considering en passant yet
+	var doubleMoveStartRank,rowOffset,promoteDestRow int
+	if piece.Color==Black {
+		doubleMoveStartRank = 1
+		rowOffset = 1
+		promoteDestRow = board.rows-1
+	} else {
+		doubleMoveStartRank = board.rows - 2
+		rowOffset = -1
+		promoteDestRow = 0
+	}
+	if (move.DestCol== move.SrcCol && move.SrcRow!=move.DestRow){
+		if (Abs(move.SrcRow-move.DestRow)==2 && move.SrcRow==doubleMoveStartRank){
+			if ( (piece.Color==Black && board.IsEmpty(move.SrcRow+1,move.SrcCol)) || (piece.Color==White && board.IsEmpty(move.SrcRow-1,move.SrcCol))) {
+				return true,"double pawn move allowed"
+			} else{ return false,"double move blocked"}
+		} else if (Abs(move.SrcRow-move.DestRow)==1 && !piece.isBackwardPawnMove(move)){
+			if (board.IsEmpty(move.SrcRow-1,move.SrcCol)){
+				if(move.Promote!=0 && move.DestRow==promoteDestRow){
+					return true,("pawn promoted to"+string(move.Promote))
+				}
+				return true,"valid single pawn move"
+			} else { return false, "dest blocked"}
+		} 
+		
+	} else if(move.DestCol!= move.SrcCol && move.SrcRow!=move.DestRow){
+		//check if col row +-1 logic
+			if(Abs(move.SrcCol-move.DestCol)==1 && move.DestRow==move.SrcRow+rowOffset && !board.IsEmpty(move.DestRow,move.DestCol)){
+				return true,"valid pawn capture"
+			}
+			return false,"invalid pawn capture"
+	}
+	return false, "not a valid pawn move"
 }

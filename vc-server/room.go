@@ -17,7 +17,6 @@ type Room struct{
 
 
 
-var RoomList = make(map[string]*Room)
 
 const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))

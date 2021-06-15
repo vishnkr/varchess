@@ -5,7 +5,6 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
-	"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -23,7 +22,6 @@ func ConvertFENtoBoard(fen string) *Board {
 			colCount += 1
 		}
 	}
-	fmt.Println(colCount,rowsData)
 	board := &Board{
 		tiles: make([][]rune, len(rowsData)),
 		rows:  len(rowsData),
@@ -34,7 +32,6 @@ func ConvertFENtoBoard(fen string) *Board {
 		col = 0
 		board.tiles[rowIndex] = make([]rune, board.cols)
 		for _, char := range row {
-			fmt.Println(rowIndex,col,char,unicode.IsNumber(rune(char)))
 			if unicode.IsNumber(rune(char)) {
 					count,_ := strconv.Atoi(string(char))
 					col+=count-1
