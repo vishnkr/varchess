@@ -2,6 +2,7 @@ package main
 
 import (
 	//"github.com/gorilla/websocket"
+	"unicode"
 	"fmt"
 	
 )
@@ -9,17 +10,28 @@ import (
 type Game struct {
 	p1       *Client
 	p2       *Client
-	fen      string
+	board    *Board
 	moveList []string
 	pgn      string
 	result   string
 }
 
 type Board struct {
-	tiles [][]rune
+	tiles [][]Square
 	rows  int
 	cols  int
 	turn rune
+}
+type SqColor uint8 
+const (
+	Dark SqColor = iota
+	Light
+)
+
+type Square struct{
+	SqColor SqColor
+	Piece Piece
+	IsEmpty bool
 }
 
 type Move struct{
@@ -31,28 +43,26 @@ type Move struct{
 }
 
 func (board *Board) IsEmpty(row int,col int) bool{
-	return board.tiles[row][col]==0
+	return board.tiles[row][col].IsEmpty
 }
 
 func DisplayBoardState(board *Board){
 	var piece string
+	//fmt.Println(board.rows,board.cols)
 	for i:=0;i<board.rows;i++{
 		for j:=0;j<board.cols;j++{
-			if (board.tiles[i][j] !=0){
-				piece =string(board.tiles[i][j])
-			} else{piece ="-"}
+			if (!board.tiles[i][j].IsEmpty){
+				//fmt.Println("go",board.tiles[i][j].Piece,typeToRuneMap[board.tiles[i][j].Piece.Type],typeToRuneMap)
+				if (board.tiles[i][j].Piece.Color == White){
+					piece = string(unicode.ToUpper(typeToRuneMap[board.tiles[i][j].Piece.Type]))
+				} else { piece = string(typeToRuneMap[board.tiles[i][j].Piece.Type]) }
+			} else{piece = "-"}
 			fmt.Print(piece," ")
 		}
 		fmt.Print("\n")
 	}
 }
 
-func (piece Piece) isBackwardPawnMove(move *Move) bool{
-	if (piece.Color == 'b' && move.DestRow<move.SrcRow) || (piece.Color == 'w' && move.DestRow>move.SrcRow) {
-			return true
-	}
-	return false
-}
 
 //split this function up later once complete logic is done
 func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
@@ -93,7 +103,7 @@ func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 		start,end := Min(move.SrcRow,move.DestRow),Max(move.SrcRow,move.DestRow)
 		for i:=start+1;i<end;i++{
 			if(!board.IsEmpty(i,move.SrcCol)){
-				return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
+				return false,("rook path blocked")
 			}
 		}
 		return true,"valid rook move"
@@ -102,7 +112,7 @@ func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 		start,end := Min(move.SrcCol,move.DestCol),Max(move.SrcCol,move.DestCol)
 		for i:=start+1;i<end;i++{
 			if(!board.IsEmpty(move.SrcRow,i)){
-				return false,("path blocked by "+string(board.tiles[i][move.SrcCol]))
+				return false,("rook path blocked")
 			}
 		}
 		return true,"valid rook move"

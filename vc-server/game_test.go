@@ -106,8 +106,8 @@ func TestQueenHorizontal(t *testing.T){
 	move:=&Move{
 		SrcRow:4,
 		SrcCol:3,
-		DestRow:1,
-		DestCol:0,
+		DestRow:4,
+		DestCol:7,
 		Promote: Queen,
 	}
     result,reason := piece.isValidMove(board,move)

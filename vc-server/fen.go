@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
+	//"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -13,7 +14,6 @@ func ConvertFENtoBoard(fen string) *Board {
 	rowsData := strings.Split(boardData[0], "/")
 	var colCount int = 0
 	//count columns
-	
 	for _, char := range rowsData[0] {
 		if unicode.IsNumber(rune(char)) {
 			empty, _ := strconv.Atoi(string(char))
@@ -23,20 +23,41 @@ func ConvertFENtoBoard(fen string) *Board {
 		}
 	}
 	board := &Board{
-		tiles: make([][]rune, len(rowsData)),
+		tiles: make([][]Square, len(rowsData)),
 		rows:  len(rowsData),
 		cols:  colCount,
 	}
 	var col int = 0
 	for rowIndex, row := range rowsData {
 		col = 0
-		board.tiles[rowIndex] = make([]rune, board.cols)
+		board.tiles[rowIndex] = make([]Square, board.cols)
 		for _, char := range row {
+			
 			if unicode.IsNumber(rune(char)) {
 					count,_ := strconv.Atoi(string(char))
-					col+=count-1
-			} else{board.tiles[rowIndex][col] = rune(char) }
-			col++
+					i:= col
+					for (col < i+count){
+						board.tiles[rowIndex][col] = Square{IsEmpty:true}
+						col++	
+					}
+			} else{
+				var color Color
+				if(unicode.IsUpper(rune(char))){
+					color = White
+				} else{
+					color = Black
+				}
+				
+				board.tiles[rowIndex][col] = Square{
+											IsEmpty:false, 
+											Piece: Piece{
+												Type: strToTypeMap[string(unicode.ToLower(char))],
+												Color: color,
+											},
+										}
+				col++
+			}
+			
 		}
 	}
 	return board
@@ -47,7 +68,7 @@ func ConvertBoardtoFEN(board *Board) string{
 	for row:=0;row<board.rows; row++{
 		var empty int = 0
 		for col:=0;col<board.cols;col++{
-			if board.tiles[row][col]==0{
+			if board.tiles[row][col].IsEmpty{
 				empty+=1
 			} else{
 				if empty>0{
@@ -55,7 +76,12 @@ func ConvertBoardtoFEN(board *Board) string{
 					fen.WriteString(str)
 					empty=0
 				}
-				fen.WriteString(string(board.tiles[row][col]))
+				if (board.tiles[row][col].Piece.Color==White){
+					fen.WriteString(string(unicode.ToUpper(typeToRuneMap[board.tiles[row][col].Piece.Type])))
+				} else{
+					fen.WriteString(string(typeToRuneMap[board.tiles[row][col].Piece.Type]))
+				}
+				
 			}
 			
 		}
