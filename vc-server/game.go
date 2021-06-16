@@ -2,37 +2,27 @@ package main
 
 import (
 	//"github.com/gorilla/websocket"
-	"unicode"
+	"strings"
 	"fmt"
 	
 )
 
 type Game struct {
-	p1       *Client
-	p2       *Client
-	board    *Board
-	moveList []string
-	pgn      string
-	result   string
+	P1       *Client
+	P2       *Client
+	Board    *Board
+	MoveList []string
+	Pgn      string
+	Result   string
 }
 
 type Board struct {
-	tiles [][]Square
-	rows  int
-	cols  int
-	turn rune
+	Tiles [][]Square
+	Rows  int
+	Cols  int
+	Turn rune
 }
-type SqColor uint8 
-const (
-	Dark SqColor = iota
-	Light
-)
 
-type Square struct{
-	SqColor SqColor
-	Piece Piece
-	IsEmpty bool
-}
 
 type Move struct{
 	SrcRow int `json:"srcRow"`
@@ -40,22 +30,22 @@ type Move struct{
 	DestRow int `json:"destRow"`
 	DestCol int `json:"destCol"`
 	Promote Type `json:"promote,omitempty"`
+	Castle bool `json:"castle,omitempty"`
 }
 
 func (board *Board) IsEmpty(row int,col int) bool{
-	return board.tiles[row][col].IsEmpty
+	return board.Tiles[row][col].IsEmpty
 }
 
 func DisplayBoardState(board *Board){
 	var piece string
 	//fmt.Println(board.rows,board.cols)
-	for i:=0;i<board.rows;i++{
-		for j:=0;j<board.cols;j++{
-			if (!board.tiles[i][j].IsEmpty){
-				//fmt.Println("go",board.tiles[i][j].Piece,typeToRuneMap[board.tiles[i][j].Piece.Type],typeToRuneMap)
-				if (board.tiles[i][j].Piece.Color == White){
-					piece = string(unicode.ToUpper(typeToRuneMap[board.tiles[i][j].Piece.Type]))
-				} else { piece = string(typeToRuneMap[board.tiles[i][j].Piece.Type]) }
+	for i:=0;i<board.Rows;i++{
+		for j:=0;j<board.Cols;j++{
+			if (!board.Tiles[i][j].IsEmpty){
+				if (board.Tiles[i][j].Piece.Color == White){
+					piece = strings.ToUpper(board.Tiles[i][j].Piece.String())
+				} else { piece = board.Tiles[i][j].Piece.String()} 
 			} else{piece = "-"}
 			fmt.Print(piece," ")
 		}
@@ -64,7 +54,7 @@ func DisplayBoardState(board *Board){
 }
 
 
-//split this function up later once complete logic is done
+
 func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
 	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
 	//check if same piece color exists at destination
@@ -91,9 +81,10 @@ func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
 				return isBishopMoveValid(piece,board,move)
 			}
 			return rookCheck,res
+		
 
 	}
-	return true,"good to go"
+	return false,"something's wrong"
 }
 
 func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
@@ -141,9 +132,9 @@ func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	if piece.Color==Black {
 		doubleMoveStartRank = 1
 		rowOffset = 1
-		promoteDestRow = board.rows-1
+		promoteDestRow = board.Rows-1
 	} else {
-		doubleMoveStartRank = board.rows - 2
+		doubleMoveStartRank = board.Rows - 2
 		rowOffset = -1
 		promoteDestRow = 0
 	}
@@ -155,7 +146,7 @@ func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 		} else if (Abs(move.SrcRow-move.DestRow)==1 && !piece.isBackwardPawnMove(move)){
 			if (board.IsEmpty(move.SrcRow-1,move.SrcCol)){
 				if(move.Promote!=0 && move.DestRow==promoteDestRow){
-					return true,("pawn promoted to"+string(move.Promote))
+					return true,("pawn promoted to "+ string(typeToRuneMap[move.Promote]))
 				}
 				return true,"valid single pawn move"
 			} else { return false, "dest blocked"}

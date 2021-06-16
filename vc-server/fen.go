@@ -23,21 +23,21 @@ func ConvertFENtoBoard(fen string) *Board {
 		}
 	}
 	board := &Board{
-		tiles: make([][]Square, len(rowsData)),
-		rows:  len(rowsData),
-		cols:  colCount,
+		Tiles: make([][]Square, len(rowsData)),
+		Rows:  len(rowsData),
+		Cols:  colCount,
 	}
 	var col int = 0
 	for rowIndex, row := range rowsData {
 		col = 0
-		board.tiles[rowIndex] = make([]Square, board.cols)
+		board.Tiles[rowIndex] = make([]Square, board.Cols)
 		for _, char := range row {
 			
 			if unicode.IsNumber(rune(char)) {
 					count,_ := strconv.Atoi(string(char))
 					i:= col
 					for (col < i+count){
-						board.tiles[rowIndex][col] = Square{IsEmpty:true}
+						board.Tiles[rowIndex][col] = Square{IsEmpty:true}
 						col++	
 					}
 			} else{
@@ -48,7 +48,7 @@ func ConvertFENtoBoard(fen string) *Board {
 					color = Black
 				}
 				
-				board.tiles[rowIndex][col] = Square{
+				board.Tiles[rowIndex][col] = Square{
 											IsEmpty:false, 
 											Piece: Piece{
 												Type: strToTypeMap[string(unicode.ToLower(char))],
@@ -65,10 +65,10 @@ func ConvertFENtoBoard(fen string) *Board {
 
 func ConvertBoardtoFEN(board *Board) string{
 	var fen bytes.Buffer
-	for row:=0;row<board.rows; row++{
+	for row:=0;row<board.Rows; row++{
 		var empty int = 0
-		for col:=0;col<board.cols;col++{
-			if board.tiles[row][col].IsEmpty{
+		for col:=0;col<board.Cols;col++{
+			if board.Tiles[row][col].IsEmpty{
 				empty+=1
 			} else{
 				if empty>0{
@@ -76,10 +76,10 @@ func ConvertBoardtoFEN(board *Board) string{
 					fen.WriteString(str)
 					empty=0
 				}
-				if (board.tiles[row][col].Piece.Color==White){
-					fen.WriteString(string(unicode.ToUpper(typeToRuneMap[board.tiles[row][col].Piece.Type])))
+				if (board.Tiles[row][col].Piece.Color==White){
+					fen.WriteString(string(unicode.ToUpper(typeToRuneMap[board.Tiles[row][col].Piece.Type])))
 				} else{
-					fen.WriteString(string(typeToRuneMap[board.tiles[row][col].Piece.Type]))
+					fen.WriteString(string(typeToRuneMap[board.Tiles[row][col].Piece.Type]))
 				}
 				
 			}

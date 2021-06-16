@@ -80,6 +80,21 @@ func TestPawnPromotion(t *testing.T){
     if exp != result {
        t.Errorf("result incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
+
+	exp = true
+	board = ConvertFENtoBoard("8/p2P3p/1Q6/8/3B1p2/4P3/1P6/8 w - - 0 1")
+	piece =&Piece{Type:Pawn,Color:White}
+	move =&Move{
+		SrcRow:1,
+		SrcCol:3,
+		DestRow:0,
+		DestCol:3,
+		Promote: Queen,
+	}
+    result,reason = piece.isValidMove(board,move)
+    if exp != result {
+       t.Errorf("result 2 incorrect, got: %v, %s, want: %v.",result,reason,exp )
+    }
 }
 
 func TestQueenDiagonal(t *testing.T){
