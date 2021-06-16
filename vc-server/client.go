@@ -2,14 +2,92 @@
 package main
 import (
 	"github.com/gorilla/websocket"
+	"sync"
+	//"net/http"
+	//"log"
+	"fmt"
+	"encoding/json"
 )
+
+type MessageStruct struct {
+	Type string `json:"type"`
+	Data string `json:"data,omitempty"`
+}
+
+type UserRoomInfo struct{
+	Username string `json:"username"`
+	RoomId string `json:"roomId"`
+}
+
+type ChatMessage struct{
+	RoomId string `json:"roomId"`
+	Message string `json:"message"`
+	Username string `json:"username"`
+}
+
 
 type Client struct{
 	conn *websocket.Conn
-	//wsServer *WsServer
+	mu sync.Mutex
+	wsServer *WsServer
 	send  chan []byte
 	roomId string
 	username string
+}
+//,roomId string, username string
+func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
+	return &Client{
+		conn: conn,
+		wsServer: wsServer,
+		send: make(chan []byte, 256),
+	}
+}
+
+func (c *Client) Read(){
+	defer c.conn.Close()
+	for {
+		_, msg, err:= c.conn.ReadMessage()
+		if err!=nil{
+			return
+		}
+		fmt.Print("received a message",string(msg))
+		reqData:= MessageStruct{}
+		json.Unmarshal([]byte(msg),&reqData)
+		fmt.Println("received:",reqData.Type,string(reqData.Data))
+		
+		switch reqData.Type{
+			case "createRoom", "joinRoom":
+				userInfo := UserRoomInfo{}
+				json.Unmarshal([]byte(string(reqData.Data)),&userInfo)
+				fmt.Println("room ID, uname:",userInfo.RoomId, userInfo.Username)
+				c.username = userInfo.Username
+				if(reqData.Type=="createRoom"){
+					c.CreateRoom(userInfo.RoomId)
+					
+				} else{
+					c.AddtoRoom(userInfo.RoomId)
+				}
+				response:= []byte("successful")
+				c.send <- response
+			case "chatMessage":
+				
+			case "performMove":
+
+		}
+
+		//Rooms[c.roomId.]
+	}
+}
+
+
+func (c *Client) Write(){
+	defer c.conn.Close()
+	for msg:= range c.send{
+		err := c.conn.WriteMessage(websocket.TextMessage, msg) 
+		if err != nil { 
+		return 
+		} 
+	}
 }
 
  /*
@@ -28,25 +106,6 @@ const (
 	maxMessageSize = 10000 // Maximum message size allowed from peer.
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize: 4096,
-	WriteBufferSize: 4096,
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		log.Println(origin)
-		return origin == "http://localhost:8080"
-	},
-}
-
-
-
-func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
-	return &Client{
-		conn: conn,
-		wsServer: wsServer,
-		send: make(chan []byte, 256),
-	}
-}
 
 func (client *Client) disconnect() {
 	client.wsServer.unregister <- client
