@@ -97,13 +97,19 @@
 </template>
 
 <script>
+import { convertBoardStateToFEN } from '../../utils/fen';
+import {createRoom} from '../../utils/websocket';
 import EditorBoard from './EditorBoard';
 export default {
   components:{EditorBoard},
-
   methods:{
     enterRoom(){
-      this.$router.push({ path: `/game/${this.username}/${this.roomId}` });
+      var finalboardState = this.setBoardState(this.boardState)
+      var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
+      console.log('fen',fenString)
+      createRoom(this.ws,this.roomId,this.username, fenString);
+      this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState}})
+      //this.$router.push({ path: `/game/${this.username}/${this.roomId}` });
     },
     updateBoardDimensions(){
       this.setBoardState(this.boardState);
@@ -115,12 +121,14 @@ export default {
         newBoardState.tiles.push(boardState.tiles[row].slice(0,this.cols+1));
       }
       this.$store.commit('updateBoardState',newBoardState);
+      return newBoardState
     }
   },
   data(){
     return{
       labels: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-      pieceList: ['Pawn','King','Queen','Bishop','Knight','Custom'],
+      pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
+      pieceMap: {'Pawn':'p','King':'k','Queen':'q','Bishop':'b','Knight':'n','Rook':'r','Custom':'c'},
       rows: 7,
       cols: 7,
       colorSelect: 'white',
@@ -129,6 +137,7 @@ export default {
       boardState:{},
       username: this.$route.params.username,
       roomId: this.$route.params.roomId,
+      ws: this.$route.params.ws,
     }
   }
 
@@ -140,12 +149,12 @@ export default {
   display: flex;
 }
 .side-panel{
-  flex:1;
+  flex:3;
   height: 90vh;
   /*box-shadow: 0 14px 28px rgba(250, 0, 0, 0.25), 0 10px 10px rgba(0,0,0,0.22);*/
 }
 .board-panel{
-  flex:1;
+  flex:6;
 }
 
 .list-header{

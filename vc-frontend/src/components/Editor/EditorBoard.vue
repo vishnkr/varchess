@@ -3,7 +3,7 @@
   <div id="board" >
       <div  v-for="col in cols" :key="col">
         <div v-for="row in rows" :key="row">
-          <square  v-on:childToParent="squareClicked" :tileType="boardState.tiles[row-1][col-1].tileType" :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" :pieceType="boardState.tiles[row-1][col-1].pieceType" :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
+          <square v-on:childToParent="squareClicked" :tileType="boardState.tiles[row-1][col-1].tileType" :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" :pieceType="boardState.tiles[row-1][col-1].pieceType" :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
 
         </div>
       </div>
@@ -96,7 +96,7 @@ export default {
     },
     data(){
       return {
-        pieceList : {'pawn':'p','king':'k','queen':'q','bishop':'b','knight':'n','custom':'custom'},
+        pieceList : {'pawn':'p','king':'k','queen':'q','bishop':'b','rook':'r','knight':'n','custom':'custom'},
         rowMultiplier:0,
         isMounted: false,
         rowCount: 15,
@@ -127,14 +127,13 @@ export default {
 
 
 #board-container{
-  
 }
 
 #board{
-    padding: 2%;
+    margin: 2%;
     display: grid;
     grid-template-columns: repeat(var(--size), 1fr);
-    /*grid-template-rows: repeat(var(--size), 1fr);*/
+    grid-template-rows: repeat(var(--size), 0fr);
     box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
     align-items: center;
     justify-content: center;

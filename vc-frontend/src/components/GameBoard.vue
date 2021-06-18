@@ -11,8 +11,9 @@ import BoardSquare from './BoardSquare.vue';
 import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
+  props:['board'],
   created(){
-      this.boardState = this.$store.state.boardState;
+      this.boardState = this.board? this.board: this.$store.state.boardState;
       var row,tile,x=1,y=1, tileId=0;
       //console.log(this.boardState)
       this.rows = this.boardState.tiles.length
@@ -67,7 +68,6 @@ export default {
     max-width: 700px;
     width:100%;
     max-height: 700px;
-    /*padding-bottom: 100%;*/
 
 }
 

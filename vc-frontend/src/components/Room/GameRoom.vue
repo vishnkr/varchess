@@ -2,11 +2,12 @@
   <div class="container">
     <div class="columns">
         <div class="column board-panel">
-          <game-board />
+          <game-board :board="boardState" />
         </div>
         <div class="column right-panel">
           <v-text-field v-model="shareLink" id="tocopy" readonly outlined ></v-text-field>
           <v-btn @click="copyText">Copy Link</v-btn>
+          <div>Current Players: </div>
           <chat :username="username" :roomId="roomId"/>
         </div>
     </div>
@@ -38,6 +39,9 @@ export default {
       shareLink: this.getShareUrl(),
       username: this.$route.params.username,
       roomId: this.$route.params.roomId,
+      player1: null,
+      player2: null,
+      boardState:this.$route.params.boardState,
     }
   }
 }
