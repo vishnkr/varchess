@@ -81,7 +81,7 @@ func (piece Piece) isBackwardPawnMove(move *Move) bool{
 var typeToRuneMap = map[Type]rune{Pawn:'p', Knight:'n', Bishop:'b', Rook:'r', Queen:'q', King:'k'}
 var strToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
 
-func (board *Board) isPieceStartPosValid(piece Piece, row int, col int) bool{
+func (board *Board) isPieceStartPosValid(piece *Piece, row int, col int) bool{
 	return  board.getPieceColor(row,col) == piece.Color && board.Tiles[row][col].Piece.Type == piece.Type
 }
 

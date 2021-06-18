@@ -55,7 +55,7 @@ func DisplayBoardState(board *Board){
 
 
 
-func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
+func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
 	//check if same piece color exists at destination
 	if (board.getPieceColor(move.SrcRow,move.SrcCol) == board.getPieceColor(move.DestRow,move.DestCol)){
@@ -87,7 +87,7 @@ func (piece Piece) isValidMove(board *Board,move *Move) (bool,string){
 	return false,"something's wrong"
 }
 
-func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//horizontal or vertical block
 	if (move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
 		//vertical move
@@ -110,7 +110,7 @@ func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	} else { return false,"invalid rook move"}
 }
 
-func isBishopMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	pathLength:= Abs(move.SrcRow - move.DestRow)
 	if pathLength!= Abs(move.SrcCol - move.DestCol){
 		return false, "not diagonal"
@@ -126,7 +126,7 @@ func isBishopMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	return true,"valid"
 }
 
-func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
+func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//not considering en passant yet
 	var doubleMoveStartRank,rowOffset,promoteDestRow int
 	if piece.Color==Black {

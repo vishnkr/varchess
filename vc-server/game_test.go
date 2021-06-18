@@ -16,7 +16,7 @@ func TestPawnCapture(t *testing.T) {
 		DestRow:4,
 		DestCol:5,
 	}
-    result,reason := piece.isValidMove(board,move)
+    result,reason := board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result 1 incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -29,7 +29,7 @@ func TestPawnCapture(t *testing.T) {
 		DestRow:2,
 		DestCol:1,
 	}
-    result,reason = piece.isValidMove(board,move)
+    result,reason = board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result 2 incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -46,7 +46,7 @@ func TestDoublePawnMove(t *testing.T){
 		DestRow:3,
 		DestCol:7,
 	}
-    result,reason := piece.isValidMove(board,move)
+    result,reason := board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result 1 incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -59,7 +59,7 @@ func TestDoublePawnMove(t *testing.T){
 		DestRow:4,
 		DestCol:1,
 	}
-    result,reason = piece.isValidMove(board,move)
+    result,reason = board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result 2 incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -76,7 +76,7 @@ func TestPawnPromotion(t *testing.T){
 		DestCol:0,
 		Promote: Queen,
 	}
-    result,reason := piece.isValidMove(board,move)
+    result,reason := board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -91,7 +91,7 @@ func TestPawnPromotion(t *testing.T){
 		DestCol:3,
 		Promote: Queen,
 	}
-    result,reason = piece.isValidMove(board,move)
+    result,reason = board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result 2 incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -108,7 +108,7 @@ func TestQueenDiagonal(t *testing.T){
 		DestCol:0,
 		Promote: Queen,
 	}
-    result,reason := piece.isValidMove(board,move)
+    result,reason := board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
@@ -125,7 +125,7 @@ func TestQueenHorizontal(t *testing.T){
 		DestCol:7,
 		Promote: Queen,
 	}
-    result,reason := piece.isValidMove(board,move)
+    result,reason := board.isValidMove(piece,move)
     if exp != result {
        t.Errorf("result incorrect, got: %v, %s, want: %v.",result,reason,exp )
     }
