@@ -27,7 +27,7 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
     }
     fen = fen.substring(0, fen.length - 1);
     fen+= ` ${turn} ${castlingAvailability} ${enPassant} 0 1`;
-    console.log('result fen-',fen)
+    return fen
 }
 
 function convertFENtoBoardState(fen){

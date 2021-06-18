@@ -22,7 +22,7 @@
 
 <script>
 import CreateMessage from '../Chat/CreateMessage';
-import WS,{msgQueue} from '../../utils/websocket';
+import WS from '../../utils/websocket';
 export default {
     components: {CreateMessage},
     props: ['username','roomId'],
@@ -37,9 +37,12 @@ export default {
     
     mounted(){
            this.ws.onmessage = (msg)=>{
+               console.log(msg)
                 let apiMsg = JSON.parse(msg.data);
                 if (apiMsg.type==="chatMessage" ){
-                    let msgData = JSON.parse(apiMsg.data);
+                    
+                    let msgData = apiMsg.data//JSON.parse(apiMsg.data);
+                    console.log("parsed: ",msgData)
                     msgData.id = this.count;
                     this.count+=1;
                     //console.log('messages',this.messages,msgData);
@@ -47,7 +50,6 @@ export default {
                     
                 }
                 //let msgData = JSON.parse(apiMsg);
-                console.log('here',msgQueue,msg)
                 //this.messages.push({username:msgData.username, message:msgData.message})
            }
     },

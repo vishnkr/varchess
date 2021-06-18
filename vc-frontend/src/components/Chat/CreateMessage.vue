@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import {sendJSONReq} from '../../utils/websocket';
+import {sendMessage} from '../../utils/websocket';
 export default {
     props: ['username','roomId','ws'],
     data(){
@@ -24,9 +24,9 @@ export default {
         createMessage(){
             if(this.newMessage){
                 console.log('ws from creae mess',this.ws)
-                var newMessage = {message: this.newMessage, username: this.username, roomId:this.roomId};
-                sendJSONReq(this.ws,'chatMessage',JSON.stringify(newMessage));
-                this.$emit('sendChatMessage',newMessage);
+                var newmessage = {message: this.newMessage, username: this.username, roomId:this.roomId}
+                sendMessage(this.ws,newmessage);
+                this.$emit('sendChatMessage',newmessage);
                 this.newMessage=null;
                 this.errorText=null;
             }

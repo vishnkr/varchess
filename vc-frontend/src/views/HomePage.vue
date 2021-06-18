@@ -17,6 +17,7 @@
       <v-col
           cols="12"
         >
+        
           <v-text-field
             v-model="username"
             label="Enter Username"
@@ -28,6 +29,7 @@
       <v-dialog
         transition="dialog-bottom-transition"
         max-width="600"
+        v-model="dialog"
       >
         <template v-slot:activator="{ on, attrs }">
           <div class="text-center">
@@ -41,16 +43,16 @@
               >
               Create Room
             </v-btn>
-            <span v-if="errorText">{{errorText}}</span>
+            
           </div>
         </template>
-        <template v-slot:default="dialog">
+        <template >
           <v-card>
             <v-toolbar
               color="primary"
               dark
             ><h3>Choose Game Setup</h3></v-toolbar>
-             
+              <span class="errorText" v-if="errorText">{{errorText}}</span>
             <v-card-actions class="justify-end">
               <v-radio-group
                     v-model="mode"
@@ -67,7 +69,7 @@
                   </v-radio-group>
               <v-btn
                 color="error"
-                @click="dialog.value=false"
+                @click="dialog=false"
               >Cancel</v-btn>
               <v-btn
                 color="success"
@@ -86,8 +88,9 @@
 
 <script>
 
-import WS,{sendJSONReq} from '../utils/websocket';
+import WS,{createRoom} from '../utils/websocket';
 import axios from 'axios';
+import { convertFENtoBoardState } from '../utils/fen';
 
 
 export default {
@@ -101,22 +104,31 @@ export default {
     checkUsername(){
       if(!this.username || this.username==''){
         this.errorText = 'Enter Username';
-        //dialog.value=false;
+        this.dialog=false;
         return false;
       }
       else{
         this.errorText = null;
+        this.dialog=true;
         return true;
-        //dialog.value=true;
       } 
     },
     connectToWebsocket() {
       this.ws = WS;
-      this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
-    },
-    onWebsocketOpen() {
-      console.log("connected to WS!");
       
+    },
+    isEven(val){return val%2==0},
+    isLight(row,col){
+        return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
+
+    getStandardBoard(){
+      var board = convertFENtoBoardState(this.standardFen)
+      for (var row =0;row<8;row++){
+        for (var col=0;col<8;col++){
+          board.tiles[row][col].tileType = this.isLight(col,row)? 'l' : 'd';
+        }
+      }
+      return board
     },
     async enterRoom(){
       //console.log(this.roomId);
@@ -126,13 +138,19 @@ export default {
         .then((response) => {
           console.log('response http:',response);
           this.roomId = response.data.data;
+          this.connectToWebsocket()
+          console.log('ws from home',this.ws)
+          if(this.mode=='custom'){
+            this.$router.push({name:'Editor',params:{username: this.username,roomId: this.roomId, ws: this.ws}})
+          }else{
+            createRoom(this.ws,this.roomId,this.username, this.standardFen);
+            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.getStandardBoard()}})
+          }
         }, (error) => {
+          this.errorText = 'Server Not Responding'
+          this.dialog=false
           console.log(error);
         });
-        this.connectToWebsocket()
-        console.log('ws from home',this.ws)
-        sendJSONReq(this.ws,'createRoom',this.roomId);
-        this.$router.push({path: (this.mode=='custom'? `/editor/${this.username}/${this.roomId}` : `/game/${this.username}/${this.roomId}`) })
       }
     },
 
@@ -140,11 +158,12 @@ export default {
   data:()=>{
     return {
       createClicked: false,
+      standardFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
       errorText: null,
       mode:'standard',
       username: null,
       ws: null,
-      dialog:true,
+      dialog: false,
       serverUrl: "ws://localhost:5000/ws",
       roomId: null,
     }

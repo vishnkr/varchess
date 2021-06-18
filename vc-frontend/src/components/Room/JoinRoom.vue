@@ -21,21 +21,30 @@
 </template>
 
 <script>
-import WS, {sendJSONReq} from '../../utils/websocket';
+import { convertFENtoBoardState } from '../../utils/fen';
+import WS, {joinRoom} from '../../utils/websocket';
+import axios from 'axios';
 export default {
     mounted: function() {
-      
+       this.getBoardFen();
       },
     methods:{
+      async getBoardFen() {
+        await axios.get(`http://localhost:5000/getBoardFen/${this.roomId}`).then((response)=>{
+          console.log('response http:',response);
+          this.boardState = convertFENtoBoardState(response.data.data)
+        });
+      },
+
         checkRoom(){
             this.connectToWebsocket()
             console.log(this.ws)
-            sendJSONReq(this.ws,'joinRoom',this.roomId);
+            joinRoom(this.ws,this.roomId,this.username);
             this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
         connectToWebsocket() {
         this.ws = WS
-        this.ws.addEventListener('open', (event) => { this.onWebsocketOpen(event) });
+        
         },
         onWebsocketOpen() {
         console.log("connected to WS!");
@@ -44,6 +53,7 @@ export default {
     },
     data(){
         return {
+            boardState: null,
             username: null,
             roomId: this.$route.params.roomId,
             serverUrl: "ws://localhost:5000/ws",

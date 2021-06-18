@@ -4,6 +4,7 @@ import HomePage from '../views/HomePage'
 import EditorDialog from '../components/Editor/EditorDialog'
 import GameRoom from '../components/Room/GameRoom'
 import JoinRoom from '../components/Room/JoinRoom'
+
 Vue.use(Router);
 const routes = [
     { path: '/', 
@@ -13,10 +14,12 @@ const routes = [
     {
       path: '/editor/:username/:roomId',
       name: 'Editor',
+      props: true,
       component: EditorDialog,
     },
     {
       path: '/game/:username/:roomId',
+      name: 'Game',
       component: GameRoom,
     },
     {
