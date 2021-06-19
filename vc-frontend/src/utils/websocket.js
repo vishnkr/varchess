@@ -1,4 +1,5 @@
 //import WebSocket from 'reconnecting-websocket';
+import store from "../store"
 
 const WS = new WebSocket('ws://localhost:5000/ws');
 
@@ -13,23 +14,35 @@ WS.onopen = function(){
     }
 }
 WS.onmessage = function(msg){
-    let apiMsg = JSON.parse(msg.data);
-    console.log('receirved message',apiMsg)
-    msgQueue.push(apiMsg);
+    
+        let apiMsg = JSON.parse(msg.data);
+        console.log('received message',apiMsg)
+        if(apiMsg.type==="chatMessage"){
+            let msgData = JSON.parse(apiMsg.data);
+            console.log("parsed: ",msgData)
+            if (store.state.chatMessages[msgData.roomId]==undefined){
+                msgData.id=1
+            } else {
+                console.log('a',store.state.chatMessages[msgData.roomId])
+                msgData.id = (store.state.chatMessages[msgData.roomId]).length+1;
+            }
+            store.commit('addMessage',msgData)
+        } else if(apiMsg.type==="gameInfo"){
+            //let msgData = JSON.parse(apiMsg);
+            console.log('gameInfo',apiMsg)
+            store.commit('updateGameInfo',apiMsg)
+
+        }
+        
+    
 }
 export default WS;
 
 export function sendJSONReq(socket,type,msg){
     if (!isOpen(socket)) return;
     console.log('executing 2',socket)
-
-    if (socket.readyState !== 1){
-        console.log('executing 3')
-        msgQueue.push({type:type,data:JSON.stringify(msg)})
-    }else{
-        console.log('executing 4',JSON.stringify(msg))
-        socket.send(JSON.stringify({type:type,data:JSON.stringify(msg)})) //socket.send(json);
-    }
+    console.log('executing 4',JSON.stringify(msg))
+    socket.send(JSON.stringify({type:type,data:JSON.stringify(msg)})) //socket.send(json);
     
   }
 
@@ -47,7 +60,10 @@ export function sendMessage(socket,json){
     console.log('executing chat')
     sendJSONReq(socket,'chatMessage',{message: json.message, username: json.username, roomId:json.roomId});
 }
-
+export function requestGameinfo(socket,roomId){
+    console.log('executing gameinfo req')
+    sendJSONReq(socket,'reqGameInfo',{roomId:roomId});
+}
 function isOpen(ws) { return ws.readyState === ws.OPEN }
 /*export function sendRequest(socket,type,msg){
     let json = JSON.stringify(msg);

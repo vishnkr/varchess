@@ -13,20 +13,17 @@ export default {
   components: { BoardSquare },
   props:['board'],
   created(){
-      this.boardState = this.board? this.board: this.$store.state.boardState;
+      this.boardState = this.board;
       var row,tile,x=1,y=1, tileId=0;
-      //console.log(this.boardState)
       this.rows = this.boardState.tiles.length
       
       for(row of this.boardState.tiles){
           for(tile of row){
             tile.tileId = tileId;
-            tileId+=1;
-            
+            tileId+=1;     
             tile.x=x;
+            tile.tileType = this.isLight(y,x)? 'l' : 'd';
             tile.y=y;
-            //col.row=x-1;
-            //col.col=y-1;
             y+=1
             this.boardState1D.push(tile);
           }
@@ -35,7 +32,6 @@ export default {
       }
       this.cols = this.boardState.tiles[0].length
       convertBoardStateToFEN(this.boardState,'w','KQkq','-')
-
   },
   data(){
         return {
@@ -43,6 +39,7 @@ export default {
             boardState1D: [],
             rows: 0,
             cols:0,
+            
         }
     },
     methods:{

@@ -27,20 +27,22 @@ import axios from 'axios';
 export default {
     mounted: function() {
        this.getBoardFen();
+       this.connectToWebsocket()
       },
     methods:{
       async getBoardFen() {
         await axios.get(`http://localhost:5000/getBoardFen/${this.roomId}`).then((response)=>{
           console.log('response http:',response);
-          this.boardState = convertFENtoBoardState(response.data.data)
+          this.boardState = convertFENtoBoardState(response.data.Fen)
         });
       },
 
         checkRoom(){
             this.connectToWebsocket()
-            console.log(this.ws)
+            console.log("beofre join",this.ws,this.boardState)
             joinRoom(this.ws,this.roomId,this.username);
-            this.$router.push({path:`/game/${this.username}/${this.roomId}`})
+            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws}})
+            //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
         connectToWebsocket() {
         this.ws = WS

@@ -82,7 +82,10 @@
       </v-container>
     </v-card-text>
     </v-card>
+    <div class="portal red"></div>
   </div>
+  <div class="portal blue"></div>
+  
   </div>
 </template>
 
@@ -97,7 +100,7 @@ export default {
   components:{},
   props:['shared'],
   mounted: function() {
-
+    this.$store.commit('resetState');
       
       },
   methods:{
@@ -144,7 +147,7 @@ export default {
             this.$router.push({name:'Editor',params:{username: this.username,roomId: this.roomId, ws: this.ws}})
           }else{
             createRoom(this.ws,this.roomId,this.username, this.standardFen);
-            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.getStandardBoard()}})
+            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, ws: this.ws, boardState: this.getStandardBoard()}})
           }
         }, (error) => {
           this.errorText = 'Server Not Responding'
@@ -172,5 +175,23 @@ export default {
 </script>
 
 <style scoped>
+/*
+.portal {
+  background-color: black;
+  border-radius: 44px/62px;
+  box-shadow: 0 0 15px 4px white;
+  height: 72px;
+  width: 48px;
+}
 
+.portal.red {
+  background: radial-gradient(#000000, #000000 50%, #ff4640 70%);
+  border: 5px solid #ff4640;
+  transform: translate3D(586px, 25px, 4px) skewX(-15deg);
+}
+.portal.blue {
+  background: radial-gradient(#000000, #000000 50%, #258aff 70%);
+  border: 5px solid #258aff;
+  transform: translate3D(586px, 25px, 4px) skewX(-15deg);
+}*/
 </style>

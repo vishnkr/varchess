@@ -17,20 +17,19 @@
 <script>
 import GameBoard from '../GameBoard.vue'
 import Chat from './Chat.vue'
-
+import WS from '../../utils/websocket';
 export default {
   components: { Chat,GameBoard },
- 
-  methods:{
+  mounted(){
+    console.log('from gr',this.ws)
     
-    getShareUrl(){
-      
-      return `${window.location.origin}/#/join/${this.$route.params.roomId}`
-    },
+  },
+  methods:{
+    getShareUrl(){ return `${window.location.origin}/#/join/${this.$route.params.roomId}`},
     copyText(){
-    let input=document.getElementById("tocopy");
-   input.select();
-         document.execCommand("copy");
+      let input=document.getElementById("tocopy");
+      input.select();
+      document.execCommand("copy");
     },
     
   },
@@ -41,7 +40,9 @@ export default {
       roomId: this.$route.params.roomId,
       player1: null,
       player2: null,
-      boardState:this.$route.params.boardState,
+      turn: null,
+      boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
+      ws: WS,//this.$route.params.ws,
     }
   }
 }

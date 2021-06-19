@@ -108,7 +108,7 @@ export default {
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
       console.log('fen',fenString)
       createRoom(this.ws,this.roomId,this.username, fenString);
-      this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState}})
+      this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
       //this.$router.push({ path: `/game/${this.username}/${this.roomId}` });
     },
     updateBoardDimensions(){
@@ -120,7 +120,8 @@ export default {
       for(var row=0;row<this.rows+1;row++){
         newBoardState.tiles.push(boardState.tiles[row].slice(0,this.cols+1));
       }
-      this.$store.commit('updateBoardState',newBoardState);
+      var payload = {boardState: newBoardState, roomId: this.roomId}
+      this.$store.commit('updateBoardState',payload);
       return newBoardState
     }
   },
