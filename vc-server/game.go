@@ -14,13 +14,13 @@ type Game struct {
 	MoveList []string
 	Pgn      string
 	Result   string
+	Turn string
 }
 
 type Board struct {
 	Tiles [][]Square
 	Rows  int
 	Cols  int
-	Turn rune
 }
 
 

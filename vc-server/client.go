@@ -32,6 +32,10 @@ type MoveInfo struct{
 	RoomId string `json:"roomId"`
 }
 
+type Response struct{
+	Status string `json:"status"`
+}
+
 
 type Client struct{
 	conn *websocket.Conn
@@ -58,7 +62,7 @@ func (c *Client) disconnect() {
 
 func (c *Client) Read(){
 	defer c.disconnect()
-	var response []byte
+	//var response []byte
 	for {
 		_, msg, err:= c.conn.ReadMessage()
 		if err!=nil{
@@ -77,12 +81,11 @@ func (c *Client) Read(){
 				} else{
 					c.AddtoRoom(userInfo.RoomId)
 				}
-				response = []byte("successful")
+				//response = []byte(Response{Status:"successful"})
 
 			case "chatMessage":
 				chatMessage := ChatMessage{}
 				json.Unmarshal([]byte(reqData.Data),&chatMessage)
-				marshalledMessage,_ := json.Marshal(chatMessage)
 				fmt.Println(reqData.Data,chatMessage,"reachin here",chatMessage.RoomId)
 				for member, _ := range RoomsMap[chatMessage.RoomId].Clients {
 					fmt.Println("reachin here")
@@ -91,7 +94,6 @@ func (c *Client) Read(){
 						fmt.Println("success")
 					}
 				}
-				response = marshalledMessage
 
 			case "performMove":
 				moveInfo := MoveInfo{}
@@ -108,9 +110,12 @@ func (c *Client) Read(){
 				game:= RoomsMap[moveInfo.RoomId].Game
 				res,reason:=game.Board.isValidMove(piece,move)
 				fmt.Println("move valid:",res,reason)
-				response = []byte("comple")
+				//response = []byte("comple")
 		}
-		c.send <- response
+		response:= Response{Status:"successful"}
+		marshalledMessage,_ := json.Marshal(response)
+		
+		c.send <- marshalledMessage
 	}
 }
 

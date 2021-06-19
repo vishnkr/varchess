@@ -51,7 +51,6 @@ func setupResponse(w *http.ResponseWriter, req *http.Request) {
 }
 func boardStateHandler(w http.ResponseWriter, r *http.Request) {
 	setupResponse(&w, r)
-	fmt.Println("reached")
 	if (r.Method == "OPTIONS") {
         return
     } else {
