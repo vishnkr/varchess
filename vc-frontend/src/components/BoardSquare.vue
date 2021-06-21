@@ -28,12 +28,14 @@ export default {
         isPiecePresent: Boolean,
         pieceType: String,
         pieceColor: String,
+        x: Number,
+        y: Number,
     },
     computed:{
         cssVar(){
         return {
-        '--x': this.row,
-        '--y': this.col,
+        '--x': this.x,
+        '--y': this.y,
         }
       }
     }

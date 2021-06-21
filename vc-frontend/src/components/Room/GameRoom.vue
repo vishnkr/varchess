@@ -2,11 +2,12 @@
   <div class="container">
     <div class="columns">
         <div class="column board-panel">
-          <game-board :board="boardState" />
+          <game-board :board="boardState" ref="gameBoard" :isflipped="isFlippedCheck"/>
         </div>
         <div class="column right-panel">
           <v-text-field v-model="shareLink" id="tocopy" readonly outlined ></v-text-field>
           <v-btn @click="copyText">Copy Link</v-btn>
+          <v-btn @click="flip">Flip Board</v-btn>
           <div>Current Players: </div>
           <chat :username="username" :roomId="roomId"/>
         </div>
@@ -25,6 +26,14 @@ export default {
     
   },
   methods:{
+    flip(){
+      this.isFlipped=!this.isFlipped
+      this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
+    },
+    isFlippedCheck(){
+      this.isFlipped = this.username == this.player2;
+      return this.isFlipped;
+    },
     getShareUrl(){ return `${window.location.origin}/#/join/${this.$route.params.roomId}`},
     copyText(){
       let input=document.getElementById("tocopy");
@@ -40,6 +49,9 @@ export default {
       roomId: this.$route.params.roomId,
       player1: null,
       player2: null,
+      moveSrc: null,
+      moveDest: null,
+      isFlipped: this.isFlippedCheck(),
       turn: null,
       boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
       ws: WS,//this.$route.params.ws,
