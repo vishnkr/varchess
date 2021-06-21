@@ -23,7 +23,6 @@ WS.onmessage = function(msg){
             if (store.state.chatMessages[msgData.roomId]==undefined){
                 msgData.id=1
             } else {
-                console.log('a',store.state.chatMessages[msgData.roomId])
                 msgData.id = (store.state.chatMessages[msgData.roomId]).length+1;
             }
             store.commit('addMessage',msgData)

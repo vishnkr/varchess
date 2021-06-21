@@ -4,6 +4,7 @@ import vuetify from './plugins/vuetify';
 import router from './router'
 import store from './store';
 import VueChatScroll from 'vue-chat-scroll';
+import '@fortawesome/fontawesome-free/css/all.css'
 
 Vue.config.productionTip = false;
 Vue.use(VueChatScroll);

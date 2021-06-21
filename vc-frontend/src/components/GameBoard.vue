@@ -13,10 +13,16 @@ import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
   props:['board','isflipped'],
+  watch: { 
+    isflipped() { // watch it
+          this.updateBoardState1D(this.isflipped)
+        }
+  },
   mounted(){
       this.boardState = this.board;
       this.rows = this.boardState.tiles.length
       this.cols = this.boardState.tiles[0].length
+      console.log('inside board',this.isflipped)
       this.updateBoardState1D(this.isflipped)
       convertBoardStateToFEN(this.boardState,'w','KQkq','-')
   },
@@ -29,8 +35,10 @@ export default {
             
         }
     },
+    
     methods:{
         updateBoardState1D(flipped){
+          console.log('called 1d fli')
           this.isFlipped = flipped
           var stack = new Array();
           this.boardState1D=[]

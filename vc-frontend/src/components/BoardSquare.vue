@@ -1,5 +1,5 @@
 <template>
-  <div class="square" :style="cssVar" :class="tileType=='d'? 'dark':'light'"  @click="emitToBoard">
+  <div class="square" :style="cssVar" :class="[tileType=='d'? 'dark':'light', isPiecePresent && isClicked?'highlight-from':null]"  @click="clickSquare">
       <div v-if="isPiecePresent">
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
@@ -16,11 +16,15 @@ export default {
       toggleIsPiecePresent(){
         this.isPiecePresent = !this.isPiecePresent;
       },
-      emitToBoard(){
-          this.$emit("childToParent",this.row,this.col)
+      clickSquare(){
+          this.isClicked=!this.isClicked
       }
     },
-
+    data(){
+      return {
+        isClicked: false,
+      }
+    },
     props:{
         tileType: String,
         row: Number,
@@ -61,6 +65,14 @@ export default {
 
 .light {
   background-color: #e4f5cb;
+}
+
+.highlight-possible{
+  background-color: #d9bf77 !important;
+}
+
+.highlight-from{
+  background-color: #a97d5d !important;
 }
 
 @media only screen and (max-device-width: 480px) {
