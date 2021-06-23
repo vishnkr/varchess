@@ -23,8 +23,28 @@ const mutations ={
         state.chatMessages[messageInfo.roomId]=[messageInfo];
       }
     },
-    updateGameInfo (state,gameInfo){
-      state.gameInfo[gameInfo.roomId] = gameInfo;
+    updateGameInfo (state,payload){
+      if(!state.gameInfo[payload.roomId]){state.gameInfo[payload.roomId]={}}
+      state.gameInfo[payload.roomId].p1 = payload.p1;
+      state.gameInfo[payload.roomId].p2 = payload.p2;
+      state.gameInfo[payload.roomId].turn = payload.turn;
+    },
+    updateTurn(state){
+      state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
+    },
+    setClientInfo(state,payload){
+      state.clientInfo.username = payload.username
+      state.clientInfo.isPlayer = payload.isPlayer
+      if(payload.isPlayer){
+        state.clientInfo.color = payload.color
+      }
+      state.clientInfo.ws = payload.ws
+    },
+    setSelection(state,payload){
+      state.curStartPos = {piece: payload.piece, row: payload.row, col: payload.col}
+    },
+    undoSelection(state){
+      state.curStartPos = null
     }
 }
 

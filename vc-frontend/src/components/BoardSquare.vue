@@ -1,5 +1,7 @@
 <template>
-  <div class="square" :style="cssVar" :class="[tileType=='d'? 'dark':'light', isPiecePresent && isClicked?'highlight-from':null]"  @click="clickSquare">
+  <div class="square" :style="cssVar" 
+        :class="[tileType=='d'? 'dark':'light', isPiecePresent && isHighlighted?'highlight-from':null]"  
+        @click="clickSquare">
       <div v-if="isPiecePresent">
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
@@ -13,28 +15,33 @@ import BoardPiece from './BoardPiece'
 export default {
     components:{BoardPiece},
     methods:{
-      toggleIsPiecePresent(){
-        this.isPiecePresent = !this.isPiecePresent;
-      },
       clickSquare(){
-          this.isClicked=!this.isClicked
+        if(!this.isSelectedSrc){ // start pos is selected
+          if(this.isPiecePresent){
+              console.log('click',this.pieceColor,this.pieceColor[0])
+              this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:this.pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
+          }
+        } else { // dest pos is selected
+          if(this.$store.state.curStartPos.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
+              this.$store.commit('undoSelection')
+              this.$emit("sendSelectedPiece",null)
+            } 
+            else{
+              if(this.isPiecePresent){
+              this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
+              } else{
+                this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:false,row:this.row,col:this.col})
+              }
+            }
+        }
       }
     },
     data(){
       return {
-        isClicked: false,
+        
       }
     },
-    props:{
-        tileType: String,
-        row: Number,
-        col: Number,
-        isPiecePresent: Boolean,
-        pieceType: String,
-        pieceColor: String,
-        x: Number,
-        y: Number,
-    },
+    props:['tileType','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
     computed:{
         cssVar(){
         return {

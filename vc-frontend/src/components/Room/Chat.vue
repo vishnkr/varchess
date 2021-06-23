@@ -65,7 +65,7 @@ export default {
 }
 
 .messages{
-    max-height: 300px;
+    height: 300px;
     overflow: auto;
     margin: 30px
 }

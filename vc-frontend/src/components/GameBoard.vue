@@ -1,7 +1,19 @@
 <template>
   <div :style="cssVar" id='board-container'>
       <div id="board">
-        <board-square v-for="square in this.boardState1D"  :key="square.tileId" :tileType="square.tileType" :isPiecePresent="square.isPiecePresent" :pieceType="square.pieceType" :pieceColor="square.pieceColor" :x="square.x" :y="square.y" :row="square.row" :col="square.col"  />
+        <board-square v-for="square in this.boardState1D"  :key="square.tileId" 
+        :tileType="square.tileType" 
+        :isPiecePresent="square.isPiecePresent" 
+        :tileId="square.tileId"
+        :pieceType="square.pieceType" 
+        :pieceColor="square.pieceColor" 
+        :x="square.x" :y="square.y" 
+        :row="square.row" :col="square.col"  
+        :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
+        :isSelectedSrc="selectedSrc?true:false"
+        v-on:sendSelectedPiece="setSelectedPiece"
+        v-on:destinationSelect="validateMove"
+        />
         
       </div>
   </div>
@@ -12,7 +24,7 @@ import BoardSquare from './BoardSquare.vue';
 import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
-  props:['board','isflipped'],
+  props:['board','isflipped','playerColor'],
   watch: { 
     isflipped() { // watch it
           this.updateBoardState1D(this.isflipped)
@@ -22,7 +34,7 @@ export default {
       this.boardState = this.board;
       this.rows = this.boardState.tiles.length
       this.cols = this.boardState.tiles[0].length
-      console.log('inside board',this.isflipped)
+      console.log('playcol',this.playerColor)
       this.updateBoardState1D(this.isflipped)
       convertBoardStateToFEN(this.boardState,'w','KQkq','-')
   },
@@ -32,13 +44,34 @@ export default {
             boardState1D: [],
             rows: 0,
             cols:0,
-            
+            selectedSrc: null,
         }
     },
     
     methods:{
+        validateMove(destInfo){
+          console.log('validate',this.selectedSrc)
+          this.boardState1D[destInfo.id].isPiecePresent = true
+          this.boardState1D[destInfo.id].pieceType = this.selectedSrc.pieceType
+          this.boardState1D[destInfo.id].pieceColor = this.selectedSrc.pieceColor=='w'?'white' :'black'
+          this.boardState1D[this.selectedSrc.id].pieceColor = null
+          this.boardState1D[this.selectedSrc.id].pieceType = null
+          this.boardState1D[this.selectedSrc.id].isPiecePresent = false
+          this.selectedSrc = null
+        },
+        setSelectedPiece(pieceInfo){
+          
+          if(pieceInfo && this.playerColor == pieceInfo.pieceColor[0]){
+            console.log('selectedSource',this.playerColor,pieceInfo)
+            this.selectedSrc = {id:pieceInfo.id,pieceColor:pieceInfo.pieceColor[0],pieceType:pieceInfo.pieceType}
+            this.$store.commit('setSelection',{row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
+          }
+          else{ 
+            this.selectedSrc = null
+
+          }
+        },
         updateBoardState1D(flipped){
-          console.log('called 1d fli')
           this.isFlipped = flipped
           var stack = new Array();
           this.boardState1D=[]
