@@ -134,15 +134,11 @@ export default {
       return board
     },
     async enterRoom(){
-      //console.log(this.roomId);
-      //sendReq(this.ws,'getRoomId');
       if(this.username){
         await axios.post('http://localhost:5000/getRoomId')
         .then((response) => {
-          console.log('response http:',response);
           this.roomId = response.data.data;
           this.connectToWebsocket()
-          console.log('ws from home',this.ws)
           if(this.mode=='custom'){
             this.$router.push({name:'Editor',params:{username: this.username,roomId: this.roomId, ws: this.ws}})
           }else{

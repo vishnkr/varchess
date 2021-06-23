@@ -32,24 +32,18 @@ export default {
     methods:{
       async getBoardFen() {
         await axios.get(`http://localhost:5000/getBoardFen/${this.roomId}`).then((response)=>{
-          console.log('response http:',response);
           this.boardState = convertFENtoBoardState(response.data.Fen)
         });
       },
 
         checkRoom(){
             this.connectToWebsocket()
-            console.log("beofre join",this.ws,this.boardState)
             joinRoom(this.ws,this.roomId,this.username);
             this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws}})
             //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
         connectToWebsocket() {
         this.ws = WS
-        
-        },
-        onWebsocketOpen() {
-        console.log("connected to WS!");
         
         },
     },

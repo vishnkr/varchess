@@ -46,7 +46,6 @@ export default {
           this.boardState.tiles.push([])
           for(var row=0;row<this.rowCount;row++){
             var tile = {}
-            //console.log(this.isLight(col,row),col,row);
             tile.tileType = this.isLight(col,row)? 'l' : 'd';
             if( (row===0||row==7) && (col===0||col===7)) {
                 tile.pieceType='r';

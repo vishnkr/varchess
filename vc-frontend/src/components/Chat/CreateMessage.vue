@@ -23,7 +23,6 @@ export default {
     methods:{
         createMessage(){
             if(this.newMessage){
-                console.log('ws from creae mess',this.ws)
                 var newmessage = {message: this.newMessage, username: this.username, roomId:this.roomId}
                 sendMessage(this.ws,newmessage);
                 this.$emit('sendChatMessage',newmessage);

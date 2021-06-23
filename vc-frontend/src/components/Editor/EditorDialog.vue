@@ -106,7 +106,6 @@ export default {
     enterRoom(){
       var finalboardState = this.setBoardState(this.boardState)
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
-      console.log('fen',fenString)
       createRoom(this.ws,this.roomId,this.username, fenString);
       this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
       //this.$router.push({ path: `/game/${this.username}/${this.roomId}` });

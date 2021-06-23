@@ -47,7 +47,6 @@ export default {
     },
     isFlippedCheck(){
       this.isFlipped = this.player2 ? this.username === this.player2 : false;
-      console.log(this.username,'will have board flipped',this.isFlipped)
       return this.isFlipped;
     },
     getShareUrl(){ return `${window.location.origin}/#/join/${this.$route.params.roomId}`},

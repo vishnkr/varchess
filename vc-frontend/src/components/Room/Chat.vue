@@ -28,7 +28,6 @@ export default {
     components: {CreateMessage},
     computed:{
         newMessages(){
-            console.log('reach')
             return this.$store.state.chatMessages[this.roomId] ? this.$store.state.chatMessages[this.roomId] : []
         }
     },

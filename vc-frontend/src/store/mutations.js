@@ -12,7 +12,6 @@ const mutations ={
       Object.assign(state, getDefaultState())
     },
     updateBoardState (state,payload) {
-      console.log('new',payload.boardState)
         state.boards[payload.roomId] = payload.boardState;
       },
     addMessage (state,messageInfo) {

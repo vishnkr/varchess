@@ -34,7 +34,6 @@ export default {
       this.boardState = this.board;
       this.rows = this.boardState.tiles.length
       this.cols = this.boardState.tiles[0].length
-      console.log('playcol',this.playerColor)
       this.updateBoardState1D(this.isflipped)
       convertBoardStateToFEN(this.boardState,'w','KQkq','-')
   },
@@ -50,7 +49,6 @@ export default {
     
     methods:{
         validateMove(destInfo){
-          console.log('validate',this.selectedSrc)
           this.boardState1D[destInfo.id].isPiecePresent = true
           this.boardState1D[destInfo.id].pieceType = this.selectedSrc.pieceType
           this.boardState1D[destInfo.id].pieceColor = this.selectedSrc.pieceColor=='w'?'white' :'black'
@@ -62,7 +60,6 @@ export default {
         setSelectedPiece(pieceInfo){
           
           if(pieceInfo && this.playerColor == pieceInfo.pieceColor[0]){
-            console.log('selectedSource',this.playerColor,pieceInfo)
             this.selectedSrc = {id:pieceInfo.id,pieceColor:pieceInfo.pieceColor[0],pieceType:pieceInfo.pieceType}
             this.$store.commit('setSelection',{row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
           }
@@ -75,11 +72,12 @@ export default {
           this.isFlipped = flipped
           var stack = new Array();
           this.boardState1D=[]
-          var row,tile,x=1,y=1,flipX = this.rows,flipY = this.cols, tileId=0;
+          var row,tile,x=1,y=1,flipX = this.rows,flipY = this.cols ;
+          var tileId = flipped ? this.rows*this.cols - 1 : 0;
           for(row of this.boardState.tiles){
               for(tile of row){
                 tile.tileId = tileId;
-                tileId+=1;     
+                tileId+= flipped? -1 : 1;     
                 tile.x= flipped? flipX : x;
                 tile.row = x
                 tile.tileType = this.isLight(y,x)? 'l' : 'd';

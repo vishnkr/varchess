@@ -18,7 +18,6 @@ export default {
       clickSquare(){
         if(!this.isSelectedSrc){ // start pos is selected
           if(this.isPiecePresent){
-              console.log('click',this.pieceColor,this.pieceColor[0])
               this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:this.pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
           }
         } else { // dest pos is selected
