@@ -40,7 +40,7 @@ export default {
         this.isFlippedCheck()
       }
       else if(mutation.type === "performMove"){
-        this.performGameBoardMove()
+        this.$refs.gameBoard.performMove(this.$store.state.currentMove)
       }
     })
     
@@ -60,9 +60,6 @@ export default {
     },
     getPlayerColor(){
       return this.player1 == this.username ? 'w' : this.player2 == this.username ? 'b' : null;
-    },
-    performGameBoardMove(){
-      this.$refs.gameBoard.performMove(this.$store.state.currentMove)
     },
     flip(){
       this.isFlipped=!this.isFlipped

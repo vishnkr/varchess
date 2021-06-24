@@ -16,7 +16,6 @@
             <v-spacer /><v-spacer />
             <v-tabs
               fixed-tabs
-              
             >
               <v-tab>
                 Board Editor
@@ -77,14 +76,51 @@
                     v-model="pieceSelect"
                     column
                   >
-                    {{username}}
                     <v-radio v-for="piece in pieceList"
                       :key="`${piece.toLowerCase()}`"
                       :label="`${piece}`"
-                      :value="`${piece.toLowerCase()}`"
+                      :value="`${pieceMap[piece].toLowerCase()}`"
                     ></v-radio>
                     
                   </v-radio-group>
+                </div>
+                <div v-if="pieceSelect=='c'">
+                  <v-card
+                    elevation="16"
+                    max-width="400"
+                    class="mx-auto"
+                  >
+                    <v-virtual-scroll
+                      
+                      :items="pieceFilter"
+                      height="200"
+                      item-height="64"
+                    >
+                      <template v-slot:default="{ item }">
+                        <v-list-item class="scroll-item">
+                          <v-list-item-action>
+                            <v-btn
+                              depressed
+                              color="primary"
+                              @click="customPieceSelect = item.piece"
+                            >
+                              Select
+                            </v-btn>
+                          </v-list-item-action>
+
+                          <v-list-item-content>
+                            <img class="resize" :src="item.src">
+                          </v-list-item-content>
+
+                          <v-list-item-action>
+                            
+                          </v-list-item-action>
+                        </v-list-item>
+
+                        <v-divider></v-divider>
+                      </template>
+                    </v-virtual-scroll>
+                  </v-card>
                 </div>
               </v-tab-item>
           </v-tabs>
@@ -92,7 +128,14 @@
         </v-list-item>
       </v-card>
     </div>
-    <editor-board v-on:sendBoardState="setBoardState" class="board-panel" :cols="labels[cols]" :rows="labels[rows]" :editorMode="true" :curPiece="pieceSelect" :curPieceColor="colorSelect" />
+    <editor-board v-on:sendBoardState="setBoardState" 
+      class="board-panel" 
+      :cols="labels[cols]" 
+      :rows="labels[rows]" 
+      :editorMode="true" 
+      :curPiece="pieceSelect=='c'? customPieceSelect : pieceSelect"
+      :curPieceColor="colorSelect"
+       />
   </div>
 </template>
 
@@ -103,12 +146,17 @@ import EditorBoard from './EditorBoard';
 export default {
   components:{EditorBoard},
   methods:{
+    getPieceURL(piece){
+      return require(`../../assets/images/pieces/${this.colorSelect}/${piece}.svg`)
+    },
+    setCurrentPiece(){
+
+    },
     enterRoom(){
       var finalboardState = this.setBoardState(this.boardState)
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
       createRoom(this.ws,this.roomId,this.username, fenString);
       this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
-      //this.$router.push({ path: `/game/${this.username}/${this.roomId}` });
     },
     updateBoardDimensions(){
       this.setBoardState(this.boardState);
@@ -124,15 +172,30 @@ export default {
       return newBoardState
     }
   },
+  computed: {
+      items () {
+        return Array.from({ length: this.pieces.length }, (k, v) => v + 1)
+      },
+      pieceFilter(){
+        var pieceUrls = []
+        for(var piece of this.customPieces){
+          pieceUrls.push({piece:piece,src :this.getPieceURL(piece)})
+        }        
+        return pieceUrls
+      },
+  },
   data(){
     return{
       labels: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
       pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
+      customPieces:['a','j','d','i','g','s','u','v','z'],
       pieceMap: {'Pawn':'p','King':'k','Queen':'q','Bishop':'b','Knight':'n','Rook':'r','Custom':'c'},
+      customPieceMap:{},
       rows: 7,
       cols: 7,
       colorSelect: 'white',
       pieceSelect: 'pawn',
+      customPieceSelect: '',
       isDisableTileOn: false,
       boardState:{},
       username: this.$route.params.username,
@@ -159,6 +222,11 @@ export default {
 
 .list-header{
   display:flex;
+}
+
+.resize{
+  height: 3em;
+  width: 3em;
 }
 
 @media only screen and (max-device-width: 480px) {

@@ -3,7 +3,11 @@
   <div id="board" >
       <div  v-for="col in cols" :key="col">
         <div v-for="row in rows" :key="row">
-          <square v-on:childToParent="squareClicked" :tileType="boardState.tiles[row-1][col-1].tileType" :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" :pieceType="boardState.tiles[row-1][col-1].pieceType" :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
+          <square v-on:childToParent="squareClicked" 
+          :tileType="boardState.tiles[row-1][col-1].tileType" 
+          :row="row" :col="col" :isPiecePresent="boardState.tiles[row-1][col-1].isPiecePresent" 
+          :pieceType="boardState.tiles[row-1][col-1].pieceType" 
+          :pieceColor="boardState.tiles[row-1][col-1].pieceColor" />
 
         </div>
       </div>
@@ -29,7 +33,7 @@ export default {
           
           this.boardState.tiles[row-1][col-1].isPiecePresent = true;
           this.boardState.tiles[row-1][col-1].pieceColor = this.curPieceColor;
-          this.boardState.tiles[row-1][col-1].pieceType = this.pieceList[this.curPiece];
+          this.boardState.tiles[row-1][col-1].pieceType = this.curPiece;
         }
         this.$emit("sendBoardState",this.boardState)
 
@@ -95,7 +99,7 @@ export default {
     },
     data(){
       return {
-        pieceList : {'pawn':'p','king':'k','queen':'q','bishop':'b','rook':'r','knight':'n','custom':'custom'},
+        pieceList : ['p','k','q','b','r','n'] + this.customPieces,
         rowMultiplier:0,
         isMounted: false,
         rowCount: 15,
@@ -111,6 +115,7 @@ export default {
       editorMode: Boolean,
       curPiece:String,
       curPieceColor:String,
+      customPieces: Array,
     },
     components:{
       Square,
