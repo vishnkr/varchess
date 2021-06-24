@@ -87,6 +87,15 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 	return false,"something's wrong"
 }
 
+func (board *Board) performMove(piece *Piece,move *Move){
+	board.Tiles[move.DestRow][move.DestCol].IsEmpty = false
+	board.Tiles[move.DestRow][move.DestCol].Piece = board.Tiles[move.SrcRow][move.SrcCol].Piece
+	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = true
+	board.Tiles[move.SrcRow][move.SrcCol].Piece.Type = Empty
+	board.Tiles[move.SrcRow][move.SrcCol].Piece.Color = EmptyTile
+}
+
+
 func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//horizontal or vertical block
 	if (move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
@@ -115,14 +124,45 @@ func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	if pathLength!= Abs(move.SrcCol - move.DestCol){
 		return false, "not diagonal"
 	}
-	for i := 1; i < pathLength; i++{
-		x := move.SrcRow + i;
-		y := move.SrcCol + i;
-		if (!board.IsEmpty(x, y)){
-			// Obstacle found before reaching target: the move is invalid
-			return false,"obstacle in bishop path" 
-		} 
+	if (move.SrcRow < move.DestRow && move.SrcCol<move.DestCol){
+		for i := 1; i < pathLength; i++{
+			x := move.SrcRow + i;
+			y := move.SrcCol + i;
+			if (!board.IsEmpty(x, y)){
+				// Obstacle found before reaching target: the move is invalid
+				return false,"obstacle in bishop path case 1" 
+			} 
+		}
+	} else if (move.SrcRow > move.DestRow && move.SrcCol<move.DestCol){
+		for i := 1; i < pathLength; i++{
+			x := move.SrcRow - i;
+			y := move.SrcCol + i;
+			if (!board.IsEmpty(x, y)){
+				// Obstacle found before reaching target: the move is invalid
+				return false,"obstacle in bishop path case 2" 
+			} 
+		}
+	} else if (move.SrcRow < move.DestRow && move.SrcCol > move.DestCol){
+		for i := 1; i < pathLength; i++{
+			x := move.SrcRow + i;
+			y := move.SrcCol - i;
+			if (!board.IsEmpty(x, y)){
+				// Obstacle found before reaching target: the move is invalid
+				return false,"obstacle in bishop path case 3" 
+			} 
+		}
+	} else {
+		for i := 1; i < pathLength; i++{
+			x := move.SrcRow - i;
+			y := move.SrcCol - i;
+			if (!board.IsEmpty(x, y)){
+				// Obstacle found before reaching target: the move is invalid
+				return false,"obstacle in bishop path case 4" 
+			} 
+		}
 	}
+	
+	
 	return true,"valid"
 }
 
@@ -144,12 +184,14 @@ func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 				return true,"double pawn move allowed"
 			} else{ return false,"double move blocked"}
 		} else if (Abs(move.SrcRow-move.DestRow)==1 && !piece.isBackwardPawnMove(move)){
-			if (board.IsEmpty(move.SrcRow-1,move.SrcCol)){
+			if (board.IsEmpty(move.DestRow,move.DestCol)){
 				if(move.Promote!=0 && move.DestRow==promoteDestRow){
 					return true,("pawn promoted to "+ string(typeToRuneMap[move.Promote]))
 				}
 				return true,"valid single pawn move"
-			} else { return false, "dest blocked"}
+			} else { 
+				
+				return false, "dest blocked"}
 		} 
 		
 	} else if(move.DestCol!= move.SrcCol && move.SrcRow!=move.DestRow){
