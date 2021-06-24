@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 	"sync"
 	//"net/http"
+	"strings"
 	"unicode"
 	//"log"
 	"fmt"
@@ -34,6 +35,19 @@ type MoveInfo struct{
 
 type Response struct{
 	Status string `json:"status"`
+}
+
+type MoveResponse struct{
+	Type string `json:"type"`
+	Piece string `json:"piece"`
+	RoomId string `json:"roomId"`
+	SrcRow int `json:"srcRow"`
+	SrcCol int `json:"srcCol"`
+	DestRow int `json:"destRow"`
+	DestCol int `json:"destCol"`
+	Promote Type `json:"promote,omitempty"`
+	Castle bool `json:"castle,omitempty"`
+	IsValid bool `json:"isValid,omitempty"`
 }
 
 
@@ -81,7 +95,7 @@ func (c *Client) Read(){
 				} else{
 					c.AddtoRoom(userInfo.RoomId)
 				}
-				//response = []byte(Response{Status:"successful"})
+				
 
 			case "chatMessage":
 				chatMessage := ChatMessage{}
@@ -94,27 +108,38 @@ func (c *Client) Read(){
 						fmt.Println("success")
 					}
 				}
-
+				
 			case "performMove":
 				moveInfo := MoveInfo{}
 				move:= &Move{}
+				moveResp:=&MoveResponse{}
 				fmt.Println("REACHED")
 				json.Unmarshal([]byte(reqData.Data),&(move))
 				json.Unmarshal([]byte(reqData.Data),&(moveInfo))
-				
-				piece:=&Piece{Type:strToTypeMap[moveInfo.Type]}
+				json.Unmarshal([]byte(reqData.Data),&(moveResp))
+				piece:=&Piece{Type: strToTypeMap[strings.ToLower(moveInfo.Type)]}
 				r := []rune(moveInfo.Type)
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
 				} else { piece.Color = Black }
 				game:= RoomsMap[moveInfo.RoomId].Game
 				res,reason:=game.Board.isValidMove(piece,move)
+				if (res) {
+					game.Board.performMove(piece,move)
+					fmt.Println("success 1")
+					moveResp.IsValid = res
+					moveResp.Type = "performMove"
+					for member, _ := range RoomsMap[moveInfo.RoomId].Clients {
+						fmt.Println("success 2")
+						member.conn.WriteJSON(moveResp)
+						fmt.Println("success")
+					}
+				}
 				fmt.Println("move valid:",res,reason)
-				//response = []byte("comple")
+				
 		}
 		response:= Response{Status:"successful"}
 		marshalledMessage,_ := json.Marshal(response)
-		
 		c.send <- marshalledMessage
 	}
 }

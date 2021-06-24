@@ -12,7 +12,7 @@
         :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
         :isSelectedSrc="selectedSrc?true:false"
         v-on:sendSelectedPiece="setSelectedPiece"
-        v-on:destinationSelect="validateMove"
+        v-on:destinationSelect="emitDestinationSelect"
         />
         
       </div>
@@ -48,13 +48,27 @@ export default {
     },
     
     methods:{
-        validateMove(destInfo){
-          this.boardState1D[destInfo.id].isPiecePresent = true
+        emitDestinationSelect(destInfo){
+          //var info = {...destInfo,...this.selectedSrc}
+          this.$emit('destinationSelect',destInfo)
+        },
+        
+        //changes UI of the board to match new boardstate after a valid move is made
+        performMove(moveInfo){
+          console.log('perform move',moveInfo)
+          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].isPiecePresent = true
+          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].pieceType = moveInfo.piece.toLowerCase()
+          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].pieceColor = moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'
+          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceColor = null
+          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceType = null
+          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].isPiecePresent = false
+          this.updateBoardState1D(this.isflipped)
+          /*this.boardState1D[destInfo.id].isPiecePresent = true
           this.boardState1D[destInfo.id].pieceType = this.selectedSrc.pieceType
           this.boardState1D[destInfo.id].pieceColor = this.selectedSrc.pieceColor=='w'?'white' :'black'
           this.boardState1D[this.selectedSrc.id].pieceColor = null
           this.boardState1D[this.selectedSrc.id].pieceType = null
-          this.boardState1D[this.selectedSrc.id].isPiecePresent = false
+          this.boardState1D[this.selectedSrc.id].isPiecePresent = false*/
           this.selectedSrc = null
         },
         setSelectedPiece(pieceInfo){

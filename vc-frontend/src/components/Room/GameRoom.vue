@@ -2,7 +2,12 @@
   <div class="container">
     <div class="columns">
         <div class="column board-panel">
-          <game-board :board="boardState" ref="gameBoard" :isflipped="isFlipped" :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"/>
+          <game-board :board="boardState" 
+            ref="gameBoard" 
+            :isflipped="isFlipped" 
+            :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
+            v-on:destinationSelect="validateMove"
+            />
         </div>
         <div class="column right-panel">
           <v-text-field v-model="shareLink" id="tocopy" readonly outlined ></v-text-field>
@@ -18,7 +23,7 @@
 <script>
 import GameBoard from '../GameBoard.vue'
 import Chat from './Chat.vue'
-import WS from '../../utils/websocket';
+import WS,{sendMoveInfo} from '../../utils/websocket';
 export default {
   components: { Chat,GameBoard },
   mounted(){
@@ -29,17 +34,35 @@ export default {
       ws: this.ws
       })
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'updateGameInfo') {
+      if (mutation.type === "updateGameInfo") {
         this.player1 = state.gameInfo[this.roomId].p1 ? state.gameInfo[this.roomId].p1 : null;
         this.player2 = state.gameInfo[this.roomId].p2 ? state.gameInfo[this.roomId].p2 : null;
         this.isFlippedCheck()
+      }
+      else if(mutation.type === "performMove"){
+        this.performGameBoardMove()
       }
     })
     
   },
   methods:{
+    validateMove(destInfo){
+      var srcInfo = this.$store.state.curStartPos
+      var piece = this.getPlayerColor()=='w' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='b' ? srcInfo.piece.toLowerCase() : srcInfo.piece
+      var info = {roomId: this.roomId,
+          piece: piece,
+          srcRow: srcInfo.row,
+          srcCol: srcInfo.col,
+          destRow: destInfo.row,
+          destCol: destInfo.col,
+        } 
+      sendMoveInfo(this.ws,info)
+    },
     getPlayerColor(){
       return this.player1 == this.username ? 'w' : this.player2 == this.username ? 'b' : null;
+    },
+    performGameBoardMove(){
+      this.$refs.gameBoard.performMove(this.$store.state.currentMove)
     },
     flip(){
       this.isFlipped=!this.isFlipped

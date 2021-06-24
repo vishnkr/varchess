@@ -44,6 +44,12 @@ const mutations ={
     },
     undoSelection(state){
       state.curStartPos = null
+    },
+    performMove(state,moveInfo){
+      state.currentMove = moveInfo
+      //after move
+      state.curStartPos = null
+      state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
     }
 }
 

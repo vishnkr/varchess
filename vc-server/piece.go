@@ -2,7 +2,7 @@ package main
 
 import (
 	//"unicode"
-	//"fmt"
+	"fmt"
 )
 
 type Type uint8
@@ -14,6 +14,7 @@ const (
 	Rook
 	Queen
 	King
+	Empty
 )
 
 type Color uint8
@@ -82,6 +83,7 @@ var typeToRuneMap = map[Type]rune{Pawn:'p', Knight:'n', Bishop:'b', Rook:'r', Qu
 var strToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
 
 func (board *Board) isPieceStartPosValid(piece *Piece, row int, col int) bool{
+	fmt.Println("at row",row,"col",col,"color",piece.Color,"type",piece.Type)
 	return  board.getPieceColor(row,col) == piece.Color && board.Tiles[row][col].Piece.Type == piece.Type
 }
 

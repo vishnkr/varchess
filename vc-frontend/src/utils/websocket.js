@@ -27,10 +27,12 @@ WS.onmessage = function(msg){
             }
             store.commit('addMessage',msgData)
         } else if(apiMsg.type==="gameInfo"){
-            //let msgData = JSON.parse(apiMsg);
             console.log('gameInfo',apiMsg)
             store.commit('updateGameInfo',apiMsg)
-
+        } else if(apiMsg.type==="performMove"){
+            if(apiMsg.isValid){ //only if move is valid you perform commit
+                store.commit('performMove',apiMsg)
+            }
         }
         
     
@@ -63,6 +65,19 @@ export function requestGameinfo(socket,roomId){
     console.log('executing gameinfo req')
     sendJSONReq(socket,'reqGameInfo',{roomId:roomId});
 }
+
+export function sendMoveInfo(socket,json){
+    console.log('executing moveinfo send')
+    sendJSONReq(socket,'performMove',{
+        piece:json.piece, 
+        roomId:json.roomId, 
+        srcRow:json.srcRow-1,
+        srcCol:json.srcCol-1,
+        destRow:json.destRow-1,
+        destCol:json.destCol-1,
+    });
+}
+
 function isOpen(ws) { return ws.readyState === ws.OPEN }
 /*export function sendRequest(socket,type,msg){
     let json = JSON.stringify(msg);

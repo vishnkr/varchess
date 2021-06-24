@@ -4,6 +4,7 @@ const state = {
     gameInfo: {},  // roomId: {game info}
     curStartPos: null, //store the piece and square info of clicked src square
     curDestPos: null,
+    currentMove: null,
     clientInfo: {},
     turn: 'w',
 }

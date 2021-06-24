@@ -18,7 +18,9 @@ export default {
       clickSquare(){
         if(!this.isSelectedSrc){ // start pos is selected
           if(this.isPiecePresent){
-              this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:this.pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
+              console.log('pcol',this.pieceColor)
+              var pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
+              this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
           }
         } else { // dest pos is selected
           if(this.$store.state.curStartPos.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
@@ -27,7 +29,8 @@ export default {
             } 
             else{
               if(this.isPiecePresent){
-              this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
+                
+                this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
               } else{
                 this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:false,row:this.row,col:this.col})
               }
