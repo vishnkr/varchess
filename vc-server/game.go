@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"github.com/gorilla/websocket"
 	"strings"
 	"fmt"
 	
@@ -31,15 +30,18 @@ type Move struct{
 	DestCol int `json:"destCol"`
 	Promote Type `json:"promote,omitempty"`
 	Castle bool `json:"castle,omitempty"`
+	PieceType string `json:"piece"`
+	RoomId string `json:"roomId"`
+	Color string `json:"color"`
 }
 
 func (board *Board) IsEmpty(row int,col int) bool{
 	return board.Tiles[row][col].IsEmpty
 }
 
+//visual helper function
 func DisplayBoardState(board *Board){
 	var piece string
-	//fmt.Println(board.rows,board.cols)
 	for i:=0;i<board.Rows;i++{
 		for j:=0;j<board.Cols;j++{
 			if (!board.Tiles[i][j].IsEmpty){
@@ -54,7 +56,7 @@ func DisplayBoardState(board *Board){
 }
 
 
-
+//isValidMove: checks if a move made by given piece is valid, return string is just used for debugging purposes
 func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
 	//check if same piece color exists at destination
@@ -81,7 +83,8 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 				return isBishopMoveValid(piece,board,move)
 			}
 			return rookCheck,res
-		
+		case King:
+			return isKingMoveValid(piece,board,move)
 
 	}
 	return false,"something's wrong"
@@ -93,8 +96,46 @@ func (board *Board) performMove(piece *Piece,move *Move){
 	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = true
 	board.Tiles[move.SrcRow][move.SrcCol].Piece.Type = Empty
 	board.Tiles[move.SrcRow][move.SrcCol].Piece.Color = EmptyTile
+	if (move.Castle){
+		var oldRookPos, newRookPos int
+		if (move.DestCol<move.SrcCol){
+			oldRookPos = 0
+			newRookPos = move.SrcCol-1
+		} else{
+			oldRookPos = board.Cols-1
+			newRookPos = move.SrcCol+1
+		}
+		board.Tiles[move.SrcRow][newRookPos].IsEmpty = false
+		board.Tiles[move.SrcRow][newRookPos].Piece = Piece{Type:Rook,Color:piece.Color}
+		board.Tiles[move.SrcRow][oldRookPos].IsEmpty = true
+		board.Tiles[move.SrcRow][oldRookPos].Piece.Type = Empty
+		board.Tiles[move.SrcRow][oldRookPos].Piece.Color = EmptyTile
+	}
 }
 
+func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+	if (move.Castle){
+		if (move.SrcRow==move.DestRow){
+			var tile int 
+			if (move.SrcCol+2==move.DestCol && board.Tiles[board.Rows-1][board.Cols-1].Piece.Type==Rook){ //castle to the right
+				tile= move.SrcCol+1
+				for (tile<board.Cols-1){
+					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
+					tile+=1
+				}
+				return true, "valid castle"
+			} else if (move.SrcCol-2==move.DestCol && board.Tiles[board.Rows-1][0].Piece.Type==Rook){
+				tile= move.SrcCol-1
+				for tile>0{
+					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
+					tile-=1
+				}
+				return true, "valid castle"
+			} else {return false,"invalid castle dest"}
+		}
+	}
+	return true,"valid king move"
+}
 
 func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//horizontal or vertical block
@@ -124,42 +165,27 @@ func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	if pathLength!= Abs(move.SrcCol - move.DestCol){
 		return false, "not diagonal"
 	}
+	var xOffset,yOffset int
 	if (move.SrcRow < move.DestRow && move.SrcCol<move.DestCol){
-		for i := 1; i < pathLength; i++{
-			x := move.SrcRow + i;
-			y := move.SrcCol + i;
-			if (!board.IsEmpty(x, y)){
-				// Obstacle found before reaching target: the move is invalid
-				return false,"obstacle in bishop path case 1" 
-			} 
-		}
+		xOffset = 1
+		yOffset = 1
 	} else if (move.SrcRow > move.DestRow && move.SrcCol<move.DestCol){
-		for i := 1; i < pathLength; i++{
-			x := move.SrcRow - i;
-			y := move.SrcCol + i;
-			if (!board.IsEmpty(x, y)){
-				// Obstacle found before reaching target: the move is invalid
-				return false,"obstacle in bishop path case 2" 
-			} 
-		}
+		xOffset = -1
+		yOffset = 1
 	} else if (move.SrcRow < move.DestRow && move.SrcCol > move.DestCol){
-		for i := 1; i < pathLength; i++{
-			x := move.SrcRow + i;
-			y := move.SrcCol - i;
-			if (!board.IsEmpty(x, y)){
-				// Obstacle found before reaching target: the move is invalid
-				return false,"obstacle in bishop path case 3" 
-			} 
-		}
+		xOffset = 1
+		yOffset = -1
 	} else {
-		for i := 1; i < pathLength; i++{
-			x := move.SrcRow - i;
-			y := move.SrcCol - i;
-			if (!board.IsEmpty(x, y)){
-				// Obstacle found before reaching target: the move is invalid
-				return false,"obstacle in bishop path case 4" 
-			} 
-		}
+		xOffset = -1
+		yOffset = -1
+	}
+	for i := 1; i < pathLength; i++{
+		x := move.SrcRow + i*xOffset;
+		y := move.SrcCol + i*yOffset;
+		if (!board.IsEmpty(x, y)){
+			// Obstacle found before reaching target: the move is invalid
+			return false,"obstacle in bishop path" 
+		} 
 	}
 	
 	
@@ -202,4 +228,10 @@ func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 			return false,"invalid pawn capture"
 	}
 	return false, "not a valid pawn move"
+}
+
+func changeTurn(turn string) string{
+	if turn =="w"{
+		return "b"
+	} else { return "w"}
 }

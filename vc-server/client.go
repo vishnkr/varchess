@@ -28,23 +28,18 @@ type ChatMessage struct{
 	Username string `json:"username"`
 }
 
-type MoveInfo struct{
-	Type string `json:"piece"`
-	RoomId string `json:"roomId"`
-}
 
 type Response struct{
 	Status string `json:"status"`
 }
 
 type MoveResponse struct{
-	Type string `json:"type"`
 	Piece string `json:"piece"`
-	RoomId string `json:"roomId"`
 	SrcRow int `json:"srcRow"`
 	SrcCol int `json:"srcCol"`
 	DestRow int `json:"destRow"`
 	DestCol int `json:"destCol"`
+	Type string `json:"type"`
 	Promote Type `json:"promote,omitempty"`
 	Castle bool `json:"castle,omitempty"`
 	IsValid bool `json:"isValid,omitempty"`
@@ -84,7 +79,7 @@ func (c *Client) Read(){
 		}
 		reqData:= MessageStruct{}
 		json.Unmarshal([]byte(msg),&reqData)
-		fmt.Println("REAChed",reqData)		
+		fmt.Println("received data:",reqData)		
 		switch reqData.Type{
 			case "createRoom", "joinRoom":
 				userInfo := UserRoomInfo{}
@@ -102,7 +97,6 @@ func (c *Client) Read(){
 				json.Unmarshal([]byte(reqData.Data),&chatMessage)
 				fmt.Println(reqData.Data,chatMessage,"reachin here",chatMessage.RoomId)
 				for member, _ := range RoomsMap[chatMessage.RoomId].Clients {
-					fmt.Println("reachin here")
 					if (member.conn!=c.conn){
 						member.conn.WriteJSON(reqData)
 						fmt.Println("success")
@@ -110,30 +104,27 @@ func (c *Client) Read(){
 				}
 				
 			case "performMove":
-				moveInfo := MoveInfo{}
 				move:= &Move{}
-				moveResp:=&MoveResponse{}
-				fmt.Println("REACHED")
 				json.Unmarshal([]byte(reqData.Data),&(move))
-				json.Unmarshal([]byte(reqData.Data),&(moveInfo))
-				json.Unmarshal([]byte(reqData.Data),&(moveResp))
-				piece:=&Piece{Type: strToTypeMap[strings.ToLower(moveInfo.Type)]}
-				r := []rune(moveInfo.Type)
+				moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
+				piece:=&Piece{Type: strToTypeMap[strings.ToLower(move.PieceType)]}
+				r := []rune(move.PieceType)
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
 				} else { piece.Color = Black }
-				game:= RoomsMap[moveInfo.RoomId].Game
+				game:= RoomsMap[move.RoomId].Game
 				res,reason:=game.Board.isValidMove(piece,move)
-				if (res) {
+				if (res && game.Turn==move.Color) {
 					game.Board.performMove(piece,move)
-					fmt.Println("success 1")
 					moveResp.IsValid = res
 					moveResp.Type = "performMove"
-					for member, _ := range RoomsMap[moveInfo.RoomId].Clients {
-						fmt.Println("success 2")
-						member.conn.WriteJSON(moveResp)
-						fmt.Println("success")
+					if(move.Castle){
+						moveResp.Castle = true
 					}
+					for member, _ := range RoomsMap[move.RoomId].Clients {
+						member.conn.WriteJSON(moveResp)
+					}
+					game.Turn = changeTurn(game.Turn)
 				}
 				fmt.Println("move valid:",res,reason)
 				

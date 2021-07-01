@@ -75,6 +75,8 @@ export function sendMoveInfo(socket,json){
         srcCol:json.srcCol-1,
         destRow:json.destRow-1,
         destCol:json.destCol-1,
+        color: json.color,
+        castle: json.castle? true : null
     });
 }
 

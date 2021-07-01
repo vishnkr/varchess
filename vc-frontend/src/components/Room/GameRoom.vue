@@ -55,7 +55,11 @@ export default {
           srcCol: srcInfo.col,
           destRow: destInfo.row,
           destCol: destInfo.col,
+          color:this.getPlayerColor(),
         } 
+        if(info.piece=='k'||info.piece=='K' && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){
+          info.castle=true
+        }
       sendMoveInfo(this.ws,info)
     },
     getPlayerColor(){

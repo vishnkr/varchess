@@ -49,7 +49,6 @@ export default {
     
     methods:{
         emitDestinationSelect(destInfo){
-          //var info = {...destInfo,...this.selectedSrc}
           this.$emit('destinationSelect',destInfo)
         },
         
@@ -62,13 +61,24 @@ export default {
           this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceColor = null
           this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceType = null
           this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].isPiecePresent = false
+          if(moveInfo.castle){
+            console.log('castling')
+            var newRookPos,oldRookPos
+            if(moveInfo.destCol<moveInfo.srcCol){
+              oldRookPos = 0;
+              newRookPos = moveInfo.srcCol-1
+            } else {
+              oldRookPos = this.board.tiles[0].length -1;
+              newRookPos = moveInfo.srcCol+1
+            }
+            this.board.tiles[moveInfo.srcRow][newRookPos].isPiecePresent = true
+            this.boardState.tiles[moveInfo.destRow][newRookPos].pieceType = 'r'
+            this.boardState.tiles[moveInfo.destRow][newRookPos].pieceColor = moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'
+            this.board.tiles[moveInfo.srcRow][oldRookPos].pieceColor = null
+            this.board.tiles[moveInfo.srcRow][oldRookPos].pieceType = null
+            this.board.tiles[moveInfo.srcRow][oldRookPos].isPiecePresent = false
+          }
           this.updateBoardState1D(this.isflipped)
-          /*this.boardState1D[destInfo.id].isPiecePresent = true
-          this.boardState1D[destInfo.id].pieceType = this.selectedSrc.pieceType
-          this.boardState1D[destInfo.id].pieceColor = this.selectedSrc.pieceColor=='w'?'white' :'black'
-          this.boardState1D[this.selectedSrc.id].pieceColor = null
-          this.boardState1D[this.selectedSrc.id].pieceType = null
-          this.boardState1D[this.selectedSrc.id].isPiecePresent = false*/
           this.selectedSrc = null
         },
         setSelectedPiece(pieceInfo){

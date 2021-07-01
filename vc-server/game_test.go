@@ -5,6 +5,37 @@ import (
 	//"fmt"
 )
 
+
+func TestCastle(t *testing.T){
+	exp:=true
+	board:= ConvertFENtoBoard("r3kbnr/pp3ppp/n1pp4/4p1q1/1P2P1b1/P1NB1N2/2PP1PPP/R1BQK2R w KQkq - 1 7")
+	piece:=&Piece{Type:King,Color:White}
+	move:=&Move{
+		SrcRow:7,
+		SrcCol:4,
+		DestRow:7,
+		DestCol:6,
+		Castle: true,
+	}
+	result,reason := board.isValidMove(piece,move)
+    if exp != result {
+       t.Errorf("result 1 incorrect, got: %v, %s, want: %v.",result,reason,exp )
+    }
+
+	piece.Color=Black
+	move =&Move{
+		SrcRow:0,
+		SrcCol:4,
+		DestRow:0,
+		DestCol:2,
+		Castle: true,
+	}
+	result,reason = board.isValidMove(piece,move)
+    if exp != result {
+       t.Errorf("result 2 incorrect, got: %v, %s, want: %v.",result,reason,exp )
+    }
+
+}
 func TestPawnCapture(t *testing.T) {
 	//white pawn capture
 	exp := true
