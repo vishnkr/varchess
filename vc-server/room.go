@@ -16,7 +16,7 @@ type Room struct{
 }
 
 
-const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func genRandSeq(length int) string {
@@ -30,9 +30,13 @@ func genRandSeq(length int) string {
 func roomHandler(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json") 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	uniqueRoomId:= genRandSeq(6)
+	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
+		uniqueRoomId = genRandSeq(6)
+	}
 	response:= MessageStruct{
 		Type: "getRoomId",
-		Data: genRandSeq(6),
+		Data: uniqueRoomId,
 	}
 	json.NewEncoder(w).Encode(response)
 }

@@ -20,6 +20,8 @@ type Board struct {
 	Tiles [][]Square
 	Rows  int
 	Cols  int
+	BlackKing KingPiece
+	WhiteKing KingPiece
 }
 
 
@@ -49,7 +51,7 @@ func DisplayBoardState(board *Board){
 					piece = strings.ToUpper(board.Tiles[i][j].Piece.String())
 				} else { piece = board.Tiles[i][j].Piece.String()} 
 			} else{piece = "-"}
-			fmt.Print(piece," ")
+			fmt.Print(piece,board.Tiles[i][j].Id," ")
 		}
 		fmt.Print("\n")
 	}
@@ -64,9 +66,8 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 		fmt.Println(board.getPieceColor(move.SrcRow,move.SrcCol),board.getPieceColor(move.DestRow,move.DestCol))
 		return false,"same color piece at dest"
 	}
-
+	//if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovery check"}
 	switch piece.Type{
-		//doesn't check if move opens up a discovery check yet
 		case Rook: 
 			return isRookMoveValid(piece,board,move)
 		case Bishop:
@@ -91,11 +92,17 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 }
 
 func (board *Board) performMove(piece *Piece,move *Move){
+	
 	board.Tiles[move.DestRow][move.DestCol].IsEmpty = false
 	board.Tiles[move.DestRow][move.DestCol].Piece = board.Tiles[move.SrcRow][move.SrcCol].Piece
 	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = true
 	board.Tiles[move.SrcRow][move.SrcCol].Piece.Type = Empty
 	board.Tiles[move.SrcRow][move.SrcCol].Piece.Color = EmptyTile
+	if (piece.Type==King){
+		if (piece.Color==Black){
+			board.BlackKing.HasMoved = true
+		} else {board.WhiteKing.HasMoved=true}
+	}
 	if (move.Castle){
 		var oldRookPos, newRookPos int
 		if (move.DestCol<move.SrcCol){
@@ -113,18 +120,70 @@ func (board *Board) performMove(piece *Piece,move *Move){
 	}
 }
 
+func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
+	//get opponent attacking squares, if king is present in that then it causes discovery check
+	//squareId : bool hashmap 
+	var copyBoard *Board = deepCopyBoard(board)
+	copyBoard.performMove(piece,move)
+	DisplayBoardState(copyBoard)
+	attackedSquares := copyBoard.getSquaresAttackedBy(piece.Color)
+	fmt.Print(attackedSquares)
+	return false
+}
+
+func (board *Board) getSquaresAttackedBy(color Color) map[int]bool{
+	var attackedSquares = make(map[int]bool)
+	for rowIndex,row:= range board.Tiles{
+		for colIndex,tile:= range row{
+			if (!tile.IsEmpty){
+				for _,id:= range board.genPieceMoves(&tile.Piece,rowIndex,colIndex){
+					attackedSquares[id]=true
+				}
+			}
+		}
+	}
+	return attackedSquares
+}
+
+
+func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int) []int{
+	//includes king
+	attackedSquares:=[]int{}
+	switch piece.Type{
+	case Bishop:
+		diagonals:= [][]int{{1,1,7},{1,-1,7},{-1,1,0},{-1,-1,0}}
+		for _,value:= range diagonals{
+			xOffset,yOffset,endRow := value[0],value[1],value[2]
+			fmt.Println(xOffset,yOffset,endRow)
+			pathLength:=Abs(srcRow-endRow)
+			for i := 1; i <= pathLength; i++{
+				x := srcRow + i*xOffset;
+				y := srcCol + i*yOffset;
+				if (x>=0 && y>=0 && x<8 && y<8 && (board.Tiles[x][y].IsEmpty || board.Tiles[x][y].Piece.Type == King)){
+					attackedSquares = append(attackedSquares,board.Tiles[x][y].Id)
+				} else{ break}
+			}
+		}
+	case Rook:
+
+	}
+	return attackedSquares
+}
+
+
+
 func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
-	if (move.Castle){
+	if (move.Castle && !board.hasKingMoved(piece.Color)){
 		if (move.SrcRow==move.DestRow){
 			var tile int 
-			if (move.SrcCol+2==move.DestCol && board.Tiles[board.Rows-1][board.Cols-1].Piece.Type==Rook){ //castle to the right
+			if (move.SrcCol+2==move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type==Rook){ //castle to the right
 				tile= move.SrcCol+1
 				for (tile<board.Cols-1){
 					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
 					tile+=1
 				}
 				return true, "valid castle"
-			} else if (move.SrcCol-2==move.DestCol && board.Tiles[board.Rows-1][0].Piece.Type==Rook){
+			} else if (move.SrcCol-2==move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type==Rook){
 				tile= move.SrcCol-1
 				for tile>0{
 					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
@@ -133,8 +192,14 @@ func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 				return true, "valid castle"
 			} else {return false,"invalid castle dest"}
 		}
-	}
+	} else if (move.Castle && board.hasKingMoved(piece.Color)) {return false,"king has already moved"}
 	return true,"valid king move"
+}
+
+func (board* Board) hasKingMoved(color Color) bool{
+	if(color==White && board.WhiteKing.HasMoved || (color==Black && board.BlackKing.HasMoved)){
+		return true
+	} else {return false}
 }
 
 func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){

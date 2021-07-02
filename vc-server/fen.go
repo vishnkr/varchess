@@ -27,7 +27,7 @@ func ConvertFENtoBoard(fen string) *Board {
 		Rows:  len(rowsData),
 		Cols:  colCount,
 	}
-	var col int = 0
+	var col,id int = 0,0
 	for rowIndex, row := range rowsData {
 		col = 0
 		board.Tiles[rowIndex] = make([]Square, board.Cols)
@@ -37,8 +37,9 @@ func ConvertFENtoBoard(fen string) *Board {
 					count,_ := strconv.Atoi(string(char))
 					i:= col
 					for (col < i+count){
-						board.Tiles[rowIndex][col] = Square{IsEmpty:true}
+						board.Tiles[rowIndex][col] = Square{IsEmpty:true,Id:id}
 						col++	
+						id+=1
 					}
 			} else{
 				var color Color
@@ -47,15 +48,16 @@ func ConvertFENtoBoard(fen string) *Board {
 				} else{
 					color = Black
 				}
-				
 				board.Tiles[rowIndex][col] = Square{
-											IsEmpty:false, 
-											Piece: Piece{
-												Type: strToTypeMap[string(unicode.ToLower(char))],
-												Color: color,
-											},
-										}
+					IsEmpty:false, 
+					Id:id,
+					Piece: Piece{
+					Type: strToTypeMap[string(unicode.ToLower(char))],
+					Color: color,
+					},
+				}
 				col++
+				id+=1
 			}
 			
 		}

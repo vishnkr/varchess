@@ -28,7 +28,6 @@ func main(){
 	router.HandleFunc("/", rootHandler)
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
-	//router.HandleFunc("/ws", SocketHandler)
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
 		ServeWsHandler(wsServer,w,r)
 	})

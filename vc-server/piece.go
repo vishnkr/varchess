@@ -37,6 +37,7 @@ const (
 
 type Square struct{
 	SqColor SqColor
+	Id int
 	Piece Piece
 	IsEmpty bool
 }
@@ -64,7 +65,7 @@ func (p Piece) String() string {
 	return ""
 }
 
-func (p Piece) promotableTo() bool {
+func promotableTo(p Piece) bool {
 	switch p.Type {
 	case Queen, Rook, Bishop, Knight:
 		return true
@@ -88,7 +89,7 @@ func (board *Board) isPieceStartPosValid(piece *Piece, row int, col int) bool{
 }
 
 func (board *Board) getPieceColor(row int,col int) Color{
-	if(!board.Tiles[row][col].IsEmpty){
+	if (!board.Tiles[row][col].IsEmpty){
 		return board.Tiles[row][col].Piece.Color
 	}
 	return EmptyTile
