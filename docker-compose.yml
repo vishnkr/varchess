@@ -1,38 +1,31 @@
 version: '3.7'
 services:
-    server:
-        container_name: ep-server
+    web:
+        container_name: vc-server
         build:
-            context: ./server
+            context: ./vc-server
             dockerfile: Dockerfile
         command: bash -c "go build && ./vc-server -b 0.0.0.0:8000 --timeout 120"
         volumes:
             - './vc-server:/app/server'
         ports:
             - 5000:5000
-        depends_on: 
-            - db
+
         networks:
             - internal
         stdin_open: true
-
-    
-
-  #frontend:
-   # container_name: ep-client
-    #build:
-     # context: ./client
-      #dockerfile: Dockerfile
-    #volumes:
-      #- './client:/app/client'
-      #- '/app/node_modules'
-    #ports:
-      #- 3002:3000
-    #environment:
-      #- CHOKIDAR_USEPOLLING=true
-    #stdin_open: true
-####
-
+    frontend:
+        container_name: vc-frontend
+        build:
+          context: ./vc-frontend
+          dockerfile: Dockerfile
+        volumes:
+          - './vc-frontend:/app/frontend'
+        ports:
+          - 8080:8080
+        environment:
+          - CHOKIDAR_USEPOLLING=true
+        
 volumes:
     server:
 networks:
