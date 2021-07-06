@@ -113,7 +113,17 @@
                           </v-list-item-content>
 
                           <v-list-item-action>
-                            
+                            <v-btn
+                              depressed
+                              color="primary"
+                              @click="dialog=true"
+                            >
+                              Set Move Pattern
+                            </v-btn>
+                            <move-pattern-dialog v-if="dialog" v-on:closeDialog="closeDialog" 
+                              :dialog="dialog"
+                              :pieceColor="curPieceColor"
+                              :pieceType="customPieceSelect"/>
                           </v-list-item-action>
                         </v-list-item>
 
@@ -143,14 +153,15 @@
 import { convertBoardStateToFEN } from '../../utils/fen';
 import {createRoom} from '../../utils/websocket';
 import EditorBoard from './EditorBoard';
+import  MovePatternDialog from './MovePatternDialog.vue';
 export default {
-  components:{EditorBoard},
+  components:{EditorBoard,MovePatternDialog},
   methods:{
     getPieceURL(piece){
       return require(`../../assets/images/pieces/${this.colorSelect}/${piece}.svg`)
     },
-    setCurrentPiece(){
-
+    closeDialog(){
+      this.dialog=false
     },
     enterRoom(){
       var finalboardState = this.setBoardState(this.boardState)
@@ -193,6 +204,7 @@ export default {
       customPieceMap:{},
       rows: 7,
       cols: 7,
+      dialog:false,
       colorSelect: 'white',
       pieceSelect: 'pawn',
       customPieceSelect: '',

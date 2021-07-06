@@ -2,7 +2,7 @@
   <div class="square" :style="cssVar" 
         :class="[tileType=='d'? 'dark':'light', isPiecePresent && isHighlighted?'highlight-from':null]"  
         @click="clickSquare">
-      <div v-if="isPiecePresent">
+      <div v-if="isPiecePresent" >
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
 
@@ -15,6 +15,17 @@ import BoardPiece from './BoardPiece'
 export default {
     components:{BoardPiece},
     methods:{
+        /*onDrag(){
+
+        },
+        startDrag(event){
+          console.log("we heare")
+          event.dataTransfer.dropEffect = 'move'
+          event.dataTransfer.effectAllowed = 'move'
+          event.dataTransfer.setData("text", event.target.id)
+          //var pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
+          //event.dataTransfer.setData('pieceInfo',{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
+      },*/
       clickSquare(){
         if(!this.isSelectedSrc){ // start pos is selected
           if(this.isPiecePresent){
@@ -29,7 +40,6 @@ export default {
             } 
             else{
               if(this.isPiecePresent){
-                
                 this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
               } else{
                 this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:false,row:this.row,col:this.col})

@@ -22,7 +22,7 @@
 
 <script>
 import GameBoard from '../GameBoard.vue'
-import Chat from './Chat.vue'
+import Chat from '../Chat/Chat.vue'
 import WS,{sendMoveInfo} from '../../utils/websocket';
 export default {
   components: { Chat,GameBoard },
@@ -106,7 +106,7 @@ export default {
 }
 
 .board-panel{
-  flex: 2;
+  flex: 1;
 }
 .right-panel{
 
