@@ -95,3 +95,11 @@ func (board *Board) getPieceColor(row int,col int) Color{
 	return EmptyTile
 }	
 
+func (piece *Piece) getOpponentColor() Color{
+	if (piece.Color==White){
+		return Black
+	}else{
+		return White
+	}
+}
+

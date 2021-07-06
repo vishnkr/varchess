@@ -66,7 +66,7 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 		fmt.Println(board.getPieceColor(move.SrcRow,move.SrcCol),board.getPieceColor(move.DestRow,move.DestCol))
 		return false,"same color piece at dest"
 	}
-	//if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovery check"}
+	if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovery check"}
 	switch piece.Type{
 		case Rook: 
 			return isRookMoveValid(piece,board,move)
@@ -91,8 +91,8 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 	return false,"something's wrong"
 }
 
+// performMove modifies board state to account for position changes after a valid move has been made
 func (board *Board) performMove(piece *Piece,move *Move){
-	
 	board.Tiles[move.DestRow][move.DestCol].IsEmpty = false
 	board.Tiles[move.DestRow][move.DestCol].Piece = board.Tiles[move.SrcRow][move.SrcCol].Piece
 	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = true
@@ -119,6 +119,9 @@ func (board *Board) performMove(piece *Piece,move *Move){
 		board.Tiles[move.SrcRow][oldRookPos].Piece.Color = EmptyTile
 	}
 }
+/*func (board *Board) findKingSquareId(color Color) int{
+	for 
+}*/
 
 func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
 	//get opponent attacking squares, if king is present in that then it causes discovery check
@@ -126,52 +129,127 @@ func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
 	var copyBoard *Board = deepCopyBoard(board)
 	copyBoard.performMove(piece,move)
 	DisplayBoardState(copyBoard)
-	attackedSquares := copyBoard.getSquaresAttackedBy(piece.Color)
-	fmt.Print(attackedSquares)
+	//copyBoard.isKingUnderCheck(piece,)
 	return false
 }
 
+// getSquaresAttackedBy returns a collection of squares attacked by pieces of the given color
 func (board *Board) getSquaresAttackedBy(color Color) map[int]bool{
 	var attackedSquares = make(map[int]bool)
 	for rowIndex,row:= range board.Tiles{
 		for colIndex,tile:= range row{
-			if (!tile.IsEmpty){
-				for _,id:= range board.genPieceMoves(&tile.Piece,rowIndex,colIndex){
-					attackedSquares[id]=true
+			if (!tile.IsEmpty && tile.Piece.Color==color){
+				board.genPieceAttacks(&tile.Piece,rowIndex,colIndex,attackedSquares)
+			}
+		}
+	}
+	return attackedSquares
+}
+
+func (board *Board) isKingUnderCheck(piece *Piece,squareId int) bool{
+	opponentCol := piece.getOpponentColor()
+	attackedSquares := board.getSquaresAttackedBy(opponentCol)
+	if _,underAttack := attackedSquares[squareId]; underAttack{
+		return true
+	} 
+	return false
+}
+
+func (board *Board)isSquareInBoardRange(row int, col int) bool{
+	return row>=0 && col>=0 && row<board.Rows && col<board.Cols
+}	
+
+// genPieceMoves returns a list of square positions (using its unique Square Id) that the given piece attacks
+// this includes the position of the opponent king since it would be useful to detect checks/discovered checks
+func (board *Board) genPieceAttacks(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
+	switch piece.Type{
+	case Bishop:
+		board.genBishopMoves(piece,srcRow,srcCol,attackedSquares)
+	case Rook:
+		board.genRookMoves(piece,srcRow,srcCol,attackedSquares)
+	case Queen:
+		board.genRookMoves(piece,srcRow,srcCol,attackedSquares)
+		board.genBishopMoves(piece,srcRow,srcCol,attackedSquares)
+	case King:
+		for row:=-1;row<=1;row+=1{
+			for col:=-1;col<=1;col+=1{
+				if (!(row==0)&& !(col==0)){
+					continue
+				}
+				if (board.isSquareInBoardRange(srcRow+row,srcCol+col) && board.IsEmpty(srcRow+row,srcCol+col)){
+					attackedSquares[board.Tiles[srcRow+row][srcCol+col].Id] = true
 				}
 			}
 		}
-	}
-	return attackedSquares
-}
-
-
-func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int) []int{
-	//includes king
-	attackedSquares:=[]int{}
-	switch piece.Type{
-	case Bishop:
-		diagonals:= [][]int{{1,1,7},{1,-1,7},{-1,1,0},{-1,-1,0}}
-		for _,value:= range diagonals{
-			xOffset,yOffset,endRow := value[0],value[1],value[2]
-			fmt.Println(xOffset,yOffset,endRow)
-			pathLength:=Abs(srcRow-endRow)
-			for i := 1; i <= pathLength; i++{
-				x := srcRow + i*xOffset;
-				y := srcCol + i*yOffset;
-				if (x>=0 && y>=0 && x<8 && y<8 && (board.Tiles[x][y].IsEmpty || board.Tiles[x][y].Piece.Type == King)){
-					attackedSquares = append(attackedSquares,board.Tiles[x][y].Id)
-				} else{ break}
+	case Knight:
+		jumpSquares:= [][]int{{-2,-1},{-2,1},{-1,2},{-1,-2},{1,-2},{1,2},{2,-1},{2,1}}
+		for _, pair:= range jumpSquares{
+			targetRow:= srcRow+pair[0]
+			targetCol:= srcCol+pair[1]
+			if (board.isSquareInBoardRange(targetRow,targetCol) && board.IsEmpty(targetRow,targetCol)){
+				attackedSquares[board.Tiles[targetRow][targetCol].Id] = true
 			}
 		}
-	case Rook:
+	case Pawn:
+		var rowOffset int
+		if (piece.Color==White){
+			rowOffset=-1
+		} else {rowOffset=1}
+		if (board.isSquareInBoardRange(srcRow+rowOffset,srcCol-1) && board.IsEmpty(srcRow+rowOffset,srcCol-1)){
+			attackedSquares[board.Tiles[srcRow+rowOffset][srcCol-1].Id] = true
+		}
+		if (board.isSquareInBoardRange(srcRow+rowOffset,srcCol+1) && board.IsEmpty(srcRow+rowOffset,srcCol+1)){
+			attackedSquares[board.Tiles[srcRow+rowOffset][srcCol+1].Id] = true
+		}
 
 	}
-	return attackedSquares
 }
 
+func(board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
+	diagonals:= [][]int{{1,1,board.Rows-1},{1,-1,board.Rows-1},{-1,1,0},{-1,-1,0}}
+	for _,value:= range diagonals{
+		xOffset,yOffset,endRow := value[0],value[1],value[2]
+		pathLength:=Abs(srcRow-endRow)
+		for i := 1; i <= pathLength; i++{
+			x := srcRow + i*xOffset;
+			y := srcCol + i*yOffset;
+			if (board.isSquareInBoardRange(x,y) && board.IsEmpty(x,y) ){
+				attackedSquares[board.Tiles[x][y].Id] = true
+			} else if (board.isSquareInBoardRange(x,y) && board.Tiles[x][y].Piece.Type == King && board.Tiles[x][y].Piece.Color == piece.getOpponentColor()){
+				attackedSquares[board.Tiles[x][y].Id] = true
+				break
+			}else { break}
+		}
+	}
+}
 
+func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquares map[int]bool){
+	directions:= []int{-1,1}
+	//check horizontal
+	for _,xOffset := range directions{
+		for i:=srcCol+xOffset;i>=0 && i<board.Cols;i+=xOffset{
+			if (board.IsEmpty(srcRow,i)){
+				attackedSquares[board.Tiles[srcRow][i].Id] = true
+			} else if (board.Tiles[srcRow][i].Piece.Type == King && board.Tiles[srcRow][i].Piece.Color == piece.getOpponentColor()){
+				attackedSquares[board.Tiles[srcRow][i].Id] = true
+				break
+			} else{break}
+		}
+	}
+	//check vertical
+	for _,yOffset := range directions{
+		for i :=srcRow+yOffset;i>=0 && i<board.Rows;i+=yOffset{
+			if (board.IsEmpty(i,srcCol)){
+				attackedSquares[board.Tiles[i][srcCol].Id] = true
+			} else if (board.Tiles[i][srcCol].Piece.Type == King && board.Tiles[i][srcCol].Piece.Color == piece.getOpponentColor()){
+				attackedSquares[board.Tiles[i][srcCol].Id] = true
+				break
+			} else {break}
+		}
+	}
+}
 
+// isKingMoveValid handles all logic to determine if a king move is valid
 func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	if (move.Castle && !board.hasKingMoved(piece.Color)){
 		if (move.SrcRow==move.DestRow){
@@ -202,6 +280,7 @@ func (board* Board) hasKingMoved(color Color) bool{
 	} else {return false}
 }
 
+// isRoomMoveValid determines if a rook move is valid
 func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//horizontal or vertical block
 	if (move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
@@ -225,6 +304,7 @@ func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	} else { return false,"invalid rook move"}
 }
 
+// isBishopMoveValid determines if a Bishop move is valid
 func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	pathLength:= Abs(move.SrcRow - move.DestRow)
 	if pathLength!= Abs(move.SrcCol - move.DestCol){
@@ -257,6 +337,7 @@ func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	return true,"valid"
 }
 
+// isBishopMoveValid determines if a bishop move is valid
 func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//not considering en passant yet
 	var doubleMoveStartRank,rowOffset,promoteDestRow int
