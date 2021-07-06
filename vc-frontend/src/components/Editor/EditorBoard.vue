@@ -45,13 +45,15 @@ export default {
         return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
 
       setupDefaultBoard(){
-
         for(var col =0;col<this.colCount;col++){
           this.boardState.tiles.push([])
           for(var row=0;row<this.rowCount;row++){
             var tile = {}
             tile.tileType = this.isLight(col,row)? 'l' : 'd';
-            if( (row===0||row==7) && (col===0||col===7)) {
+            if(this.isEmpty){
+              tile.isPiecePresent=false
+            }
+            else if( (row===0||row==7) && (col===0||col===7)) {
                 tile.pieceType='r';
                 tile.isPiecePresent=true
             }
@@ -112,6 +114,7 @@ export default {
     props:{
       rows: Number,
       cols: Number,
+      isEmpty:Boolean,
       editorMode: Boolean,
       curPiece:String,
       curPieceColor:String,
@@ -131,6 +134,9 @@ export default {
 
 
 #board-container{
+    max-width: 700px;
+    width:100%;
+    max-height: 700px;
 }
 
 #board{

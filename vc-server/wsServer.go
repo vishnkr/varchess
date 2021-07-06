@@ -62,6 +62,7 @@ func (server *WsServer) unregisterClient(client *Client) {
 
 func (server *WsServer) deleteEmptyRooms(client *Client){
 	client.mu.Lock()
+	defer client.mu.Unlock()
 	for id,_:= range RoomsMap{
 		if(len(RoomsMap[id].Clients)==0){
 			fmt.Println(id,"room was deleted since its empty")
@@ -69,7 +70,7 @@ func (server *WsServer) deleteEmptyRooms(client *Client){
 			//fmt.Println(RoomsMap)		
 		}
 	}
-	client.mu.Unlock()
+	
 }
 
 func (server *WsServer) broadcastToClients(message []byte) {

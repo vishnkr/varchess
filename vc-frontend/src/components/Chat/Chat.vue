@@ -22,7 +22,6 @@
 
 <script>
 import CreateMessage from '../Chat/CreateMessage';
-//import {mapState} from 'vuex';
 import WS from '../../utils/websocket';
 export default {
     components: {CreateMessage},

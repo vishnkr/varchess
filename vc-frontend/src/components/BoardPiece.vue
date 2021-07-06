@@ -1,13 +1,11 @@
 <template>
-    <div :style="cssVars">
-       
+    <div :style="cssVars" >
        <img :src="getPieceURL">
     </div>
   
 </template>
 
 <script>
-/* <img :src="getPieceURL"> <h4>r{{row}} c{{col}}</h4>*/
 export default {
     data(){
         return {
