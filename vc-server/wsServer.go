@@ -16,7 +16,6 @@ type WsServer struct{
 
 func NewWebsocketServer() *WsServer{
 	return &WsServer{
-		//clients: make(map[*Client]string),
 		clients: make(map[*Client]bool),
 		register: make(chan *Client),
 		unregister: make(chan *Client),

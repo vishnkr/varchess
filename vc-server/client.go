@@ -96,12 +96,15 @@ func (c *Client) Read(){
 				chatMessage := ChatMessage{}
 				json.Unmarshal([]byte(reqData.Data),&chatMessage)
 				fmt.Println(reqData.Data,chatMessage,"reachin here",chatMessage.RoomId)
-				for member, _ := range RoomsMap[chatMessage.RoomId].Clients {
-					if (member.conn!=c.conn){
-						member.conn.WriteJSON(reqData)
-						fmt.Println("success")
+				if room, ok := RoomsMap[chatMessage.RoomId]; ok {
+					for member, _ := range room.Clients {
+						if (member.conn!=c.conn){
+							if message,err:= json.Marshal(reqData); err==nil{
+								member.send <- message
+							}
+						}
 					}
-				}
+				}		
 				
 			case "performMove":
 				move:= &Move{}
@@ -112,21 +115,30 @@ func (c *Client) Read(){
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
 				} else { piece.Color = Black }
-				game:= RoomsMap[move.RoomId].Game
-				res,reason:=game.Board.isValidMove(piece,move)
-				if (res && game.Turn==move.Color) {
-					game.Board.performMove(piece,move)
-					moveResp.IsValid = res
-					moveResp.Type = "performMove"
-					if(move.Castle){
-						moveResp.Castle = true
+				if room, ok := RoomsMap[move.RoomId]; ok {
+					game:= room.Game
+					var res bool
+					var reason string
+					fmt.Println(move.Color,game.Turn)
+					if (game.Turn==move.Color){
+						res,reason=game.Board.isValidMove(piece,move)
+					} else{ res,reason = false,"wrong color"}
+					if (res) {
+						game.Board.performMove(piece,move)
+						moveResp.IsValid = res
+						moveResp.Type = "performMove"
+						if (move.Castle){
+							moveResp.Castle = true
+						}
+						for member, _ := range room.Clients {
+							if message,err:= json.Marshal(moveResp); err==nil{
+								member.send <- message
+							}
+						}
+						game.Turn = changeTurn(game.Turn)
 					}
-					for member, _ := range RoomsMap[move.RoomId].Clients {
-						member.conn.WriteJSON(moveResp)
-					}
-					game.Turn = changeTurn(game.Turn)
+					fmt.Println("move valid:",res,reason)
 				}
-				fmt.Println("move valid:",res,reason)
 				
 		}
 		response:= Response{Status:"successful"}
