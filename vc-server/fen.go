@@ -28,19 +28,29 @@ func ConvertFENtoBoard(fen string) *Board {
 		Cols:  colCount,
 	}
 	var col,id int = 0,0
+	var colEnd int = 0
 	for rowIndex, row := range rowsData {
 		col = 0
 		board.Tiles[rowIndex] = make([]Square, board.Cols)
-		for _, char := range row {
-			
+		secDigit := 0
+		for index, char := range row {
 			if unicode.IsNumber(rune(char)) {
+				if (index+1<len(row) && unicode.IsNumber(rune(row[index+1]))){
+					secDigit,_ = strconv.Atoi(string(char))
+				} else{ 
 					count,_ := strconv.Atoi(string(char))
+					if (secDigit!=0){
+						colEnd = secDigit*10+count
+					} else { colEnd = count}
 					i:= col
-					for (col < i+count){
+					for (col < i+(colEnd)){
 						board.Tiles[rowIndex][col] = Square{IsEmpty:true,Id:id}
 						col++	
 						id+=1
 					}
+					
+				
+				}
 			} else{
 				var color Color
 				if(unicode.IsUpper(rune(char))){

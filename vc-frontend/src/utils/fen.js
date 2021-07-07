@@ -1,3 +1,8 @@
+/*
+* This file contains helper functions to convert a board state to its equivalent serialized version aka. 
+* FEN (Forsyth–Edwards Notation) and vice-versa.
+*/
+
 function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
     var cell,row,empty,fen = '';
     for (row of boardState.tiles){
@@ -31,17 +36,27 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
 }
 
 function convertFENtoBoardState(fen){
+    console.log(fen)
     var splitFen = fen.split(' ');
     var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
     var rows = splitFen[0].split('/');
     var char;
+    var secDigit,colEnd = 0;
     for (var i=0; i < rows.length;i++){
         boardState.tiles.push([]);
+        secDigit = 0
         for(var j = 0; j < rows[i].length; j++){
             char = rows[i].charAt(j);
             if (/\d/.test(char)){
-                for(var empty=0; empty<parseInt(char);empty++){
-                    boardState.tiles[i].push({isPiecePresent:false});
+                if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
+                    secDigit=char
+                } else{
+                    if(secDigit!=0){
+                        colEnd = parseInt(secDigit)*10+parseInt(char)
+                    } else {colEnd=parseInt(char)}
+                    for(var empty=0; empty<colEnd;empty++){
+                        boardState.tiles[i].push({isPiecePresent:false});
+                    }
                 }
             }
             else{
@@ -57,8 +72,5 @@ function convertFENtoBoardState(fen){
     }
     return boardState;
 }
-//convertFENtoBoardState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-//convertFENtoBoardState("r2q2nr/p4ppp/8/8/4p2P/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-//convertFENtoBoardState("3/r1P/Qk1/1N1 b KQkq - 0 1")
 
 export {convertBoardStateToFEN,convertFENtoBoardState};

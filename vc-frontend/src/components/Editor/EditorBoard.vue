@@ -17,7 +17,7 @@
 
 <script>
 
-import Square from '../Square'
+//import Square from '../Square'
 
 export default {
     name:'Board',
@@ -121,7 +121,6 @@ export default {
       customPieces: Array,
     },
     components:{
-      Square,
     },
     
     created(){
