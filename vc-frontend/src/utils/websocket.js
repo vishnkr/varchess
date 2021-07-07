@@ -1,6 +1,10 @@
+/*
+* This file contains the logic for handling the sending/ receiving of websocket messages between the client 
+* and server. This is present in the utils directory as it can be exported when needed to any of the components 
+* and Vuex state can be modified in one place
+*/
 //import WebSocket from 'reconnecting-websocket';
 import store from "../store"
-
 const WS = new WebSocket('ws://localhost:5000/ws');
 
 

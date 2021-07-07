@@ -32,7 +32,18 @@ export default {
     methods:{
       async getBoardFen() {
         await axios.get(`http://localhost:5000/getBoardFen/${this.roomId}`).then((response)=>{
+          console.log('got fen',response.data.Fen)
           this.boardState = convertFENtoBoardState(response.data.Fen)
+          this.boardState.rows  = this.boardState.tiles.length
+          this.boardState.cols = this.boardState.tiles[0].length
+          //console.log(this.boardState)
+          var id =0;
+          for(var row=0;row<this.boardState.rows;row++){
+            for(var col=0;col<this.boardState.cols;col++){
+              this.boardState.tiles[row][col].tileId = id;
+              id+=1;
+            }
+          }
         });
       },
 
