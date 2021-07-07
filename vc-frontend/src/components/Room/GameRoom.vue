@@ -6,6 +6,7 @@
             ref="gameBoard" 
             :isflipped="isFlipped" 
             :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
+            :editorMode="false"
             v-on:destinationSelect="validateMove"
             />
         </div>

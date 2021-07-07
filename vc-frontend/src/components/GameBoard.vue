@@ -5,6 +5,8 @@
         :tileType="square.tileType" 
         :isPiecePresent="square.isPiecePresent" 
         :tileId="square.tileId"
+        :editorMode="editorMode"
+        :editorData="editorData? editorData: null"
         :pieceType="square.pieceType" 
         :pieceColor="square.pieceColor" 
         :x="square.x" :y="square.y" 
@@ -13,6 +15,7 @@
         :isSelectedSrc="selectedSrc?true:false"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
+        v-on:setEditorBoardState="editorModeSquareClicked"
         />
         
       </div>
@@ -24,7 +27,7 @@ import BoardSquare from './BoardSquare.vue';
 import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
-  props:['board','isflipped','playerColor'],
+  props:['board','isflipped','playerColor',"editorMode","editorData"],
   watch: { 
     isflipped() { // watch it
           this.updateBoardState1D(this.isflipped)
@@ -32,9 +35,10 @@ export default {
   },
   mounted(){
       this.boardState = this.board;
-      this.rows = this.boardState.tiles.length
-      this.cols = this.boardState.tiles[0].length
+      this.rows = this.board.rows
+      this.cols = this.board.cols
       this.updateBoardState1D(this.isflipped)
+      //console.log("tileS",this.board.tiles,this.rows,this.cols,this.boardState1D)
       convertBoardStateToFEN(this.boardState,'w','KQkq','-')
   },
   data(){
@@ -46,21 +50,27 @@ export default {
             selectedSrc: null,
         }
     },
-    
     methods:{
+        editorModeSquareClicked(row,col){
+        if(this.boardState.tiles[row-1][col-1].isPiecePresent){
+          this.boardState.tiles[row-1][col-1].isPiecePresent = false;
+        }
+        else{
+          this.boardState.tiles[row-1][col-1].isPiecePresent = true;
+          this.boardState.tiles[row-1][col-1].pieceColor = this.editorData.curPieceColor;
+          this.boardState.tiles[row-1][col-1].pieceType = this.editorData.curPiece =='c' ? this.editorData.customPiece : this.editorData.curPiece;
+        }
+        this.$emit("sendEditorBoardState",this.boardState)
+        this.updateBoardState1D(this.isflipped)
+        },
         emitDestinationSelect(destInfo){
           this.$emit('destinationSelect',destInfo)
         },
         
         //changes UI of the board to match new boardstate after a valid move is made
         performMove(moveInfo){
-          console.log('perform move',moveInfo)
-          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].isPiecePresent = true
-          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].pieceType = moveInfo.piece.toLowerCase()
-          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol].pieceColor = moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'
-          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceColor = null
-          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].pieceType = null
-          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol].isPiecePresent = false
+          this.boardState.tiles[moveInfo.destRow][moveInfo.destCol] = {isPiecePresent:true, pieceType:moveInfo.piece.toLowerCase(),pieceColor:moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'}
+          this.board.tiles[moveInfo.srcRow][moveInfo.srcCol]= {isPiecePresent:false, pieceType:null,pieceColor:null}
           if(moveInfo.castle){
             console.log('castling')
             var newRookPos,oldRookPos
@@ -99,6 +109,7 @@ export default {
           var row,tile,x=1,y=1,flipX = this.rows,flipY = this.cols ;
           var tileId = flipped ? this.rows*this.cols - 1 : 0;
           for(row of this.boardState.tiles){
+              //console.log('reachin',flipped)
               for(tile of row){
                 tile.tileId = tileId;
                 tileId+= flipped? -1 : 1;     
@@ -114,6 +125,7 @@ export default {
                 }
                 else{
                 this.boardState1D.push(tile);
+                
                 }
               }
               x+=1
@@ -127,6 +139,7 @@ export default {
               this.boardState1D.push(stack.pop())
             }
           }
+          console.log('1d',this.boardState1D)
       },
         isEven(val){return val%2==0},
         isLight(row,col){

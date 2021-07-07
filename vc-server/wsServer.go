@@ -52,12 +52,11 @@ func (server *WsServer) unregisterClient(client *Client) {
 			delete(RoomsMap[roomId].Clients,client)
 		}
 		server.deleteEmptyRooms(client)
-		if _, ok := server.clients[client]; ok {
-			fmt.Println(client.username,"was deleted")
-			delete(server.clients, client)
-		}
 	}
-	
+	if _, ok := server.clients[client]; ok {
+		fmt.Println(client.username,"was deleted")
+		delete(server.clients, client)
+	}
 }
 
 func (server *WsServer) deleteEmptyRooms(client *Client){

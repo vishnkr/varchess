@@ -15,18 +15,10 @@ import BoardPiece from './BoardPiece'
 export default {
     components:{BoardPiece},
     methods:{
-        /*onDrag(){
-
-        },
-        startDrag(event){
-          console.log("we heare")
-          event.dataTransfer.dropEffect = 'move'
-          event.dataTransfer.effectAllowed = 'move'
-          event.dataTransfer.setData("text", event.target.id)
-          //var pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
-          //event.dataTransfer.setData('pieceInfo',{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
-      },*/
       clickSquare(){
+        if(this.editorMode){
+          this.$emit("setEditorBoardState",this.row,this.col)
+        } else {
         if(!this.isSelectedSrc){ // start pos is selected
           if(this.isPiecePresent){
               console.log('pcol',this.pieceColor)
@@ -46,6 +38,7 @@ export default {
               }
             }
         }
+        }
       }
     },
     data(){
@@ -53,7 +46,7 @@ export default {
         
       }
     },
-    props:['tileType','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
+    props:['tileType','editorMode','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
     computed:{
         cssVar(){
         return {
