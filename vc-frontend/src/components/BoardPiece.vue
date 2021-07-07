@@ -1,6 +1,6 @@
 <template>
     <div :style="cssVars" >
-       <img :src="getPieceURL">
+       <img v-if="pieceType" :src="getPieceURL">
     </div>
   
 </template>

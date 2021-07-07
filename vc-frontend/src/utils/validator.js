@@ -1,4 +1,8 @@
-
+/*
+* This file contains functions that help with the validation of the custom board state created by the user
+* in editor mode. This is done in the client side to make sure that the board state sent to th server is
+* always a valid start position.
+*/
 const lib = require("./fen");
 console.log(lib)
 function validateStartSetup(fen){
