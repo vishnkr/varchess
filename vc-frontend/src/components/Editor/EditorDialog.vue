@@ -85,76 +85,78 @@
                   </v-radio-group>
                 </div>
                 <div v-if="editorData.curPiece=='c'">
-                  <v-card
-                    elevation="16"
-                    max-width="400"
-                    class="mx-auto"
-                  >
-                    <v-virtual-scroll
-                      
-                      :items="pieceFilter"
-                      height="200"
-                      item-height="64"
+                  <div class="custom-pieces">
+                    <v-btn
+                      depressed
+                      color="primary"
+                      @click="dialog=true"
+                      class="move-button"
                     >
-                      <template v-slot:default="{ item }">
-                        <v-radio-group v-model="editorData.customPiece">
-                        <v-list-item class="scroll-item">
-                            <v-radio
-                              :key="item.piece"
-                              :value="item.piece"
-                              @click="editorData.customPiece = item.piece"
-                            >
-                              Select
-                            </v-radio>
-                          <v-list-item-content>
-                            <img class="resize" :src="item.src">
-                          </v-list-item-content>
+                      Set Move Pattern
+                    </v-btn>
+                    <div class="piece-scroll">
+                      <v-card
+                        elevation="16"
+                        max-width="150"
+                        class="mx-auto"
+                      >
+                        <v-virtual-scroll
+                          
+                          :items="pieceFilter"
+                          height="200"
+                          item-height="64"
+                        >
+                          <template v-slot:default="{ item }">
+                            <v-radio-group v-model="editorData.customPiece">
+                            <v-list-item class="scroll-item" :class="{added : editorData.added[item.piece], defined: editorData.defined[item.piece]}">
+                                <v-radio
+                                  :key="item.piece"
+                                  :value="item.piece"
+                                  @click="editorData.customPiece = item.piece"
+                                >
+                                  Select
+                                </v-radio>
+                              <v-list-item-content>
+                                <img class="resize" :src="item.src">
+                              </v-list-item-content>
 
-                          <v-list-item-action>
-                            <v-btn
-                              depressed
-                              color="primary"
-                              @click="dialog=true"
-                            >
-                              Set Move Pattern
-                            </v-btn>
-                            <move-pattern-dialog v-if="dialog" v-on:closeDialog="closeDialog" 
-                              :dialog="dialog"
-                              :pieceColor="curPieceColor"
-                              :pieceType="customPieceSelect"/>
-                          </v-list-item-action>
-                        </v-list-item>
-                        
-                        <v-divider></v-divider>
-                        </v-radio-group>
-                      </template>
-                    </v-virtual-scroll>
-                  </v-card>
+                              <v-list-item-action>
+                                
+                                <move-pattern-dialog v-if="dialog" v-on:closeDialog="closeDialog" 
+                                  :dialog="dialog"
+                                  :editorData="editorData"
+                                  :pieceColor="editorData.curPieceColor"
+                                  :pieceType="editorData.customPiece"/>
+                              </v-list-item-action>
+                            </v-list-item>
+                            <v-divider></v-divider>
+                            </v-radio-group>
+                          </template>
+                        </v-virtual-scroll>
+                      </v-card>
+                    </div>
+                  </div>
                 </div>
               </v-tab-item>
           </v-tabs>
         </v-list-item-content>
         </v-list-item>
       </v-card>
+      
     </div>
     
-    <board :board="boardState" :isflipped="false" :editorMode="true" :editorData="editorData" :key="change" v-on:sendEditorboardState="formatBoardState"/>
+    <board :board="boardState" :isflipped="false" :editorMode="true" 
+    :editorData="editorData" :key="change" 
+    v-on:sendEditorboardState="formatBoardState"
+    v-on:customPieceAdd="customPieceAdd"
+    />
   </div>
 </template>
 
 <script>
-/*
-<editor-board v-on:sendBoardState="setBoardState" 
-      class="board-panel" 
-      :cols="labels[cols]" 
-      :rows="labels[rows]" 
-      :editorMode="true" 
-      :curPiece="pieceSelect=='c'? customPieceSelect : pieceSelect"
-      :curPieceColor="colorSelect"
-       />*/
 import { convertBoardStateToFEN } from '../../utils/fen';
 import {createRoom} from '../../utils/websocket';
-import Board from '../GameBoard.vue';
+import Board from '../Board.vue';
 import  MovePatternDialog from './MovePatternDialog.vue';
 export default {
   components:{MovePatternDialog,Board},
@@ -165,7 +167,10 @@ export default {
     getPieceURL(piece){
       return require(`../../assets/images/pieces/${this.colorSelect}/${piece}.svg`)
     },
-    
+    customPieceAdd(piece){
+      console.log(piece,'added to board')
+      this.editorData.added[piece]=true
+    },
     closeDialog(){
       this.dialog=false
     },
@@ -186,7 +191,6 @@ export default {
       return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
 
     formatBoardState(boardState){
-      console.log('called')
       this.boardState={tiles:[],rows:this.rows,cols:this.cols};
       for(var row=0;row<this.rows;row++){
         this.boardState.tiles.push(boardState.tiles[row].slice(0,this.cols));
@@ -262,7 +266,7 @@ export default {
   },
   data(){
     return{
-      editorData: {curPieceColor:'white',curPiece:'p'},
+      editorData: {curPieceColor:'white',curPiece:'p',added:{},defined:{'g':true}},
       labels: [5,6,7,8,9,10,11,12,13,14,15,16],
       pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
       customPieces:['a','j','d','i','g','s','u','v','z'],
@@ -274,7 +278,6 @@ export default {
       dialog:false,
       colorSelect: 'white',
       pieceSelect: 'pawn',
-      customPieceSelect: '',
       isDisableTileOn: false,
       boardState:{tiles:[]},
       maxBoardState:{tiles:[],rows:16,cols:16},
@@ -295,7 +298,6 @@ export default {
 .side-panel{
   flex:3;
   height: 90vh;
-  /*box-shadow: 0 14px 28px rgba(250, 0, 0, 0.25), 0 10px 10px rgba(0,0,0,0.22);*/
 }
 .board-panel{
   flex:6;
@@ -307,9 +309,20 @@ export default {
   display:flex;
 }
 
-.resize{
-  height: 3em;
-  width: 3em;
+.custom-pieces{
+  display: flex;
+}
+.move-button{
+  flex:1;
+}
+.piece-scroll{
+  flex:2;
+}
+.added{
+  background-color: rgb(236, 111, 111);
+}
+.defined{
+  background-color: #21af49 !important;
 }
 
 @media only screen and (max-device-width: 480px) {

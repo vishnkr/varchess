@@ -15,7 +15,7 @@
         :isSelectedSrc="selectedSrc?true:false"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
-        v-on:setEditorBoardState="editorModeSquareClicked"
+        v-on:setEditorBoardState="handleEditorSquareClick"
         />
         
       </div>
@@ -24,10 +24,9 @@
 
 <script>
 import BoardSquare from './BoardSquare.vue';
-import {convertBoardStateToFEN} from '../utils/fen'
 export default {
   components: { BoardSquare },
-  props:['board','isflipped','playerColor',"editorMode","editorData"],
+  props:['board','isflipped','playerColor',"editorMode","editorData",],
   watch: { 
     isflipped() { // watch it
           this.updateBoardState1D(this.isflipped)
@@ -38,8 +37,6 @@ export default {
       this.rows = this.board.rows
       this.cols = this.board.cols
       this.updateBoardState1D(this.isflipped)
-      //console.log("tileS",this.board.tiles,this.rows,this.cols,this.boardState1D)
-      convertBoardStateToFEN(this.boardState,'w','KQkq','-')
   },
   data(){
         return {
@@ -51,7 +48,17 @@ export default {
         }
     },
     methods:{
-        editorModeSquareClicked(row,col){
+      handleEditorSquareClick(type,row,col){
+        if (type=="regular"){
+          this.editorModeSquareClicked(row,col)
+        } else {
+          this.movementSet()
+        }
+      },
+      movementSet(){
+        
+      },
+      editorModeSquareClicked(row,col){
         if(this.boardState.tiles[row-1][col-1].isPiecePresent){
           this.boardState.tiles[row-1][col-1].isPiecePresent = false;
         }
@@ -59,13 +66,14 @@ export default {
           this.boardState.tiles[row-1][col-1].isPiecePresent = true;
           this.boardState.tiles[row-1][col-1].pieceColor = this.editorData.curPieceColor;
           this.boardState.tiles[row-1][col-1].pieceType = this.editorData.curPiece =='c' ? this.editorData.customPiece : this.editorData.curPiece;
+          this.editorData.curPiece =='c'? this.$emit("customPieceAdd",this.editorData.customPiece) : null;
         }
         this.$emit("sendEditorBoardState",this.boardState)
         this.updateBoardState1D(this.isflipped)
         },
         emitDestinationSelect(destInfo){
           this.$emit('destinationSelect',destInfo)
-        },
+      },
         
         //changes UI of the board to match new boardstate after a valid move is made
         performMove(moveInfo){
@@ -139,7 +147,7 @@ export default {
               this.boardState1D.push(stack.pop())
             }
           }
-          console.log('1d',this.boardState1D)
+          //console.log('1d',this.boardState1D)
       },
         isEven(val){return val%2==0},
         isLight(row,col){

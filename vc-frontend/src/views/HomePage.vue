@@ -90,7 +90,6 @@
 </template>
 
 <script>
-
 import WS,{createRoom} from '../utils/websocket';
 import axios from 'axios';
 import { convertFENtoBoardState } from '../utils/fen';

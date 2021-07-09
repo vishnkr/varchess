@@ -2,7 +2,7 @@
   <div class="container">
     <div class="columns">
         <div class="column board-panel">
-          <game-board :board="boardState" 
+          <board :board="boardState" 
             ref="gameBoard" 
             :isflipped="isFlipped" 
             :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
@@ -22,11 +22,11 @@
 </template>
 
 <script>
-import GameBoard from '../GameBoard.vue'
+import Board from '../Board.vue'
 import Chat from '../Chat/Chat.vue'
 import WS,{sendMoveInfo} from '../../utils/websocket';
 export default {
-  components: { Chat,GameBoard },
+  components: { Chat,Board },
   mounted(){
     this.$store.commit("setClientInfo",{
       username:this.username,
