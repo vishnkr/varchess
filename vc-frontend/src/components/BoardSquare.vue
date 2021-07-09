@@ -1,6 +1,7 @@
 <template>
-  <div class="square" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', isPiecePresent && isHighlighted?'highlight-from':null]"  
+  <div class="square" :id="tileId" :style="cssVar" 
+        :class="[tileType=='d'? 'dark':'light', isPiecePresent && isHighlighted?'highlight-from':null,
+        addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null, ]"
         @click="clickSquare">
       <div v-if="isPiecePresent" >
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
@@ -17,11 +18,17 @@ export default {
     methods:{
       clickSquare(){
         if(this.editorMode){
-          this.$emit("setEditorBoardState",this.row,this.col)
+          console.log('edi',this.editorData)
+          var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
+          if (this.editorData.isSetMovement){ 
+            console.log('reachin here')
+            this.addColor = this.addColor ? null : this.editorData.moveType
+            console.log(this.addColor)
+          }
+          this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
         if(!this.isSelectedSrc){ // start pos is selected
           if(this.isPiecePresent){
-              console.log('pcol',this.pieceColor)
               var pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
               this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
           }
@@ -43,10 +50,10 @@ export default {
     },
     data(){
       return {
-        
+        addColor:null,
       }
     },
-    props:['tileType','editorMode','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
+    props:['tileType','editorMode','editorData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
     computed:{
         cssVar(){
         return {
@@ -85,6 +92,16 @@ export default {
 
 .highlight-from{
   background-color: #a97d5d !important;
+}
+
+.move-jump-pattern{
+  background-color: #4056b8 !important;
+  border-color: black;
+}
+
+.move-slide-pattern{
+  background-color: #ac422a !important;
+  border-color: black;
 }
 
 @media only screen and (max-device-width: 480px) {
