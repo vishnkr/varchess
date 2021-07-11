@@ -6,6 +6,7 @@ const state = {
     curDestPos: null,
     currentMove: null,
     clientInfo: {},
+    roomClients:{},
     turn: 'w',
 }
 

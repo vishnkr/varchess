@@ -3,13 +3,11 @@
       <div class="card">
           <v-card elevation="2">
               <p class="nomessages">
-                  <span>Chat</span>
               </p>
               <div class="messages" v-chat-scroll="{always:false, smooth:true}">
                   <div v-for="message in messages" :key="message.id">
-                      <span class="text-info">[{{message.username}}]:</span>
+                      <span v-if="message.username" class="text-info">[{{message.username}}]:</span>
                       <span>{{message.message}}</span>
-                      
                   </div>
               </div>
               <div class="card-action">
@@ -33,9 +31,9 @@ export default {
     props: ['username','roomId'],
     mounted() {
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'addMessage') {
+      if (mutation.type === 'addMessage' || mutation.type === 'addClientToRoom' || mutation.type === 'removeClientFromRoom') {
         this.messages = state.chatMessages[this.roomId]
-      }
+      } 
     })
     },
     data(){
