@@ -1,10 +1,11 @@
 <template>
   <div class="container" style="margin-bottom: 30px">
-          <div class="form-group">
-              <v-text-field v-model="newMessage" label="Enter Message..." solo></v-text-field>
+          <div class="form-group d-flex flex-row align-center">
+             <v-text-field v-model="newMessage" placeholder="Type Something" @keypress.enter="createMessage"></v-text-field>
+             <v-btn icon class="ml-4" @click="createMessage"><v-icon>mdi-send</v-icon></v-btn>
               <p class="error-text" v-if="errorText">{{errorText}}</p>
           </div>
-          <div><v-btn depressed color="primary" class="button" @click="createMessage">Submit</v-btn></div>
+          
           
 
   </div>

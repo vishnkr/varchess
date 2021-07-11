@@ -47,6 +47,7 @@ type GameInfo struct{
 	P2 string `json:"p2"`
     Turn string `json:"turn"`
 	RoomId string `json:"roomId"`
+	Members []string `json:"members"`
 }
 
 func (c *Client) CreateRoom(roomId string,startFen string){
@@ -63,7 +64,8 @@ func (c *Client) CreateRoom(roomId string,startFen string){
 	DisplayBoardState(RoomsMap[roomId].Game.Board)
 	RoomsMap[roomId].Clients[c] = true
 	fmt.Println("you are p1")
-	gameInfo:= GameInfo{Type:"gameInfo",P1:c.username,Turn:"w",RoomId: roomId}
+	gameInfo:= GameInfo{Type:"gameInfo",P1:c.username,Turn:"w",RoomId: roomId, Members:[]string{}}
+	gameInfo.Members = append(gameInfo.Members,c.username)
 	marshalledInfo,_ := json.Marshal(gameInfo)
 	RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
 	fmt.Println("rooms",RoomsMap,*RoomsMap[roomId])
@@ -83,14 +85,23 @@ func (c *Client) AddtoRoom(roomId string){
 	if (len(curRoom.Clients) == 1){
 		RoomsMap[roomId].Game.P2 = c
 		fmt.Println("you are p2")
-		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: c.username,Turn:curRoom.Game.Turn,RoomId: roomId}
+		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: c.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
 	} else { 
 		fmt.Println("you are a viewer")
-		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId}
+		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
 	}
+	gameInfo.Members = append(gameInfo.Members,c.username)
+	fmt.Println("mem",gameInfo.Members)
 	RoomsMap[roomId].Clients[c] = true
 	c.roomId = roomId
 	marshalledInfo,_ := json.Marshal(gameInfo)
 	RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
 }
 
+func (room *Room) getClientUsernames() []string{
+	var clientList = []string{}
+	for client,_ := range room.Clients{
+		clientList = append(clientList,client.username)
+	}
+	return clientList
+}

@@ -21,22 +21,51 @@ WS.onmessage = function(msg){
     
         let apiMsg = JSON.parse(msg.data);
         console.log('received message',apiMsg)
-        if(apiMsg.type==="chatMessage"){
-            let msgData = JSON.parse(apiMsg.data);
-            console.log("parsed: ",msgData)
-            if (store.state.chatMessages[msgData.roomId]==undefined){
-                msgData.id=1
-            } else {
-                msgData.id = (store.state.chatMessages[msgData.roomId]).length+1;
+        switch(apiMsg.type){
+            case "chatMessage": {
+                let msgData = JSON.parse(apiMsg.data);
+                console.log("parsed: ",msgData)
+                if (store.state.chatMessages[msgData.roomId]==undefined){
+                    msgData.id=1
+                } else {
+                    msgData.id = (store.state.chatMessages[msgData.roomId]).length+1;
+                }
+                store.commit('addMessage',msgData)
+                break;
             }
-            store.commit('addMessage',msgData)
-        } else if(apiMsg.type==="gameInfo"){
-            console.log('gameInfo',apiMsg)
-            store.commit('updateGameInfo',apiMsg)
-        } else if(apiMsg.type==="performMove"){
-            if(apiMsg.isValid){ //only if move is valid you perform commit
-                store.commit('performMove',apiMsg)
+            case "gameInfo":{
+                console.log('gameInfo',apiMsg)
+                store.commit('updateGameInfo',apiMsg)
+                store.commit('updateClientList',apiMsg)
+                break;
             }
+            case "performMove":{
+                if(apiMsg.isValid){ //only if move is valid you perform commit
+                    store.commit('performMove',apiMsg)
+                }
+                break;
+            }
+            case "clientList":{ //if new client joins or leaves room
+                console.log('clientActivity',apiMsg)
+                var client
+                let msgData = JSON.parse(apiMsg.data);
+                if(msgData.activityType==="join"){
+                    for(client of msgData.clientList){
+                        if(!store.state.roomClients[apiMsg.roomId][client]){
+                            store.commit('addClientToRoom',{roomId:msgData.roomId,username:client})
+                        }
+                    }
+                } else {
+                    for(client of store.state.roomClients[msgData.roomId]){
+                        if(!msgData.clientList.includes(client)){
+                            store.commit('removeClientfromRoom',{roomId:msgData.roomId,username:client})
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                break;
         }
         
     

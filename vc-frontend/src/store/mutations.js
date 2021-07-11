@@ -27,6 +27,7 @@ const mutations ={
       state.gameInfo[payload.roomId].p1 = payload.p1;
       state.gameInfo[payload.roomId].p2 = payload.p2;
       state.gameInfo[payload.roomId].turn = payload.turn;
+      state.gameInfo[payload.roomId].members  = payload.members;
     },
     updateTurn(state){
       state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
