@@ -50,7 +50,7 @@ type GameInfo struct{
 	Members []string `json:"members"`
 }
 
-func (c *Client) CreateRoom(roomId string,startFen string){
+func (c *Client) CreateRoom(roomId string,startFen string) *Room{
 	c.roomId = roomId
 	RoomsMap[roomId] = &Room{
 		Game: &Game{
@@ -69,6 +69,7 @@ func (c *Client) CreateRoom(roomId string,startFen string){
 	marshalledInfo,_ := json.Marshal(gameInfo)
 	RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
 	fmt.Println("rooms",RoomsMap,*RoomsMap[roomId])
+	return RoomsMap[roomId]
 }
 
 func (room *Room) BroadcasToMembers(message []byte){

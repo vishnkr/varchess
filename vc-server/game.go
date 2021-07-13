@@ -22,8 +22,14 @@ type Board struct {
 	Cols  int
 	BlackKing KingPiece
 	WhiteKing KingPiece
+	CustomMovePatterns []MovePatterns
 }
-
+//customMove patterns: {'stringpiece' : {jump:[[]], slide:[[]]}}
+type MovePatterns struct {
+	PieceName string `json:"piece"`
+	JumpPattern [][]int `json:"jumpPattern"`
+	SlidePattern [][]int `json:"slidePattern"`
+}
 
 type Move struct{
 	SrcRow int `json:"srcRow"`
@@ -47,9 +53,16 @@ func DisplayBoardState(board *Board){
 	for i:=0;i<board.Rows;i++{
 		for j:=0;j<board.Cols;j++{
 			if (!board.Tiles[i][j].IsEmpty){
+				//fmt.Println("before custom",board.Tiles[i][j].Piece.CustomPiece)
+				if (board.Tiles[i][j].Piece.CustomPiece!=nil){
+						//fmt.Println("found custom",board.Tiles[i][j].Piece.CustomPiece)
+						piece = board.Tiles[i][j].Piece.CustomPiece.PieceName
+				} else {
+					piece = board.Tiles[i][j].Piece.String()
+				}
 				if (board.Tiles[i][j].Piece.Color == White){
-					piece = strings.ToUpper(board.Tiles[i][j].Piece.String())
-				} else { piece = board.Tiles[i][j].Piece.String()} 
+					piece = strings.ToUpper(piece)
+				}
 			} else{piece = "-"}
 			fmt.Print(piece,board.Tiles[i][j].Id," ")
 		}
@@ -86,6 +99,8 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 			return rookCheck,res
 		case King:
 			return isKingMoveValid(piece,board,move)
+		case Custom:
+			return isCustomMoveValid(piece,board,move)
 
 	}
 	return false,"something's wrong"
@@ -358,7 +373,7 @@ func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 		} else if (Abs(move.SrcRow-move.DestRow)==1 && !piece.isBackwardPawnMove(move)){
 			if (board.IsEmpty(move.DestRow,move.DestCol)){
 				if(move.Promote!=0 && move.DestRow==promoteDestRow){
-					return true,("pawn promoted to "+ string(typeToRuneMap[move.Promote]))
+					return true,"pawn promoted"
 				}
 				return true,"valid single pawn move"
 			} else { 
@@ -380,4 +395,36 @@ func changeTurn(turn string) string{
 	if turn =="w"{
 		return "b"
 	} else { return "w"}
+}
+
+func isCustomMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+	//Check jump moves followed by slide moves
+	var jumpPattern [][]int //,slidePattern [][]int
+	//find pattern for the piece, will change this to a hashmap later
+	for _,movePatterns := range board.CustomMovePatterns{
+		fmt.Println("mp",movePatterns,piece,piece.CustomPiece)
+		if (movePatterns.PieceName == strings.ToLower(piece.CustomPiece.PieceName)){
+			jumpPattern = movePatterns.JumpPattern
+			//slidePattern = movePatterns.SlidePattern
+		}
+	}
+	
+	var rowDiff,colDiff int = move.SrcRow-move.DestRow, move.SrcCol-move.DestCol
+	fmt.Println("diffs",rowDiff,colDiff,jumpPattern)
+	if (len(jumpPattern)!=0){
+		for _, pair := range jumpPattern{
+			fmt.Println("pair",pair)
+			if (pair[0]==rowDiff && pair[1]==colDiff){
+				return true,"valid custom move"
+			}
+		}
+	}
+	/*if (len(slidePattern)!=0){
+		for _, pair := range slidePattern{
+			if (pair[0]==rowDiff && pair[1]==colDiff){
+				//return true,"valid custom move"
+			}
+		}
+	}*/
+	return false,"no"
 }

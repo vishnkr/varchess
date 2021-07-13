@@ -20,6 +20,7 @@ type UserRoomInfo struct{
 	Username string `json:"username"`
 	RoomId string `json:"roomId"`
 	StartFEN string `json:"fen,omitempty"`
+	CustomMovePatterns []MovePatterns `json:"movePatterns,omitempty"`
 }
 
 type ChatMessage struct{
@@ -86,12 +87,14 @@ func (c *Client) Read(){
 				json.Unmarshal([]byte(reqData.Data),&userInfo)
 				c.username = userInfo.Username
 				if (reqData.Type=="createRoom"){
-					c.CreateRoom(userInfo.RoomId,userInfo.StartFEN)
+					room:= c.CreateRoom(userInfo.RoomId,userInfo.StartFEN)
+					if (len(userInfo.CustomMovePatterns)!=0){
+						room.Game.Board.CustomMovePatterns = userInfo.CustomMovePatterns
+					}
 				} else{
 					c.AddtoRoom(userInfo.RoomId)
 				}
 				
-
 			case "chatMessage":
 				chatMessage := ChatMessage{}
 				json.Unmarshal([]byte(reqData.Data),&chatMessage)
@@ -109,8 +112,16 @@ func (c *Client) Read(){
 			case "performMove":
 				move:= &Move{}
 				json.Unmarshal([]byte(reqData.Data),&(move))
+				fmt.Println("movedata",reqData.Data)
 				moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
-				piece:=&Piece{Type: strToTypeMap[strings.ToLower(move.PieceType)]}
+				val,ok := strToTypeMap[strings.ToLower(move.PieceType)]
+				piece:=&Piece{}
+				if (!ok){
+					piece.Type = Custom
+					piece.CustomPiece = &CustomPiece{PieceName:move.PieceType}
+				} else {
+					piece.Type = val
+				}
 				r := []rune(move.PieceType)
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
@@ -171,22 +182,6 @@ const (
 	pingPeriod = (pongWait * 9) / 10 // Send ping interval, must be less then pong wait time
 	maxMessageSize = 10000 // Maximum message size allowed from peer.
 )
-
-
-func ServeWs(wsServer *WsServer,w http.ResponseWriter, r *http.Request){
-	conn, err:= upgrader.Upgrade(w,r,nil)
-	if err!=nil{
-		log.Println(err)
-		return
-	}
-	client:= newClient(conn,wsServer)
-	go client.writeMessage()
-	go client.readMessage()
-	wsServer.register <- client
-	fmt.Println("New Client joined the hub!")
-	fmt.Println(client)
-}
-
 
 func (client *Client) readMessage(){
 	defer func(){

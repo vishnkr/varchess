@@ -122,11 +122,15 @@
 
                               <v-list-item-action>
                                 
-                                <move-pattern-dialog v-if="dialog" v-on:closeDialog="closeDialog" 
+                                <move-pattern-dialog v-if="dialog" 
+                                  v-on:closeDialog="closeDialog" 
+                                  v-on:movePatterns="setMovePattern"
                                   :dialog="dialog"
                                   :editorData="editorData"
                                   :pieceColor="editorData.curPieceColor"
-                                  :pieceType="editorData.customPiece"/>
+                                  :pieceType="editorData.customPiece"
+                                  :ws="ws"
+                                  />
                               </v-list-item-action>
                             </v-list-item>
                             <v-divider></v-divider>
@@ -178,10 +182,14 @@ export default {
     enterRoom(){
       var finalboardState = this.boardState
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
-      createRoom(this.ws,this.roomId,this.username, fenString);
+      createRoom(this.ws,this.roomId,this.username, fenString,this.customMovePatterns);
       this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
     },
 
+    setMovePattern(piece,jumpPattern,slidePattern){
+      this.customMovePatterns.push({piece:piece,jumpPattern:jumpPattern,slidePattern:slidePattern});
+      this.editorData.defined[piece] = true;
+    },
     updateBoardDimensions(){
       this.formatBoardState(this.maxBoardState);
     },
@@ -266,12 +274,12 @@ export default {
   },
   data(){
     return{
-      editorData: {curPieceColor:'white',curPiece:'p',added:{},defined:{'g':true}},
+      editorData: {curPieceColor:'white',curPiece:'p',added:{},defined:{}},
       labels: [5,6,7,8,9,10,11,12,13,14,15,16],
       pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
       customPieces:['a','j','d','i','g','s','u','v','z'],
       pieceMap: {'Pawn':'p','King':'k','Queen':'q','Bishop':'b','Knight':'n','Rook':'r','Custom':'c'},
-      customPieceMap:{},
+      customMovePatterns:[],
       labelRow: 3,
       labelCol: 3,
       change:0,
