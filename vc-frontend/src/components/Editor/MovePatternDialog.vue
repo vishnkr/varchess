@@ -39,12 +39,17 @@
                 :board="boardState"
                 :editorMode="true"
                 :editorData="editData"
+                v-on:setMP="addPattern"
                 />
             </div>
           <div style="padding:10px" class="settings-panel">
                 <v-card class="mx-auto" max-width="550">
-                  <div style="padding:10px">
+                  <div style="padding:10px;">
                     <v-list-item-title >Choose Move Type</v-list-item-title>
+                    <div style="display:flex;">
+                    <span style="margin-right:10px;"><div class='box move-jump' /> Jump</span>
+                    <span style="margin-right:10px;"><div class='box move-slide' /> Slide</span>
+                    </div>
                     <v-radio-group
                       row
                       v-model="moveType"
@@ -52,11 +57,11 @@
                       <v-radio
                         label="Jump"
                         value="jump"
-                      ></v-radio>
+                      />
                       <v-radio
                         label="Slide"
-                        value="slide"
-                      ></v-radio>
+                        value="slide" 
+                        />
                     </v-radio-group>
                 </div>
                 </v-card>
@@ -70,7 +75,7 @@
 import Board from '../Board.vue'
 export default {
     components:{Board},
-    props:['dialog','pieceType','pieceColor','editorData'],
+    props:['dialog','pieceType','pieceColor','editorData','ws'],
     watch:{
       moveType(){
         console.log('got',this)
@@ -86,12 +91,19 @@ export default {
       this.editData.isSetMovement = true
     },
     methods:{
+        addPattern(row,col){
+          if(this.moveType=="jump"){
+            console.log(row-1,col-1,this.piecePos[0]!=row-1 && this.piecePos[1]!=col-1)
+            if(this.piecePos[0]!=row-1 || this.piecePos[1]!=col-1){
+              this.jumpPattern.push([row-this.piecePos[0]-1,col-this.piecePos[1]-1])
+            }
+          }
+        },
         closeDialog(){
             this.$emit("closeDialog")
-            
         },
         savePattern(){
-          //must save move pattern definitions later and then close
+          this.$emit("movePatterns",this.editorData.customPiece,this.jumpPattern,this.slidePattern)
           this.closeDialog()
         },
         isEven(val){return val%2==0},
@@ -120,9 +132,12 @@ export default {
         return{
             rows:9,
             cols:9,
+            piecePos:[4,4],
             boardState: {tiles:[]},
             moveType: 'jump',
-            editData: {...this.editorData}
+            editData: {...this.editorData},
+            jumpPattern: [],
+            slidePattern: [],
         }
     }
 }
@@ -139,4 +154,23 @@ export default {
 .settings-panel{
   flex:1;
 }
+
+.box {
+  float: left;
+  height: 20px;
+  width: 20px;
+  margin-right:10px;
+  margin-bottom: 15px;
+  border: 1px solid black;
+  clear: both;
+}
+
+.move-jump {
+  background-color: #4056b8;
+}
+
+.move-slide {
+  background-color: #ac422a;
+}
+
 </style>

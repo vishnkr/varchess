@@ -5,7 +5,6 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
-	//"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -48,8 +47,6 @@ func ConvertFENtoBoard(fen string) *Board {
 						col++	
 						id+=1
 					}
-					
-				
 				}
 			} else{
 				var color Color
@@ -61,10 +58,16 @@ func ConvertFENtoBoard(fen string) *Board {
 				board.Tiles[rowIndex][col] = Square{
 					IsEmpty:false, 
 					Id:id,
-					Piece: Piece{
-					Type: strToTypeMap[string(unicode.ToLower(char))],
-					Color: color,
-					},
+				}
+				val,ok := strToTypeMap[string(unicode.ToLower(char))]
+				
+				if (!ok){
+					customPiece:=&CustomPiece{PieceName:string(char)}
+					board.Tiles[rowIndex][col].Piece = Piece{Color: color,Type:Custom}
+					board.Tiles[rowIndex][col].Piece.CustomPiece = customPiece
+				} else {
+					board.Tiles[rowIndex][col].Piece = Piece{Color: color,Type:val}
+					board.Tiles[rowIndex][col].Piece.Type = val
 				}
 				col++
 				id+=1
@@ -77,6 +80,7 @@ func ConvertFENtoBoard(fen string) *Board {
 
 func ConvertBoardtoFEN(board *Board) string{
 	var fen bytes.Buffer
+	var name string
 	for row:=0;row<board.Rows; row++{
 		var empty int = 0
 		for col:=0;col<board.Cols;col++{
@@ -88,12 +92,13 @@ func ConvertBoardtoFEN(board *Board) string{
 					fen.WriteString(str)
 					empty=0
 				}
+				if (board.Tiles[row][col].Piece.Type==Custom){
+					name = board.Tiles[row][col].Piece.CustomPiece.PieceName
+				} else { name = typeToStrMap[board.Tiles[row][col].Piece.Type]}
 				if (board.Tiles[row][col].Piece.Color==White){
-					fen.WriteString(string(unicode.ToUpper(typeToRuneMap[board.Tiles[row][col].Piece.Type])))
-				} else{
-					fen.WriteString(string(typeToRuneMap[board.Tiles[row][col].Piece.Type]))
+					name = strings.ToUpper(name)
 				}
-				
+				fen.WriteString(name)
 			}
 			
 		}

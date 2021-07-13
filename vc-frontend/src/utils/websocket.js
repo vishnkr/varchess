@@ -80,9 +80,13 @@ export function sendJSONReq(socket,type,msg){
     
   }
 
-export function createRoom(socket,roomId,username,standardFen){
+export function createRoom(socket,roomId,username,standardFen,customMovePatterns){
     console.log('executing create',standardFen)
+    if(Object.keys(customMovePatterns).length != 0){
+        sendJSONReq(socket,'createRoom',{roomId:roomId, username:username, fen:standardFen, movePatterns:customMovePatterns});
+    } else {
     sendJSONReq(socket,'createRoom',{roomId:roomId, username:username, fen:standardFen});
+    }
 }
 
 export function joinRoom(socket,roomId,username){

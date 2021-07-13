@@ -52,11 +52,8 @@ export default {
         if (type=="regular"){
           this.editorModeSquareClicked(row,col)
         } else {
-          this.movementSet()
+          this.$emit('setMP',row,col)
         }
-      },
-      movementSet(){
-        
       },
       editorModeSquareClicked(row,col){
         if(this.boardState.tiles[row-1][col-1].isPiecePresent){
@@ -80,7 +77,6 @@ export default {
           this.boardState.tiles[moveInfo.destRow][moveInfo.destCol] = {isPiecePresent:true, pieceType:moveInfo.piece.toLowerCase(),pieceColor:moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'}
           this.board.tiles[moveInfo.srcRow][moveInfo.srcCol]= {isPiecePresent:false, pieceType:null,pieceColor:null}
           if(moveInfo.castle){
-            console.log('castling')
             var newRookPos,oldRookPos
             if(moveInfo.destCol<moveInfo.srcCol){
               oldRookPos = 0;
@@ -147,7 +143,6 @@ export default {
               this.boardState1D.push(stack.pop())
             }
           }
-          //console.log('1d',this.boardState1D)
       },
         isEven(val){return val%2==0},
         isLight(row,col){

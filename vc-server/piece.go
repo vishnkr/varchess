@@ -27,6 +27,11 @@ const (
 type Piece struct{
 	Type Type
 	Color Color
+	CustomPiece *CustomPiece
+}
+
+type CustomPiece struct{
+	PieceName string
 }
 
 type SqColor uint8 
@@ -80,12 +85,19 @@ func (piece Piece) isBackwardPawnMove(move *Move) bool{
 	return false
 }
 
-var typeToRuneMap = map[Type]rune{Pawn:'p', Knight:'n', Bishop:'b', Rook:'r', Queen:'q', King:'k'}
+//var typeToRuneMap = map[Type]rune{Pawn:'p', Knight:'n', Bishop:'b', Rook:'r', Queen:'q', King:'k'}
+var typeToStrMap = map[Type]string{Pawn:"p", Knight:"n", Bishop:"b", Rook:"r", Queen:"q", King:"k"}
 var strToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
 
 func (board *Board) isPieceStartPosValid(piece *Piece, row int, col int) bool{
 	//fmt.Println("at row",row,"col",col,"color",piece.Color,"type",piece.Type)
-	return  board.getPieceColor(row,col) == piece.Color && board.Tiles[row][col].Piece.Type == piece.Type
+	var validType bool
+	if (board.Tiles[row][col].Piece.Type == Custom){
+		validType = board.Tiles[row][col].Piece.CustomPiece.PieceName == piece.CustomPiece.PieceName
+	} else {
+		validType = board.Tiles[row][col].Piece.Type == piece.Type
+	}
+	return  board.getPieceColor(row,col) == piece.Color && validType
 }
 
 func (board *Board) getPieceColor(row int,col int) Color{

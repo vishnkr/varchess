@@ -124,13 +124,7 @@ export default {
         return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
 
     getStandardBoard(){
-      var board = convertFENtoBoardState(this.standardFen)
-      for (var row =0;row<8;row++){
-        for (var col=0;col<8;col++){
-          board.tiles[row][col].tileType = this.isLight(col,row)? 'l' : 'd';
-        }
-      }
-      return board
+      return {...convertFENtoBoardState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"), rows:8,cols:8}
     },
     async enterRoom(){
       if(this.username){
@@ -156,7 +150,6 @@ export default {
   data:()=>{
     return {
       createClicked: false,
-      standardFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1",
       errorText: null,
       mode:'standard',
       username: null,
