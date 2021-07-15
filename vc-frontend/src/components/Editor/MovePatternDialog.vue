@@ -36,6 +36,7 @@
           <div class="flex-panels">
             <div style="padding:10px" class="board-panel">
                 <board 
+                ref="MPBoard" 
                 :board="boardState"
                 :editorMode="true"
                 :editorData="editData"
@@ -63,6 +64,11 @@
                         value="slide" 
                         />
                     </v-radio-group>
+                    <v-divider></v-divider>
+                    <div v-if="moveType=='slide'">
+                      <v-checkbox v-model="slideDirections" v-for="(val,key) in directions" :key="key" :value="val" :label="key" />
+                    </div>
+
                 </div>
                 </v-card>
             </div>
@@ -80,6 +86,9 @@ export default {
       moveType(){
         console.log('got',this)
         this.editData.moveType = this.moveType
+      },
+      slideDirections(){
+        this.$refs.MPBoard.setSlidePattern(this.slideDirections)
       }
     },
     computed:{
@@ -89,6 +98,7 @@ export default {
       this.setupMPBoard()
       this.editData.moveType = this.moveType
       this.editData.isSetMovement = true
+      this.editData.piecePos = this.piecePos
     },
     methods:{
         addPattern(row,col){
@@ -103,7 +113,7 @@ export default {
             this.$emit("closeDialog")
         },
         savePattern(){
-          this.$emit("movePatterns",this.editorData.customPiece,this.jumpPattern,this.slidePattern)
+          this.$emit("movePatterns",this.editorData.customPiece,this.jumpPattern,this.slideDirections)
           this.closeDialog()
         },
         isEven(val){return val%2==0},
@@ -135,11 +145,12 @@ export default {
             piecePos:[4,4],
             boardState: {tiles:[]},
             moveType: 'jump',
+            slideDirections:[],
+            directions: {'North':[-1,0],'South':[1,0],'East':[0,1],'West':[0,-1],'North East':[-1,1], 'North West':[-1,-1], 'South East':[1,1], 'South West':[1,-1]},
             editData: {...this.editorData},
             jumpPattern: [],
-            slidePattern: [],
         }
-    }
+    },
 }
 </script>
 

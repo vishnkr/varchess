@@ -2,6 +2,7 @@
   <div :style="cssVar" id='board-container'>
       <div id="board">
         <board-square v-for="square in this.boardState1D"  :key="square.tileId" 
+        ref="squares"
         :tileType="square.tileType" 
         :isPiecePresent="square.isPiecePresent" 
         :tileId="square.tileId"
@@ -12,7 +13,7 @@
         :x="square.x" :y="square.y" 
         :row="square.row" :col="square.col"  
         :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
-        :isSelectedSrc="selectedSrc?true:false"
+        :selectedSrc="selectedSrc"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
         v-on:setEditorBoardState="handleEditorSquareClick"
@@ -26,7 +27,7 @@
 import BoardSquare from './BoardSquare.vue';
 export default {
   components: { BoardSquare },
-  props:['board','isflipped','playerColor',"editorMode","editorData",],
+  props:['board','isflipped','playerColor',"editorMode","editorData","boardSize"],
   watch: { 
     isflipped() { // watch it
           this.updateBoardState1D(this.isflipped)
@@ -53,6 +54,24 @@ export default {
           this.editorModeSquareClicked(row,col)
         } else {
           this.$emit('setMP',row,col)
+        }
+      },
+      setSlidePattern(slideDirections){
+        var tileIDs = []
+        for(var i = 0;i<this.boardState1D.length;i++){
+          this.$refs.squares[i].removeColorFromSquare()
+        }
+        for (var direction of slideDirections){
+          var row = this.editorData.piecePos[0]+direction[0]
+          var col = this.editorData.piecePos[1]+direction[1]
+          while(row<this.boardState.rows && row>=0 && col<this.boardState.cols && col>=0){
+            tileIDs.push(this.boardState.tiles[row][col].tileId)
+            row+=direction[0]
+            col+=direction[1]
+          }
+        } 
+        for(i=0;i<tileIDs.length;i++){
+          this.$refs.squares[tileIDs[i]].addColorToSquare('slide')
         }
       },
       editorModeSquareClicked(row,col){
@@ -129,7 +148,6 @@ export default {
                 }
                 else{
                 this.boardState1D.push(tile);
-                
                 }
               }
               x+=1
@@ -151,8 +169,7 @@ export default {
     computed:{
       cssVar(){
         return {
-        '--sizex': this.rows,
-        '--sizey': this.cols,
+        '--container_size': this.boardSize ? `${this.boardSize}px` : `${700}px`,
         '--size': Math.max(this.rows,this.cols),
         }
       }
@@ -163,9 +180,9 @@ export default {
 <style >
 #board-container{
 
-    max-width: 700px;
+    max-width: var(--container_size);
     width:100%;
-    max-height: 700px;
+    max-height: var(--container_size);
 
 }
 

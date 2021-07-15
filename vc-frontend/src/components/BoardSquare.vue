@@ -16,28 +16,30 @@ import BoardPiece from './BoardPiece'
 export default {
     components:{BoardPiece},
     methods:{
+      addColorToSquare(moveType){
+        this.addColor = moveType
+      },
+      removeColorFromSquare(){
+        console.log('col',this.addColor)
+        this.addColor= this.addColor==='jump'? 'jump' : null;
+        },
       clickSquare(){
+        var pieceType;
         if(this.editorMode){
-          console.log('edi',this.editorData)
           var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
           if (this.editorData.isSetMovement){ 
-            console.log('reachin here')
             this.addColor = this.addColor ? null : this.editorData.moveType
-            console.log(this.addColor)
           }
           this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
-        if(!this.isSelectedSrc){ // start pos is selected
-          if(this.isPiecePresent){
-              var pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
+          if(this.isPiecePresent & (!this.selectedSrc || this.selectedSrc && this.selectedSrc.pieceColor == (this.pieceColor=='white' ? 'w':'b') && this.selectedSrc.id!=this.tileId)){ // start pos is selected
+              pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
               this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
-          }
-        } else { // dest pos is selected
+          } else { // dest pos is selected
           if(this.$store.state.curStartPos.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
               this.$store.commit('undoSelection')
               this.$emit("sendSelectedPiece",null)
-            } 
-            else{
+            } else{
               if(this.isPiecePresent){
                 this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
               } else{
@@ -53,7 +55,7 @@ export default {
         addColor:null,
       }
     },
-    props:['tileType','editorMode','editorData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','isSelectedSrc'],
+    props:['tileType','editorMode','editorData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','selectedSrc'],
     computed:{
         cssVar(){
         return {

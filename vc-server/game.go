@@ -399,13 +399,14 @@ func changeTurn(turn string) string{
 
 func isCustomMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	//Check jump moves followed by slide moves
-	var jumpPattern [][]int //,slidePattern [][]int
+	var jumpPattern,slidePattern [][]int
 	//find pattern for the piece, will change this to a hashmap later
 	for _,movePatterns := range board.CustomMovePatterns{
 		fmt.Println("mp",movePatterns,piece,piece.CustomPiece)
 		if (movePatterns.PieceName == strings.ToLower(piece.CustomPiece.PieceName)){
 			jumpPattern = movePatterns.JumpPattern
-			//slidePattern = movePatterns.SlidePattern
+			slidePattern = movePatterns.SlidePattern
+			break
 		}
 	}
 	
@@ -415,16 +416,23 @@ func isCustomMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 		for _, pair := range jumpPattern{
 			fmt.Println("pair",pair)
 			if (pair[0]==rowDiff && pair[1]==colDiff){
-				return true,"valid custom move"
+				return true,"valid custom jump move"
 			}
 		}
 	}
-	/*if (len(slidePattern)!=0){
-		for _, pair := range slidePattern{
-			if (pair[0]==rowDiff && pair[1]==colDiff){
-				//return true,"valid custom move"
+
+	for _, direction := range slidePattern{
+		var rowOffset,colOffset int = direction[0], direction[1]
+		var tempRow,tempCol int = move.SrcRow+rowOffset, move.SrcCol+colOffset
+		for (tempRow>=0 && tempCol >=0 && tempRow<board.Rows && tempCol<board.Cols){
+			if (tempRow==move.DestRow && tempCol==move.DestCol){
+				return true,"valid custom slide move"
+			} else if (!board.IsEmpty(tempRow,tempCol)){ break } else{
+				tempRow+=rowOffset
+				tempCol+=colOffset
 			}
 		}
-	}*/
+	}
+	
 	return false,"no"
 }
