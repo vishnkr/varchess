@@ -23,7 +23,6 @@ export default {
     name:'Board',
     methods:
     {
-      
       squareClicked(row,col){
         
         if(this.boardState.tiles[row-1][col-1].isPiecePresent){

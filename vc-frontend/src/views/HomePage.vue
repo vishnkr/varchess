@@ -135,7 +135,7 @@ export default {
           if(this.mode=='custom'){
             this.$router.push({name:'Editor',params:{username: this.username,roomId: this.roomId, ws: this.ws}})
           }else{
-            createRoom(this.ws,this.roomId,this.username, this.standardFen);
+            createRoom(this.ws,this.roomId,this.username, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1");
             this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, ws: this.ws, boardState: this.getStandardBoard()}})
           }
         }, (error) => {

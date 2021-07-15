@@ -138,7 +138,7 @@ export default {
 <style scoped>
 .columns{
   display: flex;
-
+  margin-bottom: 2em;
 }
 .centered-input input {
   text-align: center;
