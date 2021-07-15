@@ -17,6 +17,20 @@
     <v-main>
       <router-view :shared="shared"/>
     </v-main>
+    <v-footer padless>
+    <v-col
+      class="text-center"
+      cols="12"
+    >
+      <a href="https://github.com/vishnkr/varchess" data-size="large">
+       <v-icon>fab fa-github</v-icon>
+      </a>
+      <span> Licensed by <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPLv3</a>.</span>
+      
+       <strong>Varchess</strong> by vishnkr - {{ new Date().getFullYear() }} 
+      
+    </v-col>
+  </v-footer>
   </v-app>
 </template>
 
@@ -32,3 +46,9 @@ export default {
   }),
 };
 </script>
+
+<style scoped>
+a:-webkit-any-link{
+text-decoration:none !important;
+}
+</style>
