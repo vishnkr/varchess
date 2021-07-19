@@ -65,6 +65,9 @@ export default {
       else if(mutation.type === "performMove"){
         this.$refs.gameBoard.performMove(this.$store.state.currentMove)
       }
+      else if(mutation.type==="websocketError"){
+        this.error = state.errorMessage;
+      }
     })
     
   },

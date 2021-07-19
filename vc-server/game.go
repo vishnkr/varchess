@@ -79,7 +79,7 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 		fmt.Println(board.getPieceColor(move.SrcRow,move.SrcCol),board.getPieceColor(move.DestRow,move.DestCol))
 		return false,"same color piece at dest"
 	}
-	if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovery check"}
+	if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovered check"}
 	switch piece.Type{
 		case Rook: 
 			return isRookMoveValid(piece,board,move)
@@ -116,7 +116,11 @@ func (board *Board) performMove(piece *Piece,move *Move){
 	if (piece.Type==King){
 		if (piece.Color==Black){
 			board.BlackKing.HasMoved = true
-		} else {board.WhiteKing.HasMoved=true}
+			board.WhiteKing.Position = []int{move.DestRow,move.DestCol}
+		} else {
+			board.WhiteKing.Position = []int{move.DestRow,move.DestCol}
+			board.WhiteKing.HasMoved=true
+		}
 	}
 	if (move.Castle){
 		var oldRookPos, newRookPos int
@@ -140,12 +144,10 @@ func (board *Board) performMove(piece *Piece,move *Move){
 
 func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
 	//get opponent attacking squares, if king is present in that then it causes discovery check
-	//squareId : bool hashmap 
 	var copyBoard *Board = deepCopyBoard(board)
 	copyBoard.performMove(piece,move)
 	DisplayBoardState(copyBoard)
-	//copyBoard.isKingUnderCheck(piece,)
-	return false
+	return copyBoard.isKingUnderCheck(piece.Color)
 }
 
 // getSquaresAttackedBy returns a collection of squares attacked by pieces of the given color
@@ -161,10 +163,16 @@ func (board *Board) getSquaresAttackedBy(color Color) map[int]bool{
 	return attackedSquares
 }
 
-func (board *Board) isKingUnderCheck(piece *Piece,squareId int) bool{
-	opponentCol := piece.getOpponentColor()
+func (board *Board) isKingUnderCheck(color Color) bool{
+	var kingPos []int
+	opponentCol := getOpponentColor(color)
 	attackedSquares := board.getSquaresAttackedBy(opponentCol)
-	if _,underAttack := attackedSquares[squareId]; underAttack{
+	if (color==White){
+		kingPos = board.WhiteKing.Position
+	} else {
+		kingPos = board.BlackKing.Position
+	}
+	if _,underAttack := attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id]; underAttack{
 		return true
 	} 
 	return false
@@ -230,7 +238,7 @@ func(board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 			y := srcCol + i*yOffset;
 			if (board.isSquareInBoardRange(x,y) && board.IsEmpty(x,y) ){
 				attackedSquares[board.Tiles[x][y].Id] = true
-			} else if (board.isSquareInBoardRange(x,y) && board.Tiles[x][y].Piece.Type == King && board.Tiles[x][y].Piece.Color == piece.getOpponentColor()){
+			} else if (board.isSquareInBoardRange(x,y) && board.Tiles[x][y].Piece.Type == King && board.Tiles[x][y].Piece.Color == getOpponentColor(piece.Color)){
 				attackedSquares[board.Tiles[x][y].Id] = true
 				break
 			}else { break}
@@ -245,7 +253,7 @@ func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquar
 		for i:=srcCol+xOffset;i>=0 && i<board.Cols;i+=xOffset{
 			if (board.IsEmpty(srcRow,i)){
 				attackedSquares[board.Tiles[srcRow][i].Id] = true
-			} else if (board.Tiles[srcRow][i].Piece.Type == King && board.Tiles[srcRow][i].Piece.Color == piece.getOpponentColor()){
+			} else if (board.Tiles[srcRow][i].Piece.Type == King && board.Tiles[srcRow][i].Piece.Color == getOpponentColor(piece.Color)){
 				attackedSquares[board.Tiles[srcRow][i].Id] = true
 				break
 			} else{break}
@@ -256,7 +264,7 @@ func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquar
 		for i :=srcRow+yOffset;i>=0 && i<board.Rows;i+=yOffset{
 			if (board.IsEmpty(i,srcCol)){
 				attackedSquares[board.Tiles[i][srcCol].Id] = true
-			} else if (board.Tiles[i][srcCol].Piece.Type == King && board.Tiles[i][srcCol].Piece.Color == piece.getOpponentColor()){
+			} else if (board.Tiles[i][srcCol].Piece.Type == King && board.Tiles[i][srcCol].Piece.Color == getOpponentColor(piece.Color)){
 				attackedSquares[board.Tiles[i][srcCol].Id] = true
 				break
 			} else {break}
@@ -266,27 +274,33 @@ func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquar
 
 // isKingMoveValid handles all logic to determine if a king move is valid
 func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
-	if (move.Castle && !board.hasKingMoved(piece.Color)){
-		if (move.SrcRow==move.DestRow){
-			var tile int 
-			if (move.SrcCol+2==move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type==Rook){ //castle to the right
-				tile= move.SrcCol+1
-				for (tile<board.Cols-1){
-					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
-					tile+=1
-				}
-				return true, "valid castle"
-			} else if (move.SrcCol-2==move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type==Rook){
-				tile= move.SrcCol-1
-				for tile>0{
-					if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
-					tile-=1
-				}
-				return true, "valid castle"
-			} else {return false,"invalid castle dest"}
+	if (move.Castle){
+		if (!board.hasKingMoved(piece.Color)){
+			if (move.SrcRow==move.DestRow){
+				var tile int 
+				if (move.SrcCol+2==move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type==Rook){ //castle to the right
+					tile= move.SrcCol+1
+					for (tile<board.Cols-1){
+						if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
+						tile+=1
+					}
+					return true, "valid castle"
+				} else if (move.SrcCol-2==move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type==Rook){
+					tile= move.SrcCol-1
+					for tile>0{
+						if (!board.Tiles[move.SrcRow][tile].IsEmpty){return false,"castle path blocked"}
+						tile-=1
+					}
+					return true, "valid castle"
+				} else {return false,"invalid castle dest"}
+			}
+		} else {return false,"king has already moved"}
+	} else{
+		if (Abs(move.SrcRow-move.DestRow)<=1 && Abs(move.SrcCol-move.DestCol)<=1){
+			return true,"valid king move"
 		}
-	} else if (move.Castle && board.hasKingMoved(piece.Color)) {return false,"king has already moved"}
-	return true,"valid king move"
+	}
+	return false,"invalid king move"
 }
 
 func (board* Board) hasKingMoved(color Color) bool{

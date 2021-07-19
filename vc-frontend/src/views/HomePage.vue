@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+   
     <div class="info-card">
       <v-card class="mx-auto"
     max-width="344">
@@ -52,7 +53,6 @@
               color="primary"
               dark
             ><h3>Choose Game Setup</h3></v-toolbar>
-              <span class="errorText" v-if="errorText">{{errorText}}</span>
             <v-card-actions class="justify-end">
               <v-radio-group
                     v-model="mode"
@@ -100,8 +100,14 @@ export default {
   props:['shared'],
   mounted: function() {
     this.$store.commit('resetState');
-      
-      },
+    this.$store.subscribe((mutation, state) => {
+       if(mutation.type==="websocketError"){
+         console.log('rech')
+        this.errorText = state.errorMessage;
+      }
+     })
+  },
+  
   methods:{
     checkUsername(){
       if(!this.username || this.username==''){
@@ -128,7 +134,7 @@ export default {
     },
     async enterRoom(){
       if(this.username){
-        await axios.post('http://localhost:5000/getRoomId')
+        await axios.post(`${this.server_host}/getRoomId`)
         .then((response) => {
           this.roomId = response.data.data;
           this.connectToWebsocket()
@@ -155,8 +161,8 @@ export default {
       username: null,
       ws: null,
       dialog: false,
-      serverUrl: "ws://localhost:5000/ws",
       roomId: null,
+      server_host: process.env.VUE_APP_SERVER_HOST,
     }
   }
 }

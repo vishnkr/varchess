@@ -51,6 +51,9 @@ const mutations ={
       //after move
       state.curStartPos = null
       state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
+    },
+    websocketError(state,errorMessage){
+      state.errorMessage = errorMessage;
     }
 }
 

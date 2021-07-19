@@ -5,7 +5,8 @@
 */
 //import WebSocket from 'reconnecting-websocket';
 import store from "../store"
-const WS = new WebSocket('ws://localhost:5000/ws');
+const server_host = process.env.VUE_APP_SERVER_WS;
+const WS = new WebSocket(`${server_host}/ws`);
 
 
 let msgQueue = [];
@@ -16,6 +17,10 @@ WS.onopen = function(){
         console.log('msg',msgQueue)
         WS.send(msgQueue.pop())
     }
+}
+WS.onerror = function(){
+    console.log('got error')
+    store.commit('websocketError','Connection to server could not be established! Try again soon!')
 }
 WS.onmessage = function(msg){
     
@@ -31,6 +36,10 @@ WS.onmessage = function(msg){
                     msgData.id = (store.state.chatMessages[msgData.roomId]).length+1;
                 }
                 store.commit('addMessage',msgData)
+                break;
+            }
+            case "error":{
+                store.commit('websocketError',apiMsg.data)
                 break;
             }
             case "gameInfo":{

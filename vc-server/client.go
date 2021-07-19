@@ -107,6 +107,12 @@ func (c *Client) Read(){
 							}
 						}
 					}
+				} else {
+					fmt.Println("Room close")
+					message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
+					if errMessage,err:= json.Marshal(message); err==nil{
+						c.send <- errMessage
+					}
 				}		
 				
 			case "performMove":
@@ -149,12 +155,20 @@ func (c *Client) Read(){
 						game.Turn = changeTurn(game.Turn)
 					}
 					fmt.Println("move valid:",res,reason)
-				}
+					response:= Response{Status:"successful"}
+					marshalledMessage,_ := json.Marshal(response)
+					c.send <- marshalledMessage
+				} 
+				if !ok {
+					fmt.Println("Room close")
+					message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
+					if errMessage,err:= json.Marshal(message); err==nil{
+						c.send <- errMessage
+					}
+				}	
 				
 		}
-		response:= Response{Status:"successful"}
-		marshalledMessage,_ := json.Marshal(response)
-		c.send <- marshalledMessage
+		
 	}
 }
 

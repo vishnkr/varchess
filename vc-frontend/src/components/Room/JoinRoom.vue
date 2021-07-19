@@ -31,7 +31,10 @@ export default {
       },
     methods:{
       async getBoardFen() {
-        await axios.get(`http://localhost:5000/getBoardFen/${this.roomId}`).then((response)=>{
+        await axios.get(`${this.server_host}/getBoardFen/${this.roomId}`).then((response)=>{
+          if(response.data.type && response.data.type=="error"){
+            this.$store.commit('websocketError',response.data.data)
+          } else {
           console.log('got fen',response.data.Fen)
           this.boardState = convertFENtoBoardState(response.data.Fen)
           this.boardState.rows  = this.boardState.tiles.length
@@ -43,6 +46,7 @@ export default {
               this.boardState.tiles[row][col].tileId = id;
               id+=1;
             }
+          }
           }
         });
       },
@@ -63,8 +67,8 @@ export default {
             boardState: null,
             username: null,
             roomId: this.$route.params.roomId,
-            serverUrl: "ws://localhost:5000/ws",
             ws:null,
+            server_host: process.env.VUE_APP_SERVER_HOST,
         }
     }
 }

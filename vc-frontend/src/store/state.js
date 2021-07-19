@@ -8,6 +8,7 @@ const state = {
     clientInfo: {},
     roomClients:{},
     turn: 'w',
+    errorMessage:null,
 }
 
 export default state

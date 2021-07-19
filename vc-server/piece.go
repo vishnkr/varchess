@@ -50,6 +50,7 @@ type Square struct{
 type KingPiece struct{
 	HasMoved bool
 	InCheck bool
+	Position []int
 }
 
 func (p Piece) String() string {
@@ -107,8 +108,8 @@ func (board *Board) getPieceColor(row int,col int) Color{
 	return EmptyTile
 }	
 
-func (piece *Piece) getOpponentColor() Color{
-	if (piece.Color==White){
+func getOpponentColor(color Color) Color{
+	if (color==White){
 		return Black
 	}else{
 		return White
