@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
+	//"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -68,6 +69,13 @@ func ConvertFENtoBoard(fen string) *Board {
 				} else {
 					board.Tiles[rowIndex][col].Piece = Piece{Color: color,Type:val}
 					board.Tiles[rowIndex][col].Piece.Type = val
+					if (val==King){
+						if (color==Black){
+							board.BlackKing.Position = []int{rowIndex,col}
+						} else {
+							board.WhiteKing.Position = []int{rowIndex,col}
+						}
+					}
 				}
 				col++
 				id+=1

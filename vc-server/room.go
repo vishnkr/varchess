@@ -81,22 +81,29 @@ func (room *Room) BroadcasToMembers(message []byte){
 func (c *Client) AddtoRoom(roomId string){
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	curRoom:= RoomsMap[roomId]
-	var gameInfo GameInfo
-	if (len(curRoom.Clients) == 1){
-		RoomsMap[roomId].Game.P2 = c
-		fmt.Println("you are p2")
-		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: c.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
-	} else { 
-		fmt.Println("you are a viewer")
-		gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
-	}
-	gameInfo.Members = append(gameInfo.Members,c.username)
-	fmt.Println("mem",gameInfo.Members)
-	RoomsMap[roomId].Clients[c] = true
-	c.roomId = roomId
-	marshalledInfo,_ := json.Marshal(gameInfo)
-	RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
+	if curRoom, ok:= RoomsMap[roomId];ok{
+		var gameInfo GameInfo
+		if (len(curRoom.Clients) == 1){
+			RoomsMap[roomId].Game.P2 = c
+			fmt.Println("you are p2")
+			gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: c.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
+		} else { 
+			fmt.Println("you are a viewer")
+			gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
+		}
+		gameInfo.Members = append(gameInfo.Members,c.username)
+		fmt.Println("mem",gameInfo.Members)
+		RoomsMap[roomId].Clients[c] = true
+		c.roomId = roomId
+		marshalledInfo,_ := json.Marshal(gameInfo)
+		RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
+	} else {
+		fmt.Println("Room close")
+		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
+		if errMessage,err:= json.Marshal(message);err==nil{
+			c.send <- errMessage
+		}
+	}	
 }
 
 func (room *Room) getClientUsernames() []string{

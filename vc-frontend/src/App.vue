@@ -15,7 +15,15 @@
     </v-app-bar>
 
     <v-main>
-      <router-view :shared="shared"/>
+       <v-alert v-if="errorText"
+                  border="right"
+                  colored-border
+                  type="error"
+                  elevation="2"
+                >
+                  {{errorText}}
+    </v-alert>
+      <router-view/>
     </v-main>
     <v-footer padless>
     <v-col
@@ -35,15 +43,23 @@
 </template>
 
 <script>
-
+import WS from '../src/utils/websocket'
 export default {
   name: 'App',
-
-  data: () => ({
-    shared: {
-      username: null,
+  mounted(){
+    this.$store.subscribe((mutation, state) => {
+       if(mutation.type==="websocketError"){
+         console.log('rech')
+        this.errorText = state.errorMessage;
+      }
+     })
+  },
+  data(){
+    return {
+      ws : WS,
+      errorText: null,
     }
-  }),
+  },
 };
 </script>
 

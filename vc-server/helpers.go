@@ -30,6 +30,8 @@ func deepCopyBoard(board *Board) *Board{
             copy.Tiles[i][j].Id = board.Tiles[i][j].Id
             copy.Tiles[i][j].Piece = board.Tiles[i][j].Piece
             copy.Tiles[i][j].IsEmpty = board.Tiles[i][j].IsEmpty
+            copy.BlackKing = board.BlackKing
+            copy.WhiteKing = board.WhiteKing
         }
     }
     return copy

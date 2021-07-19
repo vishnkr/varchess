@@ -25,7 +25,7 @@ func main(){
 	router := mux.NewRouter()
     router.HandleFunc("/getRoomId", roomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}",boardStateHandler).Methods("GET","OPTIONS")
-	router.HandleFunc("/", rootHandler)
+	//router.HandleFunc("/", rootHandler)
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
@@ -55,11 +55,16 @@ func boardStateHandler(w http.ResponseWriter, r *http.Request) {
     } else {
         params:= mux.Vars(r)
 	id:= params["roomId"]
-	response:= BoardState{
-		Fen: ConvertBoardtoFEN(RoomsMap[id].Game.Board),
-		RoomId: id,
+	if room, ok := RoomsMap[id]; ok {
+		response:= BoardState{
+			Fen: ConvertBoardtoFEN(room.Game.Board),
+			RoomId: id,
+		}
+		json.NewEncoder(w).Encode(response)
+	} else { 
+		errResponse:= MessageStruct{Type:"error",Data:"Room does not exist/has been closed"}
+		json.NewEncoder(w).Encode(errResponse)
 	}
-	json.NewEncoder(w).Encode(response)
     }
 	
 }
