@@ -1,3 +1,33 @@
-VarChess
+# Varchess
+## Overview
+Varchess is a multiplayer chess website where you can create your own chess variants. Customizations include variable board dimensions, piece placements, custom pieces and movement patterns.
 
-Create custom chess variants and play with friends!
+#### Built using Vue.js (frontend), Go (websocket server and game logic).
+
+#### LIVE LINK - https://varchess.tech/
+
+
+![Editor](https://i.imgur.com/F6xPlhS.png)
+
+
+![Game Room](https://i.imgur.com/PB2iVmT.png)
+
+## Running Locally
+Clone this project and cd into the local repo.
+```
+git clone git@github.com:vishnkr/varchess.git
+```
+To run the application using Docker (docker-compose):
+
+Ignore --build flag after first run
+```
+docker-compose up --build 
+```
+To stop the containers:
+```
+docker-compose down
+```
+The web app will be running locally at localhost:8080
+
+## License
+[GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
