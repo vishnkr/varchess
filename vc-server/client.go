@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 	//"log"
+	"time"
 	"fmt"
 	"encoding/json"
 )
@@ -70,6 +71,13 @@ func (c *Client) disconnect() {
 	c.wsServer.unregister <- c
 }
 
+
+const (
+	writeWait = 10*time.Second
+	pongWait = 40*time.Second
+	pingTime = (pongWait*9)/10
+)
+
 func (c *Client) Read(){
 	defer c.disconnect()
 	//var response []byte
@@ -77,6 +85,12 @@ func (c *Client) Read(){
 		_, msg, err:= c.conn.ReadMessage()
 		if err!=nil{
 			return
+		}
+		if (string(msg)=="pong"){
+			c.conn.SetReadDeadline(time.Now().Add(pongWait))
+			fmt.Println("got pong")
+			c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+			continue
 		}
 		reqData:= MessageStruct{}
 		json.Unmarshal([]byte(msg),&reqData)
@@ -174,18 +188,31 @@ func (c *Client) Read(){
 
 
 func (c *Client) Write(){
-	defer c.disconnect()
+	ticker := time.NewTicker(pingTime)
+	defer func() {
+		ticker.Stop()
+		c.disconnect()
+	}()
 	for {
-		msg,ok := <- c.send
-		if !ok{
-			// The WsServer closed the channel.
-			c.conn.WriteMessage(websocket.CloseMessage, []byte("closing"))
-			return
+		select {
+		case msg,ok := <- c.send:
+				if !ok{
+					// The WsServer closed the channel.
+					c.conn.WriteMessage(websocket.CloseMessage, []byte("closing"))
+					return
+				}
+				err := c.conn.WriteMessage(websocket.TextMessage, msg) 
+				if err != nil { 
+				return 
+				} 
+			case <-ticker.C:
+				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				fmt.Println("ping time",c.username,c)
+				if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
+					
+					return
+				}
 		}
-		err := c.conn.WriteMessage(websocket.TextMessage, msg) 
-		if err != nil { 
-		return 
-		} 
 	}
 }
 
