@@ -1,4 +1,5 @@
 # Varchess
+![GitHub](https://img.shields.io/github/license/vishnkr/varchess)
 ## Overview
 Varchess is a multiplayer chess website where you can create your own chess variants. Customizations include variable board dimensions, piece placements, custom pieces and movement patterns.
 
@@ -28,6 +29,3 @@ To stop the containers:
 docker-compose down
 ```
 The web app will be running locally at localhost:8080
-
-## License
-[GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
