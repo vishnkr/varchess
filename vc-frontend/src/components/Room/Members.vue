@@ -3,7 +3,6 @@
       <v-card
         class="mx-auto"
         tile
-        elevation="2"
       >
         <div class="member-container">
         <v-list>

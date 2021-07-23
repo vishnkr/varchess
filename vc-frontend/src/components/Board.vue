@@ -14,6 +14,7 @@
         :row="square.row" :col="square.col"  
         :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
         :selectedSrc="selectedSrc"
+        :mpTabData="mpTabData? mpTabData: null"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
         v-on:setEditorBoardState="handleEditorSquareClick"
@@ -27,7 +28,7 @@
 import BoardSquare from './BoardSquare.vue';
 export default {
   components: { BoardSquare },
-  props:['board','isflipped','playerColor',"editorMode","editorData","boardSize"],
+  props:['board','isflipped','playerColor',"editorMode","editorData","boardSize","mpTabData"],
   watch: { 
     isflipped() { // watch it
           this.updateBoardState1D(this.isflipped)
