@@ -9,6 +9,7 @@ const state = {
     roomClients:{},
     turn: 'w',
     errorMessage:null,
+    movePatterns:null,
 }
 
 export default state

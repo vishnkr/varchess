@@ -17,14 +17,18 @@
           </v-row>
           <v-btn class="flip" @click="flip">Flip Board <v-icon>fas fa-retweet</v-icon> </v-btn>
           <v-tabs fixed-tabs>
-          <v-tab>
-            Chat 
-          </v-tab>
-          <v-tab-item><chat :username="username" :roomId="roomId"/></v-tab-item>
-          <v-tab>
-            Members
-          </v-tab>
-          <v-tab-item><members :username="username" :members="members" :players="playerList"/></v-tab-item>
+            <v-tab>
+              Chat 
+            </v-tab>
+            <v-tab-item><chat :username="username" :roomId="roomId"/></v-tab-item>
+            <v-tab>
+              Members
+            </v-tab>
+            <v-tab-item><members :username="username" :members="members" :players="playerList"/></v-tab-item>
+            <v-tab v-if="movePatterns">
+              Move Pattern
+            </v-tab>
+            <v-tab-item v-if="movePatterns"><move-pattern-tab :movePatterns="movePatterns" color="white" /></v-tab-item>
           </v-tabs>
         </div>
     </div>
@@ -35,15 +39,11 @@
 import Board from '../Board.vue'
 import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
+import MovePatternTab from './MovePatternTab.vue'
 import WS,{sendMoveInfo} from '../../utils/websocket';
 export default {
-  components: { Chat,Board,Members },
+  components: { Chat,Board,Members,MovePatternTab },
   computed:{
-    
-    membesrs(){
-      return this.$store.state.roomClients[this.roomId]
-    }
-
   },
   mounted(){
     this.updatePlayerList()
@@ -129,6 +129,7 @@ export default {
       moveSrc: null,
       moveDest: null,
       isFlipped: this.isFlippedCheck(),
+      movePatterns: this.$store.state.movePatterns,
       turn: null,
       members: [],//this.$store.state.roomClients[roomId],
       boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
@@ -160,7 +161,8 @@ export default {
    max-width:400px;
    width: 100%;
    padding: 1em;
-
+   background-color: rgb(224, 223, 223);
+   border-radius: 1%;
 }
 
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="square" :id="tileId" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', isPiecePresent && isHighlighted?'highlight-from':null,
+        :class="[tileType=='d'? 'dark':'light', mpTabData? mpTabData[[this.row,this.col]]:null , !mpTabData && isPiecePresent && isHighlighted?'highlight-from':null,
         addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null, ]"
         @click="clickSquare">
       <div v-if="isPiecePresent" >
@@ -20,7 +20,6 @@ export default {
         this.addColor = moveType
       },
       removeColorFromSquare(){
-        console.log('col',this.addColor)
         this.addColor= this.addColor==='jump'? 'jump' : null;
         },
       clickSquare(){
@@ -55,7 +54,7 @@ export default {
         addColor:null,
       }
     },
-    props:['tileType','editorMode','editorData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','selectedSrc'],
+    props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','selectedSrc'],
     computed:{
         cssVar(){
         return {

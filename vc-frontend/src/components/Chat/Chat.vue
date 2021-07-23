@@ -1,7 +1,7 @@
 <template>
   <div class="chat">
       <div class="card">
-          <v-card elevation="2">
+          <v-card>
               <p class="nomessages">
               </p>
               <div class="messages" v-chat-scroll="{always:false, smooth:true}">

@@ -54,6 +54,9 @@ const mutations ={
     },
     websocketError(state,errorMessage){
       state.errorMessage = errorMessage;
+    },
+    storeMovePatterns(state,payload){
+      state.movePatterns = payload.movePatterns;
     }
 }
 

@@ -183,6 +183,9 @@ export default {
       var finalboardState = this.boardState
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
       createRoomWithCustomPatterns(this.ws,this.roomId,this.username, fenString,this.customMovePatterns);
+      if(this.customMovePatterns!=[]){
+        this.$store.commit('storeMovePatterns',{movePatterns: this.customMovePatterns})
+      }
       this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
     },
 
