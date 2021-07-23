@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
-	//"fmt"
+	"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -13,14 +13,20 @@ func ConvertFENtoBoard(fen string) *Board {
 	boardData := strings.Split(fen, " ")
 	rowsData := strings.Split(boardData[0], "/")
 	var colCount int = 0
+	var secDigit = 0
 	//count columns
-	for _, char := range rowsData[0] {
+	for index, char := range rowsData[0] {
 		if unicode.IsNumber(rune(char)) {
-			empty, _ := strconv.Atoi(string(char))
-			colCount += empty
-		} else {
-			colCount += 1
-		}
+			count, _ := strconv.Atoi(string(char))
+			if (index+1<len(rowsData[0]) && unicode.IsNumber(rune(rowsData[0][index+1]))){
+				secDigit,_ = strconv.Atoi(string(char))
+				fmt.Println("secdigit is",secDigit)
+			} else{ 
+				if (secDigit!=0){
+					colCount+=secDigit*10+count
+				} else {colCount += count}
+			} 
+		} else { colCount += 1}
 	}
 	board := &Board{
 		Tiles: make([][]Square, len(rowsData)),
@@ -32,18 +38,21 @@ func ConvertFENtoBoard(fen string) *Board {
 	for rowIndex, row := range rowsData {
 		col = 0
 		board.Tiles[rowIndex] = make([]Square, board.Cols)
-		secDigit := 0
+		secDigit = 0
 		for index, char := range row {
 			if unicode.IsNumber(rune(char)) {
 				if (index+1<len(row) && unicode.IsNumber(rune(row[index+1]))){
 					secDigit,_ = strconv.Atoi(string(char))
+					fmt.Println("secdigit is",secDigit)
 				} else{ 
 					count,_ := strconv.Atoi(string(char))
 					if (secDigit!=0){
 						colEnd = secDigit*10+count
+						secDigit = 0
 					} else { colEnd = count}
 					i:= col
-					for (col < i+(colEnd)){
+					for (col < i+colEnd){
+						fmt.Println("row-",rowIndex,"col-",col,colEnd,i)
 						board.Tiles[rowIndex][col] = Square{IsEmpty:true,Id:id}
 						col++	
 						id+=1
@@ -80,7 +89,6 @@ func ConvertFENtoBoard(fen string) *Board {
 				col++
 				id+=1
 			}
-			
 		}
 	}
 	return board

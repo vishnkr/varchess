@@ -64,7 +64,7 @@ func DisplayBoardState(board *Board){
 					piece = strings.ToUpper(piece)
 				}
 			} else{piece = "-"}
-			fmt.Print(piece,board.Tiles[i][j].Id," ")
+			fmt.Print(piece," ")
 		}
 		fmt.Print("\n")
 	}
