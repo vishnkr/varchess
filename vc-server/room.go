@@ -81,7 +81,8 @@ func (room *Room) BroadcasToMembers(message []byte){
 func (c *Client) AddtoRoom(roomId string){
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if curRoom, ok:= RoomsMap[roomId];ok{
+	curRoom, ok:= RoomsMap[roomId]
+	if ok{
 		var gameInfo GameInfo
 		if (len(curRoom.Clients) == 1){
 			RoomsMap[roomId].Game.P2 = c

@@ -146,7 +146,9 @@ func (c *Client) Read(){
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
 				} else { piece.Color = Black }
-				if room, ok := RoomsMap[move.RoomId]; ok {
+					
+				room, ok := RoomsMap[move.RoomId]
+				if ok {
 					game:= room.Game
 					var res bool
 					var reason string
@@ -172,8 +174,7 @@ func (c *Client) Read(){
 					response:= Response{Status:"successful"}
 					marshalledMessage,_ := json.Marshal(response)
 					c.send <- marshalledMessage
-				} 
-				if !ok {
+				} else {
 					fmt.Println("Room close")
 					message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
 					if errMessage,err:= json.Marshal(message); err==nil{
