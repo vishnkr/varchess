@@ -11,7 +11,7 @@ Varchess is a multiplayer chess website where you can create your own chess vari
 ![Editor](https://i.imgur.com/F6xPlhS.png)
 
 
-![Game Room](https://i.imgur.com/PB2iVmT.png)
+![Game Room](https://i.imgur.com/X8pAHgM.png)
 
 ## Running Locally
 Clone this project and cd into the local repo.
