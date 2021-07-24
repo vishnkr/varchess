@@ -25,10 +25,11 @@
               Members
             </v-tab>
             <v-tab-item><members :username="username" :members="members" :players="playerList"/></v-tab-item>
-            <v-tab v-if="movePatterns">
+            <v-tab v-if="movePatterns.length!=0">
               Move Pattern
             </v-tab>
-            <v-tab-item v-if="movePatterns"><move-pattern-tab :movePatterns="movePatterns" color="white" /></v-tab-item>
+            
+            <v-tab-item v-if="movePatterns.length!=0"><move-pattern-tab :movePatterns="movePatterns" color="white" /></v-tab-item>
           </v-tabs>
         </div>
     </div>

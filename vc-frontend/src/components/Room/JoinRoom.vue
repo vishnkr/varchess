@@ -35,7 +35,10 @@ export default {
           if(response.data.type && response.data.type=="error"){
             this.$store.commit('websocketError',response.data.data)
           } else {
-          console.log('got fen',response.data.Fen)
+          if(response.data.movePatterns){
+            this.$store.commit('storeMovePatterns',{movePatterns:response.data.movePatterns})
+          }
+
           this.boardState = convertFENtoBoardState(response.data.Fen)
           this.boardState.rows  = this.boardState.tiles.length
           this.boardState.cols = this.boardState.tiles[0].length

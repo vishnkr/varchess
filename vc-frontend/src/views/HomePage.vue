@@ -1,19 +1,36 @@
 <template>
   <div class="home">
-   
     <div class="info-card">
+      <v-card class="mx-auto"
+        max-width="500">
+        <v-card-text>
+          <p class="display-1 text--primary">
+            VarChess
+          </p>
+          <div class="text-h5 mb-2">
+             Create your own chess variants and play with friends!
+          </div>
+          <ul>
+            
+           <li> Feeling creative? Play on a 12x7 board with a "dolphin" piece that can move like a knight and half a bishop.</li>
+           <li> Are you an aggressive player? Fill the board with as many queens as you wish</li>
+           
+          </ul>
+          </v-card-text>
+          <v-img src="../assets/game.png" max-height="" />
+      </v-card>
+    </div>
+    <div class="create-room">
       <v-card class="mx-auto"
     max-width="344">
     <v-card-text>
-      <p class="display-1 text--primary">
-        VarChess
-      </p>
+      
       <v-container>
         <v-row>
         <v-col
           cols="12"
         >
-      <div class="headline">Create your own chess variants and play with friends! The perfect place to experiment your playing style with varying board sizes, customized piece movements and placements. More features coming soon.</div>
+        <div class="headline text--primary">Create a room now to play!</div>
       </v-col>
       <v-col
           cols="12"
@@ -169,6 +186,19 @@ export default {
 </script>
 
 <style scoped>
+ul{
+  color:rgb(6, 6, 180); 
+  font-family:Arial; 
+  font-size: 18px;
+}
+.home{
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+.info-card{
+  margin: 2em;
+}
 /*
 .portal {
   background-color: black;

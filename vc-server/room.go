@@ -67,12 +67,12 @@ func (c *Client) CreateRoom(roomId string,startFen string) *Room{
 	gameInfo:= GameInfo{Type:"gameInfo",P1:c.username,Turn:"w",RoomId: roomId, Members:[]string{}}
 	gameInfo.Members = append(gameInfo.Members,c.username)
 	marshalledInfo,_ := json.Marshal(gameInfo)
-	RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
+	RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
 	fmt.Println("rooms",RoomsMap,*RoomsMap[roomId])
 	return RoomsMap[roomId]
 }
 
-func (room *Room) BroadcasToMembers(message []byte){
+func (room *Room) BroadcastToMembers(message []byte){
 	for client,_ := range room.Clients{
 		client.send <- message
 	}
@@ -93,11 +93,10 @@ func (c *Client) AddtoRoom(roomId string){
 			gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
 		}
 		gameInfo.Members = append(gameInfo.Members,c.username)
-		fmt.Println("mem",gameInfo.Members)
 		RoomsMap[roomId].Clients[c] = true
 		c.roomId = roomId
 		marshalledInfo,_ := json.Marshal(gameInfo)
-		RoomsMap[roomId].BroadcasToMembers(marshalledInfo)
+		RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
 	} else {
 		fmt.Println("Room close")
 		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
