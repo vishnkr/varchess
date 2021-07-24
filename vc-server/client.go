@@ -6,7 +6,6 @@ import (
 	//"net/http"
 	"strings"
 	"unicode"
-	//"log"
 	"time"
 	"fmt"
 	"encoding/json"
@@ -66,7 +65,6 @@ func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
 }
 
 func (c *Client) disconnect() {
-	//close(c.send)
 	c.conn.Close()
 	c.wsServer.unregister <- c
 }
@@ -80,7 +78,6 @@ const (
 
 func (c *Client) Read(){
 	defer c.disconnect()
-	//var response []byte
 	for {
 		_, msg, err:= c.conn.ReadMessage()
 		if err!=nil{
@@ -88,7 +85,6 @@ func (c *Client) Read(){
 		}
 		if (string(msg)=="pong"){
 			c.conn.SetReadDeadline(time.Now().Add(pongWait))
-			fmt.Println("got pong")
 			c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 			continue
 		}
@@ -190,10 +186,8 @@ func (c *Client) Read(){
 
 func (c *Client) Write(){
 	ticker := time.NewTicker(pingTime)
-	defer func() {
-		ticker.Stop()
-		c.disconnect()
-	}()
+	defer ticker.Stop()
+	defer c.disconnect()
 	for {
 		select {
 		case msg,ok := <- c.send:
@@ -208,90 +202,11 @@ func (c *Client) Write(){
 				} 
 			case <-ticker.C:
 				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-				fmt.Println("ping time",c.username,c)
 				if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
 					
 					return
 				}
 		}
 	}
-}
-
- /*
-const (
-	writeWait = 10 * time.Second 	// Max wait time when writing message to peer
-	pongWait = 60 * time.Second // Max time till next pong from peer
-	pingPeriod = (pongWait * 9) / 10 // Send ping interval, must be less then pong wait time
-	maxMessageSize = 10000 // Maximum message size allowed from peer.
-)
-
-func (client *Client) readMessage(){
-	defer func(){
-		client.disconnect()
-	}()
-
-	client.conn.SetReadLimit(maxMessageSize)
-	client.conn.SetReadDeadline(time.Now().Add(pongWait))
-	client.conn.SetPongHandler(func(string) error { client.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-
-	for{
-		_, jsonMessage,err := client.conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("unexpected close error: %v", err)
-			}
-			break
-		}
-		client.wsServer.broadcast <- jsonMessage
-	}
 
 }
-
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
-func (client *Client) writeMessage(){
-	ticker := time.NewTicker(pingPeriod)
-	defer func(){
-		ticker.Stop()
-		client.conn.Close()
-	}()
-	for {
-		select{
-		case message, ok:= <-client.send:
-			client.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok{
-				// The WsServer closed the channel.
-				client.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-
-			w, err:=client.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-
-			// Attach queued chat messages to the current websocket message.
-			n := len(client.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-client.send)
-			}
-
-			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			client.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := client.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
-}
-
-
-*/

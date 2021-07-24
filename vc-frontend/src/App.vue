@@ -2,19 +2,21 @@
   <v-app>
     <v-app-bar
       app
-      color="dark-grey"
+      color="green lighten-2"
       dark
     >
-      <div class="d-flex align-center">
-        <h2>VarChess</h2>
-      </div>
-
+        <div class="title" v-on:click="redirectToHome">
+        <v-img src="./assets/logo.svg" max-height="40" max-width="40" contain />
+        <div class="d-flex align-center">
+          <h1>VarChess</h1>
+        </div>
+        </div>
       <v-spacer></v-spacer>
 
-      
     </v-app-bar>
 
     <v-main>
+      
        <v-alert v-if="errorText"
                   border="right"
                   colored-border
@@ -43,28 +45,42 @@
 </template>
 
 <script>
-import WS from '../src/utils/websocket'
 export default {
   name: 'App',
   mounted(){
+    
     this.$store.subscribe((mutation, state) => {
        if(mutation.type==="websocketError"){
-         console.log('rech')
         this.errorText = state.errorMessage;
       }
      })
   },
   data(){
     return {
-      ws : WS,
       errorText: null,
     }
   },
+  methods:{
+    redirectToHome(){
+    this.$router.push({name:'Home'})
+    location.reload()
+    }
+  }
 };
 </script>
 
 <style scoped>
 a:-webkit-any-link{
 text-decoration:none !important;
+}
+
+.title{
+  cursor: pointer;
+  display: inline-flex;
+}
+h1{
+  text-shadow: -2px 0 yellow, 0 2px yellow, 2px 0 yellow, 0 -2px yellow;
+  font-family: 'Bangers'; color: black;
+  font-size:42px;
 }
 </style>

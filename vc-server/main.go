@@ -41,24 +41,25 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 type BoardState struct{
 	Fen string
 	RoomId string
+	MovePatterns []MovePatterns `json:"movePatterns"`
 }
 
-func setupResponse(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-    (*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-    (*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-}
 func boardStateHandler(w http.ResponseWriter, r *http.Request) {
-	setupResponse(&w, r)
+	w.Header().Set("Content-Type", "application/json") 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if (r.Method == "OPTIONS") {
         return
     } else {
         params:= mux.Vars(r)
 	id:= params["roomId"]
-	if room, ok := RoomsMap[id]; ok {
+	room, ok := RoomsMap[id] 
+	if ok {
 		response:= BoardState{
 			Fen: ConvertBoardtoFEN(room.Game.Board),
 			RoomId: id,
+		}
+		if (room.Game.Board.CustomMovePatterns!=nil){
+			response.MovePatterns = room.Game.Board.CustomMovePatterns
 		}
 		json.NewEncoder(w).Encode(response)
 	} else { 
@@ -66,5 +67,4 @@ func boardStateHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errResponse)
 	}
     }
-	
 }

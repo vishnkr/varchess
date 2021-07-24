@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 	"bytes"
-	"fmt"
+	//"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
@@ -20,7 +20,6 @@ func ConvertFENtoBoard(fen string) *Board {
 			count, _ := strconv.Atoi(string(char))
 			if (index+1<len(rowsData[0]) && unicode.IsNumber(rune(rowsData[0][index+1]))){
 				secDigit,_ = strconv.Atoi(string(char))
-				fmt.Println("secdigit is",secDigit)
 			} else{ 
 				if (secDigit!=0){
 					colCount+=secDigit*10+count
@@ -43,7 +42,6 @@ func ConvertFENtoBoard(fen string) *Board {
 			if unicode.IsNumber(rune(char)) {
 				if (index+1<len(row) && unicode.IsNumber(rune(row[index+1]))){
 					secDigit,_ = strconv.Atoi(string(char))
-					fmt.Println("secdigit is",secDigit)
 				} else{ 
 					count,_ := strconv.Atoi(string(char))
 					if (secDigit!=0){
@@ -52,7 +50,6 @@ func ConvertFENtoBoard(fen string) *Board {
 					} else { colEnd = count}
 					i:= col
 					for (col < i+colEnd){
-						fmt.Println("row-",rowIndex,"col-",col,colEnd,i)
 						board.Tiles[rowIndex][col] = Square{IsEmpty:true,Id:id}
 						col++	
 						id+=1

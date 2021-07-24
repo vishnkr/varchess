@@ -2,7 +2,7 @@
   <div class="square" :id="tileId" :style="cssVar" 
         :class="[tileType=='d'? 'dark':'light', mpTabData? mpTabData[[this.row,this.col]]:null , !mpTabData && isPiecePresent && isHighlighted?'highlight-from':null,
         addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null, ]"
-        @click="clickSquare">
+         @mousedown="clickSquare">
       <div v-if="isPiecePresent" >
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
@@ -16,6 +16,7 @@ import BoardPiece from './BoardPiece'
 export default {
     components:{BoardPiece},
     methods:{
+
       addColorToSquare(moveType){
         this.addColor = moveType
       },
@@ -23,6 +24,7 @@ export default {
         this.addColor= this.addColor==='jump'? 'jump' : null;
         },
       clickSquare(){
+        
         var pieceType;
         if(this.editorMode){
           var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
@@ -72,11 +74,12 @@ export default {
 .square {
   background: transparent;
   border: 1px solid transparent;
-   width: 100%;
-    height: 0;
-    padding-bottom: 100%;
-    grid-column: var(--y);
-    grid-row: var(--x);
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+  grid-column: var(--y);
+  grid-row: var(--x);
+  cursor: pointer;
 }
 
 .dark {
