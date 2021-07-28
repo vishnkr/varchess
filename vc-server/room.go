@@ -48,9 +48,12 @@ type GameInfo struct{
     Turn string `json:"turn"`
 	RoomId string `json:"roomId"`
 	Members []string `json:"members"`
+	Result string `json:"result"`
 }
 
 func (c *Client) CreateRoom(roomId string,startFen string) *Room{
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.roomId = roomId
 	RoomsMap[roomId] = &Room{
 		Game: &Game{
@@ -63,12 +66,10 @@ func (c *Client) CreateRoom(roomId string,startFen string) *Room{
 	}
 	DisplayBoardState(RoomsMap[roomId].Game.Board)
 	RoomsMap[roomId].Clients[c] = true
-	fmt.Println("you are p1")
 	gameInfo:= GameInfo{Type:"gameInfo",P1:c.username,Turn:"w",RoomId: roomId, Members:[]string{}}
 	gameInfo.Members = append(gameInfo.Members,c.username)
 	marshalledInfo,_ := json.Marshal(gameInfo)
 	RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
-	fmt.Println("rooms",RoomsMap,*RoomsMap[roomId])
 	return RoomsMap[roomId]
 }
 
@@ -86,10 +87,8 @@ func (c *Client) AddtoRoom(roomId string){
 		var gameInfo GameInfo
 		if (len(curRoom.Clients) == 1){
 			RoomsMap[roomId].Game.P2 = c
-			fmt.Println("you are p2")
 			gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: c.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
 		} else { 
-			fmt.Println("you are a viewer")
 			gameInfo = GameInfo{Type:"gameInfo",P1:curRoom.Game.P1.username,P2: curRoom.Game.P2.username,Turn:curRoom.Game.Turn,RoomId: roomId,Members:RoomsMap[roomId].getClientUsernames()}
 		}
 		gameInfo.Members = append(gameInfo.Members,c.username)

@@ -8,6 +8,7 @@
                 <v-list-item-title class="headline">
                 Game Editor
                 </v-list-item-title>
+              <v-btn color="red" dark style="margin-right:5px;" @click="clearBoard"><v-icon>mdi-delete</v-icon> Clear</v-btn>
               <v-btn color="success" depressed @click="enterRoom">
                   Save Setup
                 </v-btn>
@@ -160,6 +161,7 @@
 <script>
 import { convertBoardStateToFEN } from '../../utils/fen';
 import {createRoomWithCustomPatterns} from '../../utils/websocket';
+import {validateStartSetup} from '../../utils/validator';
 import Board from '../Board.vue';
 import  MovePatternDialog from './MovePatternDialog.vue';
 export default {
@@ -172,13 +174,23 @@ export default {
       return require(`../../assets/images/pieces/${this.colorSelect}/${piece}.svg`)
     },
     customPieceAdd(piece){
-      console.log(piece,'added to board')
       this.editorData.added[piece]=true
     },
     closeDialog(){
       this.dialog=false
     },
-
+    clearBoard(){
+      for(var row of this.boardState.tiles){
+        for(var tile of row){
+          if(tile.isPiecePresent){
+            tile.isPiecePresent = false;
+            tile.pieceType = null;
+            tile.pieceColor = null;
+          }
+        }
+      }
+      
+    },
     enterRoom(){
       var finalboardState = this.boardState
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
@@ -186,8 +198,13 @@ export default {
       if(this.customMovePatterns!=[]){
         this.$store.commit('storeMovePatterns',{movePatterns: this.customMovePatterns})
       }
-      this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
-    },
+      if(validateStartSetup(fenString)){
+        this.$store.commit('websocketError',null)
+        this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
+      } else {
+        this.$store.commit('websocketError','Board state not valid: must contain 1 king for each color & not under check')
+      }
+   },
 
     setMovePattern(piece,jumpPattern,slidePattern){
       this.customMovePatterns.push({piece:piece,jumpPattern:jumpPattern,slidePattern:slidePattern});

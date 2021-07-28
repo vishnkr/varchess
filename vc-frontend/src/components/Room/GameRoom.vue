@@ -2,6 +2,22 @@
   <div class="container">
     <div class="columns">
         <div class="column board-panel">
+          <svg v-if="result && result=='draw'" style="position: absolute; left:0; top:0; width: 100%; z-index:1;" viewBox="0 0 250 100">
+                <rect x="0" y="35%" width="100%" height="40%" fill="rgba(0,0,0)" fill-opacity="0.7"/>
+                <text x="35%" y="55%"  
+                      font-family="Arial, Helvetica, sans-serif"
+                      dominant-baseline="central" text-anchor="middle" fill="white">
+                    DRAW!
+                </text>
+          </svg>
+          <svg v-else-if="result" style="position: absolute; left:0; top:0; width: 100%; z-index:1;" viewBox="0 0 250 100">
+                <rect x="0" y="35%" width="100%" height="40%" fill="#65b5f5" fill-opacity="0.7"/>
+                <text x="35%" y="55%"  
+                      font-family="Arial, Helvetica, sans-serif"
+                      dominant-baseline="central" text-anchor="middle" :fill="result">
+                    {{result.toUpperCase()}} WINS!
+                </text>
+          </svg>
           <board :board="boardState" 
             ref="gameBoard" 
             :isflipped="isFlipped" 
@@ -9,8 +25,9 @@
             :editorMode="false"
             v-on:destinationSelect="validateMove"
             />
+           
         </div>
-        <div class="column right-panel">
+        <div class="column right-panel" style="z-index:2;">
           <v-row row d-flex nowrap align="center" justify="center" class="px-2">
             <v-text-field width="10px" class="centered-input" v-model="shareLink" id="tocopy" readonly  ></v-text-field>
             <v-btn width="6.5rem" class="ma-2" rounded dark color="blue" @click="copyText">Copy<v-icon>fas fa-link</v-icon></v-btn>
@@ -25,11 +42,11 @@
               Members
             </v-tab>
             <v-tab-item><members :username="username" :members="members" :players="playerList"/></v-tab-item>
-            <v-tab v-if="movePatterns.length!=0">
+            <v-tab v-if="movePatterns && movePatterns.length!=0">
               Move Pattern
             </v-tab>
             
-            <v-tab-item v-if="movePatterns.length!=0"><move-pattern-tab :movePatterns="movePatterns" color="white" /></v-tab-item>
+            <v-tab-item v-if="movePatterns && movePatterns.length!=0"><move-pattern-tab :movePatterns="movePatterns" color="white" /></v-tab-item>
           </v-tabs>
         </div>
     </div>
@@ -69,6 +86,10 @@ export default {
       else if(mutation.type==="websocketError"){
         this.error = state.errorMessage;
       }
+      else if(mutation.type ==="setResult"){
+        console.log('setting result')
+        this.result = state.gameInfo.result;
+      }
     })
     
   },
@@ -95,9 +116,10 @@ export default {
           destCol: destInfo.col,
           color:this.getPlayerColor(),
         } 
-        if(info.piece=='k'||info.piece=='K' && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){
+        if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){
+          
           info.castle=true
-        }
+        } 
       sendMoveInfo(this.ws,info)
     },
     getPlayerColor(){
@@ -111,7 +133,7 @@ export default {
       this.isFlipped = this.player2 ? this.username === this.player2 : false;
       return this.isFlipped;
     },
-    getShareUrl(){ return `${window.location.origin}/#/join/${this.$route.params.roomId}`},
+    getShareUrl(){ return `${window.location.origin}/join/${this.$route.params.roomId}`},
     copyText(){
       let input=document.getElementById("tocopy");
       input.select();
@@ -132,6 +154,8 @@ export default {
       isFlipped: this.isFlippedCheck(),
       movePatterns: this.$store.state.movePatterns,
       turn: null,
+      gameInfo: this.$store.state.gameInfo,
+      result:null,
       members: [],//this.$store.state.roomClients[roomId],
       boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
       ws: WS,

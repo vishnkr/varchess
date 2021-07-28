@@ -2,11 +2,11 @@
   <v-app>
     <v-app-bar
       app
-      color="green lighten-2"
+      color="blue lighten-2"
       dark
     >
         <div class="title" v-on:click="redirectToHome">
-        <v-img src="./assets/logo.svg" max-height="40" max-width="40" contain />
+        <v-img src="./assets/logo.svg" max-height="50" max-width="50" contain />
         <div class="d-flex align-center">
           <h1>VarChess</h1>
         </div>
@@ -51,7 +51,7 @@ export default {
     
     this.$store.subscribe((mutation, state) => {
        if(mutation.type==="websocketError"){
-        this.errorText = state.errorMessage;
+          this.errorText = state.errorMessage ? state.errorMessage : null;
       }
      })
   },
