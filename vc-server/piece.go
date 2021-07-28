@@ -71,6 +71,10 @@ func (p Piece) String() string {
 	return ""
 }
 
+func (color Color) String() string{
+	if (color==Black){ return "black"} else { return "white"}
+}
+
 func promotableTo(p Piece) bool {
 	switch p.Type {
 	case Queen, Rook, Bishop, Knight:

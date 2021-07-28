@@ -25,7 +25,7 @@ func main(){
 	router := mux.NewRouter()
     router.HandleFunc("/getRoomId", roomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}",boardStateHandler).Methods("GET","OPTIONS")
-	//router.HandleFunc("/", rootHandler)
+	router.HandleFunc("/", rootHandler)
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){

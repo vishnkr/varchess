@@ -42,16 +42,19 @@ function convertFENtoBoardState(fen){
     return boardState;
 }
 
-function validateStartSetup(fen){
+export function validateStartSetup(fen){
     // does each side have exactly 1 king?
     //no checks/checkmate in start pos
     const boardState = convertFENtoBoardState(fen)
-    result = countKings(boardState)
+    var result = countKings(boardState)
     if(result.isValidKings){
-        isPlayerInCheck('b',boardState,result.bpos) && isPlayerInCheck('w',boardState,result.wpos)
+        //return isPlayerInCheck('b',boardState,result.bpos) && isPlayerInCheck('w',boardState,result.wpos)
+        return true;
     }
+    return false;
 }
 
+/*
 function isPlayerInCheck(color,board,kingPos){
     var attackedSquares = {}
     for(var row=0;row<board.tiles.length;row++){
@@ -65,14 +68,14 @@ function isPlayerInCheck(color,board,kingPos){
     }
 }
 }
-
-function countKings(boardState){
+*/
+export function countKings(boardState){
     var wKing=0, bKing=0;
     var returnObj = {};
     var rowpos = 1
     var colpos = 1
-    for(row of boardState.tiles){
-        for (cell of row){
+    for(var row of boardState.tiles){
+        for (var cell of row){
             if (cell.isPiecePresent && cell.pieceType==='k'){
                 if(cell.pieceColor === 'black'){ 
                     console.log('cell',cell)
@@ -92,4 +95,3 @@ function countKings(boardState){
     returnObj.isValidKings = wKing==1 && bKing==1
     return returnObj;
 }
-validateStartSetup("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")

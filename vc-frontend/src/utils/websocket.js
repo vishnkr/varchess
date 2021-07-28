@@ -32,7 +32,6 @@ WS.onmessage = function(msg){
             switch(apiMsg.type){
                 case "chatMessage": {
                     let msgData = JSON.parse(apiMsg.data);
-                    console.log("parsed: ",msgData)
                     if (store.state.chatMessages[msgData.roomId]==undefined){
                         msgData.id=1
                     } else {
@@ -46,13 +45,21 @@ WS.onmessage = function(msg){
                     break;
                 }
                 case "gameInfo":{
-                    console.log('gameInfo',apiMsg)
                     store.commit('updateGameInfo',apiMsg)
+                    if(apiMsg.result){
+                        store.commit("setResult",apiMsg.result)
+                    }
                     break;
                 }
+
                 case "performMove":{
                     if(apiMsg.isValid){ //only if move is valid you perform commit
                         store.commit('performMove',apiMsg)
+                    }
+                    if(apiMsg.result){
+                        store.commit('setResult',apiMsg.result)
+                    } else if (apiMsg.check){
+                        alert("Check!");
                     }
                     break;
                 }
@@ -86,8 +93,6 @@ export default WS;
 
 export function sendJSONReq(socket,type,msg){
     if (!isOpen(socket)) return;
-    console.log('executing 2',socket)
-    console.log('executing 4',JSON.stringify(msg))
     socket.send(JSON.stringify({type:type,data:JSON.stringify(msg)})) //socket.send(json);
     
   }
@@ -97,36 +102,33 @@ export function createRoom(socket,roomId,username,standardFen){
 }
 
 export function createRoomWithCustomPatterns(socket,roomId,username,standardFen,customMovePatterns){
-    console.log('executing create with custom',standardFen)
     sendJSONReq(socket,'createRoom',{roomId:roomId, username:username, fen:standardFen, movePatterns:customMovePatterns});
 }
 
 export function joinRoom(socket,roomId,username){
-    console.log('executing join')
     sendJSONReq(socket,'joinRoom',{roomId:roomId, username:username});
 }
 
 export function sendMessage(socket,json){
-    console.log('executing chat')
     sendJSONReq(socket,'chatMessage',{message: json.message, username: json.username, roomId:json.roomId});
 }
 export function requestGameinfo(socket,roomId){
-    console.log('executing gameinfo req')
     sendJSONReq(socket,'reqGameInfo',{roomId:roomId});
 }
 
 export function sendMoveInfo(socket,json){
-    console.log('executing moveinfo send')
-    sendJSONReq(socket,'performMove',{
-        piece:json.piece, 
-        roomId:json.roomId, 
-        srcRow:json.srcRow-1,
-        srcCol:json.srcCol-1,
-        destRow:json.destRow-1,
-        destCol:json.destCol-1,
-        color: json.color,
-        castle: json.castle? true : null
-    });
+    if(!store.state.gameInfo.result){
+        sendJSONReq(socket,'performMove',{
+            piece:json.piece, 
+            roomId:json.roomId, 
+            srcRow:json.srcRow-1,
+            srcCol:json.srcCol-1,
+            destRow:json.destRow-1,
+            destCol:json.destCol-1,
+            color: json.color,
+            castle: json.castle? true : false
+        });
+    }
 }
 
 function isOpen(ws) { return ws.readyState === ws.OPEN }

@@ -9,7 +9,7 @@ Vue.use(Router);
 const routes = [
     { path: '/', 
       name: 'Home',
-     component: HomePage 
+      component: HomePage 
     },
     {
       path: '/editor/:username/:roomId',
@@ -25,13 +25,14 @@ const routes = [
     {
       path: '/join/:roomId',
       component: JoinRoom,
-    }
+    },
 
   ]
-//const NotFoundComponent = { template: '<p>Page not found</p>' }
+//const NotFoundComponent = { template: "<p style='text-align:'center';'> Oops! The page you're looking for doesn't exist </p>" }
 
 const router = new Router({
-    routes
+    routes,
+    mode: 'history'
 })
   
 export default router

@@ -1,6 +1,6 @@
 <template>
   <div :style="cssVar" id='board-container'>
-      <div id="board">
+      <div id="board" style="z-index:-1;">
         <board-square v-for="square in this.boardState1D"  :key="square.tileId" 
         ref="squares"
         :tileType="square.tileType" 

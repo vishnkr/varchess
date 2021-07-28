@@ -57,6 +57,9 @@ const mutations ={
     },
     storeMovePatterns(state,payload){
       state.movePatterns = payload.movePatterns;
+    },
+    setResult(state,result){
+      state.gameInfo.result = result
     }
 }
 

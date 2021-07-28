@@ -44,6 +44,8 @@ type MoveResponse struct{
 	Promote Type `json:"promote,omitempty"`
 	Castle bool `json:"castle,omitempty"`
 	IsValid bool `json:"isValid,omitempty"`
+	Check bool `json:"check,omitempty"`
+	Result string `json:"result,omitempty"`
 }
 
 
@@ -64,30 +66,34 @@ func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
 	}
 }
 
-func (c *Client) disconnect() {
+func (c *Client) disconnect(Type string) {
+	fmt.Println("disconnect called from",Type)
+	//close(c.send)
 	c.conn.Close()
 	c.wsServer.unregister <- c
 }
 
 
 const (
-	writeWait = 10*time.Second
+	writeWait = 30*time.Second
 	pongWait = 40*time.Second
 	pingTime = (pongWait*9)/10
 )
 
 func (c *Client) Read(){
-	defer c.disconnect()
+	defer c.disconnect("Read")
+	//var response []byte
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, msg, err:= c.conn.ReadMessage()
 		if err!=nil{
 			return
 		}
-		if (string(msg)=="pong"){
-			c.conn.SetReadDeadline(time.Now().Add(pongWait))
-			c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-			continue
-		}
+		
+		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		if (string(msg)=="pong"){continue}
+		
 		reqData:= MessageStruct{}
 		json.Unmarshal([]byte(msg),&reqData)
 		fmt.Println("received data:",reqData)		
@@ -142,18 +148,29 @@ func (c *Client) Read(){
 				if (unicode.IsUpper(r[0])){
 					piece.Color = White
 				} else { piece.Color = Black }
-					
+				
 				room, ok := RoomsMap[move.RoomId]
 				if ok {
 					game:= room.Game
 					var res bool
 					var reason string
-					fmt.Println(move.Color,game.Turn)
 					if (game.Turn==move.Color){
 						res,reason=game.Board.isValidMove(piece,move)
 					} else{ res,reason = false,"wrong color"}
 					if (res) {
 						game.Board.performMove(piece,move)
+						//check for checkmates/check on ooponents
+						over,result:= game.Board.isGameOver(getOpponentColor(piece.Color))
+						if over{
+							moveResp.Result = result
+						} else{ 
+							underCheck,res :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
+							if underCheck{
+								moveResp.Check = true
+							}					
+							fmt.Println("undercheck",underCheck,res)		
+						}
+						fmt.Println("checkmate",over,result)
 						moveResp.IsValid = res
 						moveResp.Type = "performMove"
 						if (move.Castle){
@@ -187,10 +204,11 @@ func (c *Client) Read(){
 func (c *Client) Write(){
 	ticker := time.NewTicker(pingTime)
 	defer ticker.Stop()
-	defer c.disconnect()
+	defer c.disconnect("write")
 	for {
 		select {
-		case msg,ok := <- c.send:
+			case msg,ok := <- c.send:
+				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if !ok{
 					// The WsServer closed the channel.
 					c.conn.WriteMessage(websocket.CloseMessage, []byte("closing"))
@@ -203,10 +221,9 @@ func (c *Client) Write(){
 			case <-ticker.C:
 				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
-					
+					fmt.Println(err)
 					return
 				}
 		}
 	}
-
 }

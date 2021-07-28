@@ -42,7 +42,6 @@ export default {
           this.boardState = convertFENtoBoardState(response.data.Fen)
           this.boardState.rows  = this.boardState.tiles.length
           this.boardState.cols = this.boardState.tiles[0].length
-          //console.log(this.boardState)
           var id =0;
           for(var row=0;row<this.boardState.rows;row++){
             for(var col=0;col<this.boardState.cols;col++){

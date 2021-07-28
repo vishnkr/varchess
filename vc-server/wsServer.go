@@ -89,5 +89,4 @@ func ServeWsHandler(wsServer *WsServer,w http.ResponseWriter, r *http.Request){
 	go client.Read()
 	wsServer.register <- client
 	fmt.Println("New Client joined the hub!")
-	fmt.Println(client)
 }
