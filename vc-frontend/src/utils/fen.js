@@ -36,7 +36,6 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
 }
 
 function convertFENtoBoardState(fen){
-    console.log(fen)
     var splitFen = fen.split(' ');
     var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
     var rows = splitFen[0].split('/');

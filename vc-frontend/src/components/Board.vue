@@ -133,7 +133,6 @@ export default {
           var row,tile,x=1,y=1,flipX = this.rows,flipY = this.cols ;
           var tileId = flipped ? this.rows*this.cols - 1 : 0;
           for(row of this.boardState.tiles){
-              //console.log('reachin',flipped)
               for(tile of row){
                 tile.tileId = tileId;
                 tileId+= flipped? -1 : 1;     

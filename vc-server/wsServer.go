@@ -32,8 +32,6 @@ func (ws *WsServer) Run(){
 		case client:= <-ws.unregister:
 			ws.unregisterClient(client)
 		
-		case message := <-ws.broadcast:
-			ws.broadcastToClients(message)
 		}
 
 	}
@@ -70,12 +68,6 @@ func (server *WsServer) deleteEmptyRooms(client *Client){
 		}
 	}
 	
-}
-
-func (server *WsServer) broadcastToClients(message []byte) {
-	for client := range server.clients {
-		client.send <- message
-	}
 }
 
 func ServeWsHandler(wsServer *WsServer,w http.ResponseWriter, r *http.Request){

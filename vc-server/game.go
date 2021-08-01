@@ -153,8 +153,8 @@ func (board *Board) isGameOver(color Color) (bool,string){
 		}
 	}
 	if (!underCheck){
-		fmt.Println("darw",myAttackSquares)
-		fmt.Println("opp",opponentAttackedSquares)
+		//fmt.Println("darw",myAttackSquares)
+		//fmt.Println("opp",opponentAttackedSquares)
 		if (len(myAttackSquares)==0){
 			//stalemate since player has no legal moves and king is not under check
 			return true,"draw"
@@ -170,7 +170,7 @@ func (board *Board) isGameOver(color Color) (bool,string){
 				
 				if (board.isSquareInBoardRange(destRow,destCol)){
 					squareId:= board.Tiles[destRow][destCol].Id
-					fmt.Println("sqid",squareId,king,destRow,destCol)
+					//fmt.Println("sqid",squareId,king,destRow,destCol)
 					_,attacked := opponentAttackedSquares[squareId]
 					if !attacked && !board.isSameColorPieceAtDest(color,destRow,destCol){
 						canKingMove = true
@@ -178,14 +178,21 @@ func (board *Board) isGameOver(color Color) (bool,string){
 				}
 			}
 		}
-		fmt.Println("gameover",canKingMove,"squares",opponentAttackedSquares,myAttackSquares)
+		//fmt.Println("gameover",canKingMove,"squares",opponentAttackedSquares,myAttackSquares)
 
-		if (!canKingMove && !blockCheck && len(myAttackSquares)==0){
+		if (!canKingMove && !blockCheck){
 			return true,getOpponentColor(color).String()
 		}
 	}
-	fmt.Println("here")
 	return false,"game not over"
+}
+
+
+func (board *Board) canBlockCheck(color Color,king KingPiece) bool{
+	//get player's move squares excluding the king
+	// get the line of attacked sqaures from the attacking opponent piece
+	// check if any of those sqaures can be reached by one of our pieces including the square of the attacked piece
+	return false
 }
 
 func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
@@ -193,7 +200,6 @@ func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
 	var copyBoard *Board = deepCopyBoard(board)
 	copyBoard.performMove(piece,move)
 	underCheck,_ := copyBoard.isKingUnderCheck(piece.Color)
-	fmt.Println("this copy bro")
 	return underCheck
 }
 
@@ -220,8 +226,8 @@ func (board *Board) isKingUnderCheck(color Color) (bool,map[int]bool){
 	} else {
 		kingPos = board.BlackKing.Position
 	}
-	fmt.Println("atsw",attackedSquares)
-	fmt.Println("uo",attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id],kingPos,board.Tiles[kingPos[0]][kingPos[1]].Id)
+	//fmt.Println("atsw",attackedSquares)
+	//fmt.Println("uo",attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id],kingPos,board.Tiles[kingPos[0]][kingPos[1]].Id)
 	if _,underAttack := attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id]; underAttack{
 		return true,attackedSquares
 	} 
@@ -235,7 +241,7 @@ func (board *Board)isSquareInBoardRange(row int, col int) bool{
 // genPieceMoves returns a list of square positions (using its unique Square Id) that the given piece attacks
 // this includes the position of the opponent king since it would be useful to detect checks/discovered checks
 func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
-	fmt.Println("genpieceMoves",piece.String(),attackedSquares)
+	//fmt.Println("genpieceMoves",piece.String(),attackedSquares)
 	switch piece.Type{
 	case Bishop:
 		board.genBishopMoves(piece,srcRow,srcCol,attackedSquares)
@@ -283,7 +289,7 @@ func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 	}
 }
 
-func(board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
+func (board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
 	diagonals:= [][]int{{1,1,board.Rows-1},{1,-1,board.Rows-1},{-1,1,0},{-1,-1,0}}
 	for _,value:= range diagonals{
 		xOffset,yOffset,endRow := value[0],value[1],value[2]
@@ -293,7 +299,7 @@ func(board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 			y := srcCol + i*yOffset;
 			if (board.isSquareInBoardRange(x,y) && board.IsEmpty(x,y) ){
 				attackedSquares[board.Tiles[x][y].Id] = true
-			} else if (board.isSquareInBoardRange(x,y) && board.Tiles[x][y].Piece.Color == getOpponentColor(piece.Color)){
+			} else if (board.isSquareInBoardRange(x,y)){
 				attackedSquares[board.Tiles[x][y].Id] = true
 				break
 			}else { 
@@ -303,19 +309,17 @@ func(board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 	}
 }
 
-func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquares map[int]bool){
+func (board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquares map[int]bool){
 	directions:= []int{-1,1}
 	//check horizontal
 	for _,xOffset := range directions{
 		for i:=srcCol+xOffset;i>=0 && i<board.Cols;i+=xOffset{
 			if (board.IsEmpty(srcRow,i)){
 				attackedSquares[board.Tiles[srcRow][i].Id] = true
-			} else if (board.Tiles[srcRow][i].Piece.Color == getOpponentColor(piece.Color)){
+			} else {
 				attackedSquares[board.Tiles[srcRow][i].Id] = true
 				break
-			} else{
-				break
-			}
+			} 
 		}
 	}
 	//check vertical
@@ -323,10 +327,10 @@ func(board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquar
 		for i :=srcRow+yOffset;i>=0 && i<board.Rows;i+=yOffset{
 			if (board.IsEmpty(i,srcCol)){
 				attackedSquares[board.Tiles[i][srcCol].Id] = true
-			} else if (board.Tiles[i][srcCol].Piece.Color == getOpponentColor(piece.Color)){
+			} else{
 				attackedSquares[board.Tiles[i][srcCol].Id] = true
 				break
-			} else {break}
+			}
 		}
 	}
 }

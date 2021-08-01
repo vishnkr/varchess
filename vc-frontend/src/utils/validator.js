@@ -5,7 +5,6 @@
 */
 
 function convertFENtoBoardState(fen){
-    console.log(fen)
     var splitFen = fen.split(' ');
     var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
     var rows = splitFen[0].split('/');
@@ -78,7 +77,6 @@ export function countKings(boardState){
         for (var cell of row){
             if (cell.isPiecePresent && cell.pieceType==='k'){
                 if(cell.pieceColor === 'black'){ 
-                    console.log('cell',cell)
                     returnObj.bpos = [rowpos,colpos]
                     bKing+=1; 
                 } 

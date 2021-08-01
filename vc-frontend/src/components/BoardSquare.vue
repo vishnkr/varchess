@@ -6,8 +6,6 @@
       <div v-if="isPiecePresent" >
       <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
-
-      
   </div>
 </template>
 
@@ -63,12 +61,16 @@ export default {
         '--x': this.x,
         '--y': this.y,
         }
-      }
+      },
+       //to be used later in portal mode
+      getPortal(){
+        return require('../assets/images/exit.svg');
+      },
     }
 }
 </script>
 
-<style>
+<style scoped>
 
 
 .square {
@@ -107,7 +109,40 @@ export default {
   background-color: #ac422a !important;
   border-color: black;
 }
-
+/*
+.portal{
+  animation-name: zoom;
+  animation-iteration-count: infinite;
+  animation-duration: 3000ms;
+}
+<div style="overflow:hidden;" v-else>
+        <div class="portal-circle">
+          <svg class="portal" height="70%" width="80%">
+            <ellipse cx="40%" cy="40%" rx="15%" ry="15%" 
+            style="fill:yellow;stroke:purple;stroke-width:2" />
+          </svg>
+        </div>
+      </div>
+@keyframes zoom{
+  0% {
+  transform: scale(1, 1);
+  }
+  50% {
+  transform: scale(1.5, 1.5);
+  }
+  100% {
+  transform: scale(1, 1);
+  }
+}
+@keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
+*/
 @media only screen and (max-device-width: 480px) {
   .square {
   background: transparent;

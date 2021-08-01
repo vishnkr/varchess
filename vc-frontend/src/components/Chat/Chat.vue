@@ -6,8 +6,8 @@
               </p>
               <div class="messages" v-chat-scroll="{always:false, smooth:true}">
                   <div v-for="message in messages" :key="message.id">
-                      <span v-if="message.username" class="text-info">[{{message.username}}]:</span>
-                      <span>{{message.message}}</span>
+                      <span v-if="message.username" class="text-info">{{message.username}}: </span>
+                      <span class="message">{{message.message}}</span>
                   </div>
               </div>
               <div class="card-action">
@@ -58,6 +58,9 @@ export default {
 }
 .chat span{
     font-size: 1.2em;
+}
+.text-info{
+    font-weight: bold;
 }
 
 .messages{
