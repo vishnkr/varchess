@@ -63,7 +63,6 @@ export default {
             this.fillMpTabData(piece)
         },
         fillMpTabData(piece){
-            console.log(this.movePatterns)
             this.mpTabData={}
             var patterns = {}
             for (var pattern of this.movePatterns){
@@ -81,22 +80,17 @@ export default {
                 this.mpTabData[[row,col]] = 'move-jump-pattern'
                 }
             }
-            console.log('jumpa',this.mpTabData)
             row = this.curPos[0]
             col = this.curPos[1]
-            console.log('pat',patterns)
             for(var direction of patterns.slidePattern){
                 row = this.curPos[0]
                 col = this.curPos[1]
-                console.log('slides',row,col,direction)
                 while(row>=0 && row<=this.rows && col>=0 && col<=this.cols){
-                    console.log('slides',row,col,direction)
                     this.mpTabData[[row,col]] = 'move-slide-pattern'
                     row += direction[0]
                     col += direction[1]
                 }
             }
-            console.log('slidea',this.mpTabData)
 
         },
             
@@ -105,7 +99,6 @@ export default {
           return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
         setupMPBoard(){
           this.boardState = {tiles:[]};
-          console.log('calledmpboard')
           for(var col =0;col<this.cols;col++){
             this.boardState.tiles.push([])
             for(var row=0;row<this.rows;row++){

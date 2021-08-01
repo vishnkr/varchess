@@ -79,6 +79,14 @@ func (room *Room) BroadcastToMembers(message []byte){
 	}
 }
 
+func (room *Room) BroadcastToMembersExceptSender(message []byte,c *Client){
+	for member, _ := range room.Clients {
+		if (member.conn!=c.conn){
+			member.send <- message
+		}
+	}
+}
+
 func (c *Client) AddtoRoom(roomId string){
 	c.mu.Lock()
 	defer c.mu.Unlock()

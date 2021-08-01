@@ -9,14 +9,9 @@ const server_host = process.env.VUE_APP_SERVER_WS;
 const WS = new WebSocket(`${server_host}/ws`);
 
 
-let msgQueue = [];
 
 WS.onopen = function(){
-    console.log("socket opened!");
-    while (msgQueue.length > 0) {
-        console.log('msg',msgQueue)
-        WS.send(msgQueue.pop())
-    }
+    console.log("Socket opened");
 }
 WS.onerror = function(){
     console.log('got error')
@@ -24,11 +19,9 @@ WS.onerror = function(){
 }
 WS.onmessage = function(msg){
         if(msg.data=="ping"){
-            //console.log('got ping')
             WS.send("pong")
         } else {
             let apiMsg = JSON.parse(msg.data);
-            console.log('received message',msg,apiMsg)
             switch(apiMsg.type){
                 case "chatMessage": {
                     let msgData = JSON.parse(apiMsg.data);
@@ -63,8 +56,13 @@ WS.onmessage = function(msg){
                     }
                     break;
                 }
+                case "result":{
+                    if(apiMsg.result){
+                        store.commit('setResult',apiMsg.result)
+                    }
+                    break;
+                }
                 case "clientList":{ //if new client joins or leaves room
-                    console.log('clientActivity',apiMsg)
                     var client
                     let msgData = JSON.parse(apiMsg.data);
                     if(msgData.activityType==="join"){
@@ -116,6 +114,14 @@ export function requestGameinfo(socket,roomId){
     sendJSONReq(socket,'reqGameInfo',{roomId:roomId});
 }
 
+export function sendResign(socket,data){
+    sendJSONReq(socket,'resign',{roomId:data.roomId,color:data.color})
+}
+
+export function sendDrawOffer(socket,data){
+    sendJSONReq(socket,'draw',{roomId:data.roomId,color:data.color})
+}
+
 export function sendMoveInfo(socket,json){
     if(!store.state.gameInfo.result){
         sendJSONReq(socket,'performMove',{
@@ -132,11 +138,4 @@ export function sendMoveInfo(socket,json){
 }
 
 function isOpen(ws) { return ws.readyState === ws.OPEN }
-/*export function sendRequest(socket,type,msg){
-    let json = JSON.stringify(msg);
-    if (socket.readyState !== 1){
-        msgQueue.push(json)
-    }else{
-        socket.send(json);
-    }
-}*/
+

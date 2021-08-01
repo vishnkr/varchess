@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gorilla/websocket"
 	"sync"
-	//"net/http"
 	"strings"
 	"unicode"
 	"time"
@@ -47,7 +46,13 @@ type MoveResponse struct{
 	Check bool `json:"check,omitempty"`
 	Result string `json:"result,omitempty"`
 }
-
+//used when player resigns or draw agreement occurs
+type ResultMessage struct{
+	Type string `json:"type,omitempty"`
+	RoomId string `json:"roomId"`
+	Color string `json:"color"`
+	Result string `json:"result,omitempty"`
+}
 
 type Client struct{
 	conn *websocket.Conn
@@ -82,7 +87,6 @@ const (
 
 func (c *Client) Read(){
 	defer c.disconnect("Read")
-	//var response []byte
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
@@ -90,7 +94,6 @@ func (c *Client) Read(){
 		if err!=nil{
 			return
 		}
-		
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		if (string(msg)=="pong"){continue}
 		
@@ -112,91 +115,14 @@ func (c *Client) Read(){
 				}
 				
 			case "chatMessage":
-				chatMessage := ChatMessage{}
-				json.Unmarshal([]byte(reqData.Data),&chatMessage)
-				fmt.Println(reqData.Data,chatMessage,"reachin here",chatMessage.RoomId)
-				if room, ok := RoomsMap[chatMessage.RoomId]; ok {
-					for member, _ := range room.Clients {
-						if (member.conn!=c.conn){
-							if message,err:= json.Marshal(reqData); err==nil{
-								member.send <- message
-							}
-						}
-					}
-				} else {
-					fmt.Println("Room close")
-					message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
-					if errMessage,err:= json.Marshal(message); err==nil{
-						c.send <- errMessage
-					}
-				}		
-				
+				c.SendChatMessage(&reqData)
+
+			case "resign", "draw":
+				c.ResultOffer(&reqData)
+
 			case "performMove":
-				move:= &Move{}
-				json.Unmarshal([]byte(reqData.Data),&(move))
-				fmt.Println("movedata",reqData.Data)
-				moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
-				val,ok := strToTypeMap[strings.ToLower(move.PieceType)]
-				piece:=&Piece{}
-				if (!ok){
-					piece.Type = Custom
-					piece.CustomPiece = &CustomPiece{PieceName:move.PieceType}
-				} else {
-					piece.Type = val
-				}
-				r := []rune(move.PieceType)
-				if (unicode.IsUpper(r[0])){
-					piece.Color = White
-				} else { piece.Color = Black }
-				
-				room, ok := RoomsMap[move.RoomId]
-				if ok {
-					game:= room.Game
-					var res bool
-					var reason string
-					if (game.Turn==move.Color){
-						res,reason=game.Board.isValidMove(piece,move)
-					} else{ res,reason = false,"wrong color"}
-					if (res) {
-						game.Board.performMove(piece,move)
-						//check for checkmates/check on ooponents
-						over,result:= game.Board.isGameOver(getOpponentColor(piece.Color))
-						if over{
-							moveResp.Result = result
-						} else{ 
-							underCheck,res :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
-							if underCheck{
-								moveResp.Check = true
-							}					
-							fmt.Println("undercheck",underCheck,res)		
-						}
-						fmt.Println("checkmate",over,result)
-						moveResp.IsValid = res
-						moveResp.Type = "performMove"
-						if (move.Castle){
-							moveResp.Castle = true
-						}
-						for member, _ := range room.Clients {
-							if message,err:= json.Marshal(moveResp); err==nil{
-								member.send <- message
-							}
-						}
-						game.Turn = changeTurn(game.Turn)
-					}
-					fmt.Println("move valid:",res,reason)
-					response:= Response{Status:"successful"}
-					marshalledMessage,_ := json.Marshal(response)
-					c.send <- marshalledMessage
-				} else {
-					fmt.Println("Room close")
-					message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
-					if errMessage,err:= json.Marshal(message); err==nil{
-						c.send <- errMessage
-					}
-				}	
-				
+				c.PerformMove(&reqData)	
 		}
-		
 	}
 }
 
@@ -216,14 +142,105 @@ func (c *Client) Write(){
 				}
 				err := c.conn.WriteMessage(websocket.TextMessage, msg) 
 				if err != nil { 
-				return 
+					fmt.Println("err2",err)
+					return 
 				} 
 			case <-ticker.C:
 				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
-					fmt.Println(err)
+					fmt.Println("err3",err)
 					return
 				}
+		}
+	}
+}
+
+func (c *Client) ResultOffer(data *MessageStruct){
+	resultMessage:=&ResultMessage{}
+	json.Unmarshal([]byte(data.Data),&resultMessage)
+	if (data.Type=="resign"){
+		if (resultMessage.Color=="w"){ resultMessage.Result="black"} else if (resultMessage.Color=="b"){ resultMessage.Result="white"}
+		resultMessage.Type="result"
+		if message,err:= json.Marshal(resultMessage); err==nil{
+			RoomsMap[resultMessage.RoomId].BroadcastToMembers(message)
+		}
+	} else {
+		fmt.Println("offer draw")
+	}
+}
+
+func (c *Client) SendChatMessage(data *MessageStruct){
+	chatMessage := ChatMessage{}
+	json.Unmarshal([]byte(data.Data),&chatMessage)
+	if room, ok := RoomsMap[chatMessage.RoomId]; ok {
+		if message,err:= json.Marshal(data); err==nil{
+			room.BroadcastToMembersExceptSender(message,c)
+		}
+	} else {
+		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
+		if errMessage,err:= json.Marshal(message); err==nil{
+			c.send <- errMessage
+		}
+	}		
+}
+
+func (c *Client) PerformMove(data *MessageStruct){
+	move:= &Move{}
+	json.Unmarshal([]byte(data.Data),&(move))
+	moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
+	val,ok := strToTypeMap[strings.ToLower(move.PieceType)]
+	piece:=&Piece{}
+	if (!ok){
+		piece.Type = Custom
+		piece.CustomPiece = &CustomPiece{PieceName:move.PieceType}
+	} else {
+		piece.Type = val
+	}
+	r := []rune(move.PieceType)
+	if (unicode.IsUpper(r[0])){
+		piece.Color = White
+	} else { piece.Color = Black }
+	
+	room, ok := RoomsMap[move.RoomId]
+	
+	if ok {
+		var res bool
+		var reason string
+		game:= room.Game
+		if (game.Turn==move.Color){
+			res,reason =game.Board.isValidMove(piece,move)
+		} else{ res,reason = false,"wrong color"}
+		if (res) {
+			game.Board.performMove(piece,move)
+			//check for checkmates/check on opponents
+			over,result:= game.Board.isGameOver(getOpponentColor(piece.Color))
+			if over{
+				moveResp.Result = result
+			} else{ 
+				underCheck,_ :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
+				if underCheck{
+					moveResp.Check = true
+				}								
+			}
+			moveResp.IsValid = res
+			moveResp.Type = "performMove"
+			if (move.Castle){
+				moveResp.Castle = true
+			}
+			if message,err:= json.Marshal(moveResp); err==nil{
+				room.BroadcastToMembers(message)
+			}
+			game.Turn = changeTurn(game.Turn)
+		}
+		fmt.Println("move valid:",res,reason)
+		response:= Response{Status:"successful"}
+		marshalledMessage,_ := json.Marshal(response)
+		c.send <- marshalledMessage
+	} else {
+		fmt.Println("Room close")
+		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
+		if errMessage,err:= json.Marshal(message); err==nil{
+			c.send <- errMessage
 		}
 	}
 }

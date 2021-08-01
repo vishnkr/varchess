@@ -32,7 +32,26 @@
             <v-text-field width="10px" class="centered-input" v-model="shareLink" id="tocopy" readonly  ></v-text-field>
             <v-btn width="6.5rem" class="ma-2" rounded dark color="blue" @click="copyText">Copy<v-icon>fas fa-link</v-icon></v-btn>
           </v-row>
-          <v-btn class="flip" @click="flip">Flip Board <v-icon>fas fa-retweet</v-icon> </v-btn>
+          <v-row row d-flex nowrap align="center" justify="center" class="px-2 flip">
+            <div v-for="button in buttons" :key="button.text">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    style="margin-right:5px;"
+                    :color="button.color"
+                    dark
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="button.onclick"
+                  >
+                    <v-icon>fas {{button.icon}}</v-icon>
+                  </v-btn>
+                </template>
+                <span>{{button.text}}</span>
+              </v-tooltip>
+            </div>
+          </v-row>
+          
           <v-tabs fixed-tabs>
             <v-tab>
               Chat 
@@ -58,7 +77,7 @@ import Board from '../Board.vue'
 import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
-import WS,{sendMoveInfo} from '../../utils/websocket';
+import WS,{sendMoveInfo,sendResign,sendDrawOffer} from '../../utils/websocket';
 export default {
   components: { Chat,Board,Members,MovePatternTab },
   computed:{
@@ -87,7 +106,6 @@ export default {
         this.error = state.errorMessage;
       }
       else if(mutation.type ==="setResult"){
-        console.log('setting result')
         this.result = state.gameInfo.result;
       }
     })
@@ -95,7 +113,6 @@ export default {
   },
   methods:{
     updatePlayerList(){
-      console.log('pl',this.$store.state.gameInfo[this.roomId])
       var roomInfo = this.$store.state.gameInfo[this.roomId]
       this.player1 = roomInfo && roomInfo.p1 ? roomInfo.p1 : null;
       this.player2 = roomInfo && roomInfo.p2 ? roomInfo.p2 : null;
@@ -103,7 +120,6 @@ export default {
       this.members = roomInfo && roomInfo.members.filter((value)=>{
         return value!=this.player1 && value!=this.player2
       })
-      console.log('members',this.members)
     },
     validateMove(destInfo){
       var srcInfo = this.$store.state.curStartPos
@@ -128,6 +144,12 @@ export default {
     flip(){
       this.isFlipped=!this.isFlipped
       this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
+    },
+    resign(){
+      sendResign(this.ws,{roomId:this.roomId,type:'resign',color:this.getPlayerColor()})
+    },
+    offerDraw(){
+      sendDrawOffer(this.ws,{roomId:this.roomId,type:'draw',color:this.getPlayerColor()})
     },
     isFlippedCheck(){
       this.isFlipped = this.player2 ? this.username === this.player2 : false;
@@ -156,7 +178,8 @@ export default {
       turn: null,
       gameInfo: this.$store.state.gameInfo,
       result:null,
-      members: [],//this.$store.state.roomClients[roomId],
+      buttons:[{text:'Flip',icon:'fa-retweet',color:'black',onclick:this.flip},{text:'Resign',icon:'fa-flag',color:'red darken-1',onclick:this.resign},{text:'Offer Draw',icon:'fa-handshake',color:'blue darken-2',onclick:this.offerDraw}],
+      members: [],
       boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
       ws: WS,
     }
@@ -179,15 +202,23 @@ export default {
 }
 
 .board-panel{
-  flex: 1;
+  flex:2;
+  padding: 1em;
 }
 .flip{margin-bottom: 1em;}
 .right-panel{
-   max-width:400px;
-   width: 100%;
+   flex:1;
    padding: 1em;
    background-color: rgb(224, 223, 223);
    border-radius: 1%;
+}
+
+@media only screen and (max-width: 700px) {
+  .columns{
+    display: flex;
+    flex-flow: column;
+    margin-bottom: 2em;
+  }
 }
 
 </style>

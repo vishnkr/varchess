@@ -84,7 +84,6 @@ export default {
     props:['dialog','pieceType','pieceColor','editorData','ws'],
     watch:{
       moveType(){
-        console.log('got',this)
         this.editData.moveType = this.moveType
       },
       slideDirections(){
@@ -103,7 +102,6 @@ export default {
     methods:{
         addPattern(row,col){
           if(this.moveType=="jump"){
-            console.log(row-1,col-1,this.piecePos[0]!=row-1 && this.piecePos[1]!=col-1)
             if(this.piecePos[0]!=row-1 || this.piecePos[1]!=col-1){
               this.jumpPattern.push([row-this.piecePos[0]-1,col-this.piecePos[1]-1])
             }
