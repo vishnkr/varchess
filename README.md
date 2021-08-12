@@ -15,7 +15,7 @@ Varchess is a multiplayer chess website where you can create your own chess vari
 
 Future Plans : 
 - Implement a teleportation portal mode
-- Chess engine to mimic computer opponent (In the works - [Stonkfish](https://github.com/vishnkr/stonkfish)
+- Chess engine to mimic computer opponent (In the works - [Stonkfish](https://github.com/vishnkr/stonkfish))
 
 ## Running Locally
 Clone this project and cd into the local repo.
