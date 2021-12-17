@@ -1,11 +1,12 @@
 package main
 
 import (
-	"log"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"encoding/json"
+	"log"
 	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -26,6 +27,8 @@ func main(){
     router.HandleFunc("/getRoomId", roomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}",boardStateHandler).Methods("GET","OPTIONS")
 	router.HandleFunc("/", rootHandler)
+	router.HandleFunc("/login", AuthUserHandler).Methods("GET")
+	router.HandleFunc("/signup", CreateAccountHandler).Methods("POST")
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
