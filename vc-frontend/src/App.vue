@@ -12,7 +12,16 @@
         </div>
         </div>
       <v-spacer></v-spacer>
-
+      <div v-if="!isAuthenticated">
+      <v-btn rounded v-on="on" v-bind="attrs" color="primary" dark @click="signup">Sign up</v-btn>
+      <v-btn rounded
+              color="primary"
+              v-bind="attrs"
+              v-on="on"
+              dark 
+              @click="login">Log in</v-btn>
+      </div>
+      
     </v-app-bar>
 
     <v-main>
@@ -64,6 +73,12 @@ export default {
     redirectToHome(){
     this.$router.push({name:'Home'})
     location.reload()
+    },
+    login(){
+      this.$router.push({name:'Login'})
+    },
+    signup(){
+      this.$router.push({name:'Signup'})
     }
   }
 };
