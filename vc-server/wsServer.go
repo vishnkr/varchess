@@ -1,9 +1,9 @@
-package  main
+package main
 
 import (
-	"net/http"
 	"fmt"
 	"log"
+	"net/http"
 )
 
 type WsServer struct{
@@ -63,8 +63,7 @@ func (server *WsServer) deleteEmptyRooms(client *Client){
 	for id,_:= range RoomsMap{
 		if(len(RoomsMap[id].Clients)==0){
 			fmt.Println(id,"room was deleted since its empty")
-			delete(RoomsMap,id)
-			//fmt.Println(RoomsMap)		
+			delete(RoomsMap,id)	
 		}
 	}
 	
@@ -80,5 +79,5 @@ func ServeWsHandler(wsServer *WsServer,w http.ResponseWriter, r *http.Request){
 	go client.Write()
 	go client.Read()
 	wsServer.register <- client
-	fmt.Println("New Client joined the hub!")
+	fmt.Println("New Client!")
 }
