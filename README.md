@@ -8,13 +8,13 @@ Varchess is a multiplayer chess website where you can create your own chess vari
 #### LIVE LINK - https://varchess.tech/
 
 
-![Editor](https://i.imgur.com/F6xPlhS.png)
+![Editor](https://i.imgur.com/aWI8KoW.png)
 
 
-![Game Room](https://i.imgur.com/X8pAHgM.png)
+![Game Room](https://i.imgur.com/eoTxp7S.png)
 
 Future Plans : 
-- Implement a teleportation portal mode
+- More pre-defined variants (teleportation portals, golem chess, long range attacks, poisoned pawn/hidden queen)
 - Chess engine to mimic computer opponent (In the works - [Stonkfish](https://github.com/vishnkr/stonkfish))
 
 ## Running Locally
