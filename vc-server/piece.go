@@ -1,9 +1,7 @@
 package main
 
-import (
-	//"unicode"
-	//"fmt"
-)
+//"unicode"
+//"fmt"
 
 type Type uint8
 const (
@@ -48,7 +46,7 @@ type Square struct{
 }
 
 type KingPiece struct{
-	HasMoved bool
+	MoveCount int
 	InCheck bool
 	Position []int
 }
@@ -94,8 +92,8 @@ func (piece Piece) isBackwardPawnMove(move *Move) bool{
 var typeToStrMap = map[Type]string{Pawn:"p", Knight:"n", Bishop:"b", Rook:"r", Queen:"q", King:"k"}
 var strToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
 
-func (board *Board) isPieceStartPosValid(piece *Piece, row int, col int) bool{
-	//fmt.Println("at row",row,"col",col,"color",piece.Color,"type",piece.Type)
+// isPiecStartPosValid: check if piece exists at given position
+func (board *Board) isPieceStartPosValid(piece Piece, row int, col int) bool{
 	var validType bool
 	if (board.Tiles[row][col].Piece.Type == Custom){
 		validType = board.Tiles[row][col].Piece.CustomPiece.PieceName == piece.CustomPiece.PieceName
