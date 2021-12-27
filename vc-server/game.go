@@ -1,9 +1,8 @@
 package main
 
 import (
-	"strings"
 	"fmt"
-	
+	"strings"
 )
 
 type Game struct {
@@ -41,10 +40,11 @@ type Move struct{
 	PieceType string `json:"piece"`
 	RoomId string `json:"roomId"`
 	Color string `json:"color"`
+	Captured Piece
 }
 
 func (board *Board) IsEmpty(row int,col int) bool{
-	return board.Tiles[row][col].IsEmpty
+	return board.isSquareInBoardRange(row,col) && board.Tiles[row][col].IsEmpty
 }
 
 //visual helper function
@@ -69,20 +69,20 @@ func DisplayBoardState(board *Board){
 }
 
 func (board *Board) isSameColorPieceAtDest(color Color, destRow int, destCol int) bool{
-	if (color == board.getPieceColor(destRow,destCol)){
+	if (board.isSquareInBoardRange(destRow,destCol)&& !board.IsEmpty(destRow,destCol) && color == board.getPieceColor(destRow,destCol)){
 		return true
 	}
 	return false
 }
 
 //isValidMove: checks if a move made by given piece is valid, return string is just used for debugging purposes
-func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
+func (board *Board) isValidMove(piece Piece,move *Move) (bool,string){
 	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
 	//check if same piece color exists at destination
 	if (board.isSameColorPieceAtDest(piece.Color,move.DestRow,move.DestCol)){
 		return false,"same color piece at dest"
 	}
-	if (board.willCauseDiscoveredCheck(piece,move)){ return false,"discovered check"}
+	if (board.willCauseCheck(piece,move)){ return false,"under check/discovered check"}
 	switch piece.Type{
 		case Rook: 
 			return isRookMoveValid(piece,board,move)
@@ -109,20 +109,27 @@ func (board *Board) isValidMove(piece *Piece,move *Move) (bool,string){
 	return false,"something's wrong"
 }
 
-// performMove modifies board state to account for position changes after a valid move has been made
-func (board *Board) performMove(piece *Piece,move *Move){
+func (board *Board) isDestOccupied(color Color,destRow int,destCol int) bool{
+	return !board.Tiles[destRow][destCol].IsEmpty && board.Tiles[destRow][destCol].Piece.Color==getOpponentColor(color)
+		
+}
+
+// performMove: modify board state after a move has been made
+func (board *Board) performMove(piece Piece,move Move){
+
+	if (board.isDestOccupied(piece.Color,move.DestRow,move.DestCol)){
+		move.Captured = board.Tiles[move.DestRow][move.DestCol].Piece
+	}
 	board.Tiles[move.DestRow][move.DestCol].IsEmpty = false
 	board.Tiles[move.DestRow][move.DestCol].Piece = board.Tiles[move.SrcRow][move.SrcCol].Piece
 	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = true
-	board.Tiles[move.SrcRow][move.SrcCol].Piece.Type = Empty
-	board.Tiles[move.SrcRow][move.SrcCol].Piece.Color = EmptyTile
 	if (piece.Type==King){
 		if (piece.Color==Black){
-			board.BlackKing.HasMoved = true
-			board.WhiteKing.Position = []int{move.DestRow,move.DestCol}
+			board.BlackKing.MoveCount += 1
+			board.BlackKing.Position = []int{move.DestRow,move.DestCol}
 		} else {
 			board.WhiteKing.Position = []int{move.DestRow,move.DestCol}
-			board.WhiteKing.HasMoved=true
+			board.WhiteKing.MoveCount += 1
 		}
 	}
 	if (move.Castle){
@@ -137,119 +144,109 @@ func (board *Board) performMove(piece *Piece,move *Move){
 		board.Tiles[move.SrcRow][newRookPos].IsEmpty = false
 		board.Tiles[move.SrcRow][newRookPos].Piece = Piece{Type:Rook,Color:piece.Color}
 		board.Tiles[move.SrcRow][oldRookPos].IsEmpty = true
-		board.Tiles[move.SrcRow][oldRookPos].Piece.Type = Empty
-		board.Tiles[move.SrcRow][oldRookPos].Piece.Color = EmptyTile
 	}
+}
+
+//umakeMove: revert board to original state before perform move
+func (board *Board) unmakeMove(piece Piece,move Move){
+	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = false
+	if (move.Captured!=Piece{}){
+		board.Tiles[move.DestRow][move.DestCol].Piece = move.Captured		
+	} 
+	if (piece.Type==King){
+		if (piece.Color==Black){
+			board.BlackKing.MoveCount -= 1
+			board.BlackKing.Position = []int{move.SrcRow,move.SrcCol}
+		} else {
+			board.WhiteKing.Position = []int{move.SrcRow,move.SrcCol}
+			board.WhiteKing.MoveCount -= 1
+		}
+	}
+	board.Tiles[move.SrcRow][move.SrcCol].Piece = board.Tiles[move.DestRow][move.DestCol].Piece
+	board.Tiles[move.DestRow][move.DestCol].IsEmpty = true		
 }
 
 func (board *Board) isGameOver(color Color) (bool,string){
-	var king KingPiece
-	if (color==Black){king = board.BlackKing} else {king = board.WhiteKing}
-	underCheck,opponentAttackedSquares:= board.isKingUnderCheck(color)
-	myAttackSquares:= board.getSquaresAttackedBy(color)
-	for square,_ := range myAttackSquares{
-		if _,ok:=opponentAttackedSquares[square];ok{
-			delete(myAttackSquares, square);
-		}
-	}
-	if (!underCheck){
-		//fmt.Println("darw",myAttackSquares)
-		//fmt.Println("opp",opponentAttackedSquares)
-		if (len(myAttackSquares)==0){
-			//stalemate since player has no legal moves and king is not under check
-			return true,"draw"
-		} 
-	} else {
-		canKingMove,blockCheck :=false,false
-		for row:=-1;row<=1;row+=1{
-			for col:=-1;col<=1;col+=1{
-				if (row==0 && col==0){
-					continue
-				}
-				destRow,destCol := king.Position[0]+row,king.Position[1]+col
-				
-				if (board.isSquareInBoardRange(destRow,destCol)){
-					squareId:= board.Tiles[destRow][destCol].Id
-					//fmt.Println("sqid",squareId,king,destRow,destCol)
-					_,attacked := opponentAttackedSquares[squareId]
-					if !attacked && !board.isSameColorPieceAtDest(color,destRow,destCol){
-						canKingMove = true
-					}
-				}
-			}
-		}
-		//fmt.Println("gameover",canKingMove,"squares",opponentAttackedSquares,myAttackSquares)
-
-		if (!canKingMove && !blockCheck){
+	check:= board.isKingUnderCheck(color)
+	moves:= board.getAllValidMoves(color)
+	if len(moves)==0{
+		if check{
 			return true,getOpponentColor(color).String()
-		}
+		} else { return true,"draw"}
 	}
-	return false,"game not over"
+	return false,"nah"
 }
 
 
-func (board *Board) canBlockCheck(color Color,king KingPiece) bool{
-	//get player's move squares excluding the king
-	// get the line of attacked sqaures from the attacking opponent piece
-	// check if any of those sqaures can be reached by one of our pieces including the square of the attacked piece
-	return false
+func (board *Board) willCauseCheck(piece Piece, move *Move) bool {
+	copyBoard:=deepCopyBoard(board)
+	copyBoard.performMove(piece,*move)
+	postCheck := copyBoard.isKingUnderCheck(piece.Color)
+	return postCheck
 }
 
-func (board *Board) willCauseDiscoveredCheck(piece *Piece, move *Move) bool {
-	//get opponent attacking squares, if king is present in that then it causes discovery check
-	var copyBoard *Board = deepCopyBoard(board)
-	copyBoard.performMove(piece,move)
-	underCheck,_ := copyBoard.isKingUnderCheck(piece.Color)
-	return underCheck
-}
-
-// getSquaresAttackedBy returns a collection of squares attacked by pieces of the given color
-func (board *Board) getSquaresAttackedBy(color Color) map[int]bool{
-	var attackedSquares = make(map[int]bool)
-	for rowIndex,row:= range board.Tiles{
-		for colIndex,tile:= range row{
-			if (!tile.IsEmpty && tile.Piece.Color==color){
-				board.genPieceMoves(&tile.Piece,rowIndex,colIndex,attackedSquares)
-			}
-		}
-	}
-	return attackedSquares
-}
-
-//isKingUnderCheck: returns whether player's king is under check and also the squares attacked by the ooponent color
-func (board *Board) isKingUnderCheck(color Color) (bool,map[int]bool){
+//isKingUnderCheck: returns whether player's king is under check or not
+func (board *Board) isKingUnderCheck(color Color) bool{
 	var kingPos []int
-	opponentCol := getOpponentColor(color)
-	attackedSquares := board.getSquaresAttackedBy(opponentCol)
-	if (color==White){
-		kingPos = board.WhiteKing.Position
-	} else {
-		kingPos = board.BlackKing.Position
+	if color==White{kingPos=board.WhiteKing.Position} else{kingPos=board.BlackKing.Position}
+	oppMoves:=board.getAllPseudoLegalMoves(getOpponentColor(color))
+	for move :=range oppMoves{
+		if kingPos[0]==move.DestRow &&kingPos[1]==move.DestCol{
+			return true
+		}
 	}
-	//fmt.Println("atsw",attackedSquares)
-	//fmt.Println("uo",attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id],kingPos,board.Tiles[kingPos[0]][kingPos[1]].Id)
-	if _,underAttack := attackedSquares[board.Tiles[kingPos[0]][kingPos[1]].Id]; underAttack{
-		return true,attackedSquares
-	} 
-	return false,attackedSquares
+	return false
 }
 
 func (board *Board)isSquareInBoardRange(row int, col int) bool{
 	return row>=0 && col>=0 && row<board.Rows && col<board.Cols
 }	
 
-// genPieceMoves returns a list of square positions (using its unique Square Id) that the given piece attacks
-// this includes the position of the opponent king since it would be useful to detect checks/discovered checks
-func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
-	//fmt.Println("genpieceMoves",piece.String(),attackedSquares)
+// getAllValidMoves: filter out illegal moves from pseudo legal move map
+func (board *Board) getAllValidMoves(color Color)map[*Move]Piece{
+	movesList:= board.getAllPseudoLegalMoves(color)
+	for move,piece := range movesList{
+		if (board.isDestOccupied(piece.Color,move.DestRow,move.DestCol)){
+			move.Captured = board.Tiles[move.DestRow][move.DestCol].Piece
+		}
+		copyBoard:=deepCopyBoard(board)
+		copyBoard.performMove(piece,*move)
+		if copyBoard.isKingUnderCheck(color){
+			delete(movesList,move)
+		}
+		copyBoard.unmakeMove(piece,*move)
+	}
+	return movesList
+}
+
+// getAllPseudoLegalMoves: compiles all pseudo legal moves for given player
+func (board *Board) getAllPseudoLegalMoves(color Color)map[*Move]Piece{
+	var validMoves map[*Move]Piece = make(map[*Move]Piece)
+	for rowIndex,row:= range board.Tiles{
+		for colIndex,tile:= range row{
+			if (!tile.IsEmpty && tile.Piece.Color==color){
+				for k,v := range(board.genPieceMoves(tile.Piece,rowIndex,colIndex)){
+					validMoves[k]=v
+				}
+			}
+		}
+	}
+	return validMoves
+}
+
+// genPieceMoves: generate pseudo legal moves for given piece
+func (board *Board) genPieceMoves(piece Piece,srcRow int, srcCol int)map[*Move]Piece{
+	var validMoves  = make(map[*Move]Piece)
 	switch piece.Type{
 	case Bishop:
-		board.genBishopMoves(piece,srcRow,srcCol,attackedSquares)
+		validMoves = board.genBishopMoves(piece,srcRow,srcCol)
 	case Rook:
-		board.genRookMoves(piece,srcRow,srcCol,attackedSquares)
+		validMoves = board.genRookMoves(piece,srcRow,srcCol)
 	case Queen:
-		board.genRookMoves(piece,srcRow,srcCol,attackedSquares)
-		board.genBishopMoves(piece,srcRow,srcCol,attackedSquares)
+		validMoves = board.genRookMoves(piece,srcRow,srcCol)
+		for k,v:= range(board.genBishopMoves(piece,srcRow,srcCol)){
+			validMoves[k]=v
+		}
 	case King:
 		for row:=-1;row<=1;row+=1{
 			for col:=-1;col<=1;col+=1{
@@ -257,8 +254,8 @@ func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 					continue
 				}
 				if (board.isSquareInBoardRange(srcRow+row,srcCol+col) && (!board.isSameColorPieceAtDest(piece.Color,srcRow+row,srcCol+col) || board.IsEmpty(srcRow+row,srcCol+col))){
-
-					attackedSquares[board.Tiles[srcRow+row][srcCol+col].Id] = true
+					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: srcRow+row,DestCol: srcCol+col}
+					validMoves[move] = piece
 				}
 			}
 		}
@@ -267,29 +264,46 @@ func (board *Board) genPieceMoves(piece *Piece,srcRow int, srcCol int,attackedSq
 		for _, pair:= range jumpSquares{
 			targetRow:= srcRow+pair[0]
 			targetCol:= srcCol+pair[1]
-			if (board.isSquareInBoardRange(targetRow,targetCol)){
-				attackedSquares[board.Tiles[targetRow][targetCol].Id] = true
+			if (board.isSquareInBoardRange(targetRow,targetCol) && !board.isSameColorPieceAtDest(piece.Color,targetRow,targetCol)){
+				move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow,DestCol: targetCol}
+				validMoves[move] = piece
 			}
 		}
 	case Pawn:
-		var rowOffset int
+		var rowOffset,doubleMoveStartRank int
 		if (piece.Color==White){
+			doubleMoveStartRank = board.Rows-2
 			rowOffset=-1
-		} else {rowOffset=1}
-		if (board.isSquareInBoardRange(srcRow+rowOffset,srcCol-1) && board.IsEmpty(srcRow+rowOffset,srcCol-1)){
-			attackedSquares[board.Tiles[srcRow+rowOffset][srcCol-1].Id] = true
+		} else {
+			doubleMoveStartRank = 1
+			rowOffset=1
 		}
-		if (board.isSquareInBoardRange(srcRow+rowOffset,srcCol+1) && board.IsEmpty(srcRow+rowOffset,srcCol+1)){
-			attackedSquares[board.Tiles[srcRow+rowOffset][srcCol+1].Id] = true
+		targetRow:=srcRow+rowOffset
+		for i:=-1; i<=1;i++{
+			//non-capture moves
+			if (i==0){
+				if board.IsEmpty(targetRow,srcCol){
+					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow,DestCol: srcCol}
+					validMoves[move] = piece
+				}
+				if board.IsEmpty(targetRow+1,srcCol) && srcRow==doubleMoveStartRank{
+					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow+1,DestCol: srcCol}
+					validMoves[move] = piece
+				}
+			}
+			//capture moves
+			if (board.isSquareInBoardRange(targetRow,srcCol+i) && !board.IsEmpty(targetRow,srcCol+i) && !board.isSameColorPieceAtDest(piece.Color,targetRow,srcCol+i)){
+				move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow,DestCol: srcCol+i,Captured: board.Tiles[targetRow][srcCol+i].Piece}
+				validMoves[move] = piece
+			}
 		}
-		if (board.isSquareInBoardRange(srcRow+rowOffset,srcCol) && board.IsEmpty(srcRow+rowOffset,srcCol)){
-			attackedSquares[board.Tiles[srcRow+rowOffset][srcCol].Id] = true
-		}
-
 	}
+	return validMoves
 }
 
-func (board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedSquares map[int]bool){
+// genBishopMoves: generate pseudo-legal bishop moves
+func (board *Board) genBishopMoves(piece Piece,srcRow int, srcCol int)map[*Move]Piece{
+	var validMoves = make(map[*Move]Piece)
 	diagonals:= [][]int{{1,1,board.Rows-1},{1,-1,board.Rows-1},{-1,1,0},{-1,-1,0}}
 	for _,value:= range diagonals{
 		xOffset,yOffset,endRow := value[0],value[1],value[2]
@@ -297,46 +311,45 @@ func (board *Board) genBishopMoves(piece *Piece,srcRow int, srcCol int,attackedS
 		for i := 1; i <= pathLength; i++{
 			x := srcRow + i*xOffset;
 			y := srcCol + i*yOffset;
-			if (board.isSquareInBoardRange(x,y) && board.IsEmpty(x,y) ){
-				attackedSquares[board.Tiles[x][y].Id] = true
-			} else if (board.isSquareInBoardRange(x,y)){
-				attackedSquares[board.Tiles[x][y].Id] = true
-				break
-			}else { 
-				break
-			}
+			if (board.isSquareInBoardRange(x,y) && !board.isSameColorPieceAtDest(piece.Color,x,y)){
+				move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow:x,DestCol:y}
+				validMoves[move]=piece
+				if !board.IsEmpty(x,y){break}
+			} else {break}
 		}
 	}
+	return validMoves
 }
 
-func (board *Board) genRookMoves(piece *Piece,srcRow int,srcCol int,attackedSquares map[int]bool){
+func (board *Board) genRookMoves(piece Piece,srcRow int,srcCol int)map[*Move]Piece{
 	directions:= []int{-1,1}
 	//check horizontal
+	var validMoves = make(map[*Move]Piece)
 	for _,xOffset := range directions{
 		for i:=srcCol+xOffset;i>=0 && i<board.Cols;i+=xOffset{
-			if (board.IsEmpty(srcRow,i)){
-				attackedSquares[board.Tiles[srcRow][i].Id] = true
-			} else {
-				attackedSquares[board.Tiles[srcRow][i].Id] = true
-				break
-			} 
+			if (!board.isSameColorPieceAtDest(piece.Color,srcRow,i)){
+				move:= &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: srcRow,DestCol: i}
+				validMoves[move]=piece
+			} else{ break}
+			if (!board.IsEmpty(srcRow,i)){break}
+			
 		}
 	}
 	//check vertical
 	for _,yOffset := range directions{
 		for i :=srcRow+yOffset;i>=0 && i<board.Rows;i+=yOffset{
-			if (board.IsEmpty(i,srcCol)){
-				attackedSquares[board.Tiles[i][srcCol].Id] = true
-			} else{
-				attackedSquares[board.Tiles[i][srcCol].Id] = true
-				break
-			}
+			if (!board.isSameColorPieceAtDest(piece.Color,i,srcCol)){
+				move:= &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: i,DestCol: srcCol}
+				validMoves[move]=piece
+			} else{ break}
+			if (!board.IsEmpty(i,srcCol)){break}
 		}
 	}
+	return validMoves
 }
 
-// isKingMoveValid handles all logic to determine if a king move is valid
-func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+// isKingMoveValid: determine if a king move is valid
+func isKingMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	if (move.Castle){
 		if (!board.hasKingMoved(piece.Color)){
 			if (move.SrcRow==move.DestRow){
@@ -379,13 +392,13 @@ func isKingMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 }
 
 func (board* Board) hasKingMoved(color Color) bool{
-	if(color==White && board.WhiteKing.HasMoved || (color==Black && board.BlackKing.HasMoved)){
+	if(color==White && board.WhiteKing.MoveCount>0 || (color==Black && board.BlackKing.MoveCount>0)){
 		return true
 	} else {return false}
 }
 
 // isRoomMoveValid determines if a rook move is valid
-func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+func isRookMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	//horizontal or vertical block
 	if (move.SrcCol==move.DestCol && move.SrcRow!=move.DestRow){
 		//vertical move
@@ -409,7 +422,7 @@ func isRookMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 }
 
 // isBishopMoveValid determines if a Bishop move is valid
-func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+func isBishopMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	pathLength:= Abs(move.SrcRow - move.DestRow)
 	if pathLength!= Abs(move.SrcCol - move.DestCol){
 		return false, "not diagonal"
@@ -436,13 +449,11 @@ func isBishopMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 			return false,"obstacle in bishop path" 
 		} 
 	}
-	
-	
 	return true,"valid"
 }
 
 // isBishopMoveValid determines if a bishop move is valid
-func isPawnMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	//not considering en passant yet
 	var doubleMoveStartRank,rowOffset,promoteDestRow int
 	if piece.Color==Black {
@@ -486,12 +497,11 @@ func changeTurn(turn string) string{
 	} else { return "w"}
 }
 
-func isCustomMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
+func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	//Check jump moves followed by slide moves
 	var jumpPattern,slidePattern [][]int
 	//find pattern for the piece, will change this to a hashmap later
 	for _,movePatterns := range board.CustomMovePatterns{
-		fmt.Println("mp",movePatterns,piece,piece.CustomPiece)
 		if (movePatterns.PieceName == strings.ToLower(piece.CustomPiece.PieceName)){
 			jumpPattern = movePatterns.JumpPattern
 			slidePattern = movePatterns.SlidePattern
@@ -500,10 +510,8 @@ func isCustomMoveValid(piece *Piece, board *Board, move *Move) (bool,string){
 	}
 	
 	var rowDiff,colDiff int = move.SrcRow-move.DestRow, move.SrcCol-move.DestCol
-	fmt.Println("diffs",rowDiff,colDiff,jumpPattern)
 	if (len(jumpPattern)!=0){
 		for _, pair := range jumpPattern{
-			fmt.Println("pair",pair)
 			if (pair[0]==rowDiff && pair[1]==colDiff){
 				return true,"valid custom jump move"
 			}
