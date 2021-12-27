@@ -1,12 +1,11 @@
 package main
 
-
 import (
-	"fmt"
-	"math/rand"
-	"time"
-	"net/http"
 	"encoding/json"
+	"log"
+	"math/rand"
+	"net/http"
+	"time"
 )
 
 type Room struct{
@@ -74,13 +73,13 @@ func (c *Client) CreateRoom(roomId string,startFen string) *Room{
 }
 
 func (room *Room) BroadcastToMembers(message []byte){
-	for client,_ := range room.Clients{
+	for client := range room.Clients{
 		client.send <- message
 	}
 }
 
 func (room *Room) BroadcastToMembersExceptSender(message []byte,c *Client){
-	for member, _ := range room.Clients {
+	for member := range room.Clients {
 		if (member.conn!=c.conn){
 			member.send <- message
 		}
@@ -105,7 +104,7 @@ func (c *Client) AddtoRoom(roomId string){
 		marshalledInfo,_ := json.Marshal(gameInfo)
 		RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
 	} else {
-		fmt.Println("Room close")
+		log.Println("Room close")
 		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
 		if errMessage,err:= json.Marshal(message);err==nil{
 			c.send <- errMessage
@@ -115,7 +114,7 @@ func (c *Client) AddtoRoom(roomId string){
 
 func (room *Room) getClientUsernames() []string{
 	var clientList = []string{}
-	for client,_ := range room.Clients{
+	for client := range room.Clients{
 		clientList = append(clientList,client.username)
 	}
 	return clientList

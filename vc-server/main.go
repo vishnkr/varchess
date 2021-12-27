@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 var addr = flag.String("addr", ":5000", "http server address")
 
@@ -23,6 +25,12 @@ var upgrader = websocket.Upgrader{
 var RoomsMap = make(map[string]*Room)
 
 func main(){
+	
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	
 	router := mux.NewRouter()
     router.HandleFunc("/getRoomId", roomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}",boardStateHandler).Methods("GET","OPTIONS")
@@ -34,8 +42,22 @@ func main(){
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request){
 		ServeWsHandler(wsServer,w,r)
 	})
-	fmt.Print("listening on ", *addr,"\n")
+	log.Print("listening on ", *addr,"\n")
 	log.Fatal(http.ListenAndServe(*addr, router))
+	//replStart()
+}
+
+func PrintMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("Alloc = %v MiB", bToMb(m.Alloc))
+	fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
+	fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
+	fmt.Printf("\tNumGC = %v\n", m.NumGC)
+}
+
+func bToMb(b uint64) uint64 {
+return b / 1024 / 1024
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {

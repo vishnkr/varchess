@@ -1,13 +1,15 @@
-
 package main
+
 import (
-	"github.com/gorilla/websocket"
-	"sync"
-	"strings"
-	"unicode"
-	"time"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"log"
+	"strings"
+	"sync"
+	"time"
+	"unicode"
+
+	"github.com/gorilla/websocket"
 )
 
 type MessageStruct struct {
@@ -72,8 +74,7 @@ func newClient(conn *websocket.Conn, wsServer *WsServer) *Client{
 }
 
 func (c *Client) disconnect(Type string) {
-	fmt.Println("disconnect called from",Type)
-	//close(c.send)
+	log.Println("disconnect called from",Type)
 	c.conn.Close()
 	c.wsServer.unregister <- c
 }
@@ -99,7 +100,7 @@ func (c *Client) Read(){
 		
 		reqData:= MessageStruct{}
 		json.Unmarshal([]byte(msg),&reqData)
-		fmt.Println("received data:",reqData)		
+		log.Println("received data:",reqData)		
 		switch reqData.Type{
 			case "createRoom", "joinRoom":
 				userInfo := UserRoomInfo{}
@@ -142,13 +143,11 @@ func (c *Client) Write(){
 				}
 				err := c.conn.WriteMessage(websocket.TextMessage, msg) 
 				if err != nil { 
-					fmt.Println("err2",err)
 					return 
 				} 
 			case <-ticker.C:
 				c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
-					fmt.Println("err3",err)
 					return
 				}
 		}
@@ -185,11 +184,11 @@ func (c *Client) SendChatMessage(data *MessageStruct){
 }
 
 func (c *Client) PerformMove(data *MessageStruct){
-	move:= &Move{}
+	move:= Move{}
 	json.Unmarshal([]byte(data.Data),&(move))
 	moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
 	val,ok := strToTypeMap[strings.ToLower(move.PieceType)]
-	piece:=&Piece{}
+	piece:=Piece{}
 	if (!ok){
 		piece.Type = Custom
 		piece.CustomPiece = &CustomPiece{PieceName:move.PieceType}
@@ -205,19 +204,19 @@ func (c *Client) PerformMove(data *MessageStruct){
 	
 	if ok {
 		var res bool
-		var reason string
 		game:= room.Game
 		if (game.Turn==move.Color){
-			res,reason =game.Board.isValidMove(piece,move)
-		} else{ res,reason = false,"wrong color"}
+			res,_ =game.Board.isValidMove(piece,&move)
+		} else{ res,_ = false,"wrong color"}
 		if (res) {
 			game.Board.performMove(piece,move)
 			//check for checkmates/check on opponents
 			over,result:= game.Board.isGameOver(getOpponentColor(piece.Color))
 			if over{
+				log.Println("game over")
 				moveResp.Result = result
 			} else{ 
-				underCheck,_ :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
+				underCheck :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
 				if underCheck{
 					moveResp.Check = true
 				}								
@@ -232,12 +231,11 @@ func (c *Client) PerformMove(data *MessageStruct){
 			}
 			game.Turn = changeTurn(game.Turn)
 		}
-		fmt.Println("move valid:",res,reason)
+		//fmt.Println("move valid:",res,reason)
 		response:= Response{Status:"successful"}
 		marshalledMessage,_ := json.Marshal(response)
 		c.send <- marshalledMessage
 	} else {
-		fmt.Println("Room close")
 		message := MessageStruct{Type:"error",Data:"Room does not exist, connection expired"}
 		if errMessage,err:= json.Marshal(message); err==nil{
 			c.send <- errMessage
