@@ -4,3 +4,6 @@ vc-frontend/node_modules/
 vc-frontend/.DS_store
 vc-server/vc-server
 .vscode
+vc-server/.env
+vc-server/playhelper.go
+vc-frontend/.env
