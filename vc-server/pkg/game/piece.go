@@ -1,7 +1,4 @@
-package main
-
-//"unicode"
-//"fmt"
+package game
 
 type Type uint8
 const (
@@ -90,7 +87,7 @@ func (piece Piece) isBackwardPawnMove(move *Move) bool{
 
 //var typeToRuneMap = map[Type]rune{Pawn:'p', Knight:'n', Bishop:'b', Rook:'r', Queen:'q', King:'k'}
 var typeToStrMap = map[Type]string{Pawn:"p", Knight:"n", Bishop:"b", Rook:"r", Queen:"q", King:"k"}
-var strToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
+var StrToTypeMap = map[string]Type{"p":Pawn,"n":Knight,"b":Bishop, "r":Rook, "q": Queen, "k":King}
 
 // isPiecStartPosValid: check if piece exists at given position
 func (board *Board) isPieceStartPosValid(piece Piece, row int, col int) bool{
@@ -110,7 +107,7 @@ func (board *Board) getPieceColor(row int,col int) Color{
 	return EmptyTile
 }	
 
-func getOpponentColor(color Color) Color{
+func GetOpponentColor(color Color) Color{
 	if (color==White){
 		return Black
 	}else{

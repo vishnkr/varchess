@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 )
 
 type Game struct {
-	P1       *Client
-	P2       *Client
 	Board    *Board
 	MoveList []string
 	Pgn      string
@@ -68,6 +66,7 @@ func DisplayBoardState(board *Board){
 	}
 }
 
+
 func (board *Board) isSameColorPieceAtDest(color Color, destRow int, destCol int) bool{
 	if (board.isSquareInBoardRange(destRow,destCol)&& !board.IsEmpty(destRow,destCol) && color == board.getPieceColor(destRow,destCol)){
 		return true
@@ -75,8 +74,8 @@ func (board *Board) isSameColorPieceAtDest(color Color, destRow int, destCol int
 	return false
 }
 
-//isValidMove: checks if a move made by given piece is valid, return string is just used for debugging purposes
-func (board *Board) isValidMove(piece Piece,move *Move) (bool,string){
+//IsValidMove: checks if a move made by given piece is valid, return string is just used for debugging purposes
+func (board *Board) IsValidMove(piece Piece,move *Move) (bool,string){
 	if (!board.isPieceStartPosValid(piece,move.SrcRow,move.SrcCol)){ return false,"start pos not valid for given piece" }
 	//check if same piece color exists at destination
 	if (board.isSameColorPieceAtDest(piece.Color,move.DestRow,move.DestCol)){
@@ -110,12 +109,12 @@ func (board *Board) isValidMove(piece Piece,move *Move) (bool,string){
 }
 
 func (board *Board) isDestOccupied(color Color,destRow int,destCol int) bool{
-	return !board.Tiles[destRow][destCol].IsEmpty && board.Tiles[destRow][destCol].Piece.Color==getOpponentColor(color)
+	return !board.Tiles[destRow][destCol].IsEmpty && board.Tiles[destRow][destCol].Piece.Color==GetOpponentColor(color)
 		
 }
 
-// performMove: modify board state after a move has been made
-func (board *Board) performMove(piece Piece,move Move){
+// PerformMove: modify board state after a move has been made
+func (board *Board) PerformMove(piece Piece,move Move){
 
 	if (board.isDestOccupied(piece.Color,move.DestRow,move.DestCol)){
 		move.Captured = board.Tiles[move.DestRow][move.DestCol].Piece
@@ -166,12 +165,12 @@ func (board *Board) unmakeMove(piece Piece,move Move){
 	board.Tiles[move.DestRow][move.DestCol].IsEmpty = true		
 }
 
-func (board *Board) isGameOver(color Color) (bool,string){
-	check:= board.isKingUnderCheck(color)
+func (board *Board) IsGameOver(color Color) (bool,string){
+	check:= board.IsKingUnderCheck(color)
 	moves:= board.getAllValidMoves(color)
 	if len(moves)==0{
 		if check{
-			return true,getOpponentColor(color).String()
+			return true,GetOpponentColor(color).String()
 		} else { return true,"draw"}
 	}
 	return false,"nah"
@@ -180,16 +179,16 @@ func (board *Board) isGameOver(color Color) (bool,string){
 
 func (board *Board) willCauseCheck(piece Piece, move *Move) bool {
 	copyBoard:=deepCopyBoard(board)
-	copyBoard.performMove(piece,*move)
-	postCheck := copyBoard.isKingUnderCheck(piece.Color)
+	copyBoard.PerformMove(piece,*move)
+	postCheck := copyBoard.IsKingUnderCheck(piece.Color)
 	return postCheck
 }
 
-//isKingUnderCheck: returns whether player's king is under check or not
-func (board *Board) isKingUnderCheck(color Color) bool{
+//IsKingUnderCheck: returns whether player's king is under check or not
+func (board *Board) IsKingUnderCheck(color Color) bool{
 	var kingPos []int
 	if color==White{kingPos=board.WhiteKing.Position} else{kingPos=board.BlackKing.Position}
-	oppMoves:=board.getAllPseudoLegalMoves(getOpponentColor(color))
+	oppMoves:=board.getAllPseudoLegalMoves(GetOpponentColor(color))
 	for move :=range oppMoves{
 		if kingPos[0]==move.DestRow &&kingPos[1]==move.DestCol{
 			return true
@@ -210,8 +209,8 @@ func (board *Board) getAllValidMoves(color Color)map[*Move]Piece{
 			move.Captured = board.Tiles[move.DestRow][move.DestCol].Piece
 		}
 		copyBoard:=deepCopyBoard(board)
-		copyBoard.performMove(piece,*move)
-		if copyBoard.isKingUnderCheck(color){
+		copyBoard.PerformMove(piece,*move)
+		if copyBoard.IsKingUnderCheck(color){
 			delete(movesList,move)
 		}
 		copyBoard.unmakeMove(piece,*move)
@@ -219,6 +218,9 @@ func (board *Board) getAllValidMoves(color Color)map[*Move]Piece{
 	return movesList
 }
 
+func (board *Board) GetAllValidMoves(color Color)map[*Move]Piece{
+	return board.getAllValidMoves(color)
+}
 // getAllPseudoLegalMoves: compiles all pseudo legal moves for given player
 func (board *Board) getAllPseudoLegalMoves(color Color)map[*Move]Piece{
 	var validMoves map[*Move]Piece = make(map[*Move]Piece)
@@ -286,8 +288,8 @@ func (board *Board) genPieceMoves(piece Piece,srcRow int, srcCol int)map[*Move]P
 					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow,DestCol: srcCol}
 					validMoves[move] = piece
 				}
-				if board.IsEmpty(targetRow+1,srcCol) && srcRow==doubleMoveStartRank{
-					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow+1,DestCol: srcCol}
+				if board.IsEmpty(targetRow+rowOffset,srcCol) && srcRow==doubleMoveStartRank{
+					move := &Move{SrcRow: srcRow,SrcCol: srcCol,DestRow: targetRow+rowOffset,DestCol: srcCol}
 					validMoves[move] = piece
 				}
 			}
@@ -379,7 +381,7 @@ func isKingMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 						continue
 					}
 					if (board.isSquareInBoardRange(move.DestRow+row,move.DestCol+col) && board.Tiles[move.DestRow+row][move.DestCol+col].Piece.Type==King && 
-						board.Tiles[move.DestRow+row][move.DestCol+col].Piece.Color==getOpponentColor(piece.Color)){
+						board.Tiles[move.DestRow+row][move.DestCol+col].Piece.Color==GetOpponentColor(piece.Color)){
 						return false,"moving into check"
 					}
 				}
@@ -491,7 +493,7 @@ func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool,string){
 	return false, "not a valid pawn move"
 }
 
-func changeTurn(turn string) string{
+func ChangeTurn(turn string) string{
 	if turn =="w"{
 		return "b"
 	} else { return "w"}

@@ -1,8 +1,10 @@
-package main
+package server
 
 import (
 	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 type WsServer struct{
@@ -20,6 +22,15 @@ func NewWebsocketServer() *WsServer{
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),
 	}
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize: 4096,
+	WriteBufferSize: 4096,
+	CheckOrigin: func(r *http.Request) bool {
+		//return origin == "http://localhost:8080"
+		return true
+	},
 }
 
 func (ws *WsServer) Run(){

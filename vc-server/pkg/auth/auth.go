@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"database/sql"
@@ -15,7 +15,7 @@ import (
 )
 
 var db *sql.DB
-
+const TestVariable int =5
 type Credentials struct {
 	ID uint64 `json:"user_id" db:"user_id"`
 	Token string `json:"token"`

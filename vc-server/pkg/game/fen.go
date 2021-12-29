@@ -1,15 +1,13 @@
-package main
+package game
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 	"unicode"
-	"bytes"
-	//"fmt"
 )
 
 func ConvertFENtoBoard(fen string) *Board {
-	//TODO: add enpassant, castling, turn to FEN
 	boardData := strings.Split(fen, " ")
 	rowsData := strings.Split(boardData[0], "/")
 	var colCount int = 0
@@ -66,7 +64,7 @@ func ConvertFENtoBoard(fen string) *Board {
 					IsEmpty:false, 
 					Id:id,
 				}
-				val,ok := strToTypeMap[string(unicode.ToLower(char))]
+				val,ok := StrToTypeMap[string(unicode.ToLower(char))]
 				
 				if (!ok){
 					customPiece:=&CustomPiece{PieceName:string(char)}
