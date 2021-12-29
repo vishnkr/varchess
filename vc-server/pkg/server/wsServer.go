@@ -7,25 +7,24 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WsServer struct{
-	clients map[*Client]bool //map clientId/username to Client which contains connection info
-	register chan *Client
+type WsServer struct {
+	clients    map[*Client]bool //map clientId/username to Client which contains connection info
+	register   chan *Client
 	unregister chan *Client
-	broadcast chan []byte
+	broadcast  chan []byte
 }
 
-
-func NewWebsocketServer() *WsServer{
+func NewWebsocketServer() *WsServer {
 	return &WsServer{
-		clients: make(map[*Client]bool),
-		register: make(chan *Client),
+		clients:    make(map[*Client]bool),
+		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),
 	}
 }
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize: 4096,
+	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
 	CheckOrigin: func(r *http.Request) bool {
 		//return origin == "http://localhost:8080"
@@ -33,13 +32,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func (ws *WsServer) Run(){
-	for{
-		select{
-		case client:= <-ws.register:
+func (ws *WsServer) Run() {
+	for {
+		select {
+		case client := <-ws.register:
 			ws.registerClient(client)
-		
-		case client:= <-ws.unregister:
+
+		case client := <-ws.unregister:
 			ws.unregisterClient(client)
 		}
 	}
@@ -50,10 +49,10 @@ func (server *WsServer) registerClient(client *Client) {
 }
 
 func (server *WsServer) unregisterClient(client *Client) {
-	var roomId =client.roomId
+	var roomId = client.roomId
 	if _, ok := RoomsMap[roomId]; ok {
 		if _, ok := RoomsMap[roomId].Clients[client]; ok {
-			delete(RoomsMap[roomId].Clients,client)
+			delete(RoomsMap[roomId].Clients, client)
 		}
 		server.deleteEmptyRooms(client)
 	}
@@ -62,25 +61,25 @@ func (server *WsServer) unregisterClient(client *Client) {
 	}
 }
 
-func (server *WsServer) deleteEmptyRooms(client *Client){
+func (server *WsServer) deleteEmptyRooms(client *Client) {
 	client.mu.Lock()
 	defer client.mu.Unlock()
-	for id := range RoomsMap{
-		if(len(RoomsMap[id].Clients)==0){
-			log.Println(id,"room was deleted since its empty")
-			delete(RoomsMap,id)	
+	for id := range RoomsMap {
+		if len(RoomsMap[id].Clients) == 0 {
+			log.Println(id, "room was deleted since its empty")
+			delete(RoomsMap, id)
 		}
 	}
-	
+
 }
 
-func ServeWsHandler(wsServer *WsServer,w http.ResponseWriter, r *http.Request){
-	conn, err:= upgrader.Upgrade(w,r,nil)
-	if err!=nil{
+func ServeWsHandler(wsServer *WsServer, w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
 		log.Println(err)
 		return
 	}
-	client:= newClient(conn,wsServer)
+	client := newClient(conn, wsServer)
 	go client.Write()
 	go client.Read()
 	wsServer.register <- client
