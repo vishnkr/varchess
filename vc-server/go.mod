@@ -1,4 +1,4 @@
-module varchess/vc-server
+module varchess
 
 go 1.15
 

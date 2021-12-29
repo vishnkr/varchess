@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 	"unicode"
+	"varchess/pkg/game"
 
 	"github.com/gorilla/websocket"
 )
@@ -21,7 +22,7 @@ type UserRoomInfo struct{
 	Username string `json:"username"`
 	RoomId string `json:"roomId"`
 	StartFEN string `json:"fen,omitempty"`
-	CustomMovePatterns []MovePatterns `json:"movePatterns,omitempty"`
+	CustomMovePatterns []game.MovePatterns `json:"movePatterns,omitempty"`
 }
 
 type ChatMessage struct{
@@ -42,7 +43,7 @@ type MoveResponse struct{
 	DestRow int `json:"destRow"`
 	DestCol int `json:"destCol"`
 	Type string `json:"type"`
-	Promote Type `json:"promote,omitempty"`
+	Promote game.Type `json:"promote,omitempty"`
 	Castle bool `json:"castle,omitempty"`
 	IsValid bool `json:"isValid,omitempty"`
 	Check bool `json:"check,omitempty"`
@@ -184,39 +185,39 @@ func (c *Client) SendChatMessage(data *MessageStruct){
 }
 
 func (c *Client) PerformMove(data *MessageStruct){
-	move:= Move{}
+	move:= game.Move{}
 	json.Unmarshal([]byte(data.Data),&(move))
 	moveResp:=&MoveResponse{Piece:move.PieceType,SrcRow:move.SrcRow,SrcCol:move.SrcCol,DestRow:move.DestRow,DestCol:move.DestCol}
-	val,ok := strToTypeMap[strings.ToLower(move.PieceType)]
-	piece:=Piece{}
+	val,ok := game.StrToTypeMap[strings.ToLower(move.PieceType)]
+	piece:=game.Piece{}
 	if (!ok){
-		piece.Type = Custom
-		piece.CustomPiece = &CustomPiece{PieceName:move.PieceType}
+		piece.Type = game.Custom
+		piece.CustomPiece = &game.CustomPiece{PieceName:move.PieceType}
 	} else {
 		piece.Type = val
 	}
 	r := []rune(move.PieceType)
 	if (unicode.IsUpper(r[0])){
-		piece.Color = White
-	} else { piece.Color = Black }
+		piece.Color = game.White
+	} else { piece.Color = game.Black }
 	
 	room, ok := RoomsMap[move.RoomId]
 	
 	if ok {
 		var res bool
-		game:= room.Game
-		if (game.Turn==move.Color){
-			res,_ =game.Board.isValidMove(piece,&move)
+		curGame:= room.Game
+		if (curGame.Turn==move.Color){
+			res,_ =curGame.Board.IsValidMove(piece,&move)
 		} else{ res,_ = false,"wrong color"}
 		if (res) {
-			game.Board.performMove(piece,move)
+			curGame.Board.PerformMove(piece,move)
 			//check for checkmates/check on opponents
-			over,result:= game.Board.isGameOver(getOpponentColor(piece.Color))
+			over,result:= curGame.Board.IsGameOver(game.GetOpponentColor(piece.Color))
 			if over{
 				log.Println("game over")
 				moveResp.Result = result
 			} else{ 
-				underCheck :=game.Board.isKingUnderCheck(getOpponentColor(piece.Color))
+				underCheck :=curGame.Board.IsKingUnderCheck(game.GetOpponentColor(piece.Color))
 				if underCheck{
 					moveResp.Check = true
 				}								
@@ -229,7 +230,7 @@ func (c *Client) PerformMove(data *MessageStruct){
 			if message,err:= json.Marshal(moveResp); err==nil{
 				room.BroadcastToMembers(message)
 			}
-			game.Turn = changeTurn(game.Turn)
+			curGame.Turn = game.ChangeTurn(curGame.Turn)
 		}
 		//fmt.Println("move valid:",res,reason)
 		response:= Response{Status:"successful"}
