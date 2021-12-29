@@ -16,21 +16,25 @@ func ConvertFENtoBoard(fen string) *Board {
 	for index, char := range rowsData[0] {
 		if unicode.IsNumber(rune(char)) {
 			count, _ := strconv.Atoi(string(char))
-			if (index+1<len(rowsData[0]) && unicode.IsNumber(rune(rowsData[0][index+1]))){
-				secDigit,_ = strconv.Atoi(string(char))
-			} else{ 
-				if (secDigit!=0){
-					colCount+=secDigit*10+count
-				} else {colCount += count}
-			} 
-		} else { colCount += 1}
+			if index+1 < len(rowsData[0]) && unicode.IsNumber(rune(rowsData[0][index+1])) {
+				secDigit, _ = strconv.Atoi(string(char))
+			} else {
+				if secDigit != 0 {
+					colCount += secDigit*10 + count
+				} else {
+					colCount += count
+				}
+			}
+		} else {
+			colCount += 1
+		}
 	}
 	board := &Board{
 		Tiles: make([][]Square, len(rowsData)),
 		Rows:  len(rowsData),
 		Cols:  colCount,
 	}
-	var col,id int = 0,0
+	var col, id int = 0, 0
 	var colEnd int = 0
 	for rowIndex, row := range rowsData {
 		col = 0
@@ -38,85 +42,89 @@ func ConvertFENtoBoard(fen string) *Board {
 		secDigit = 0
 		for index, char := range row {
 			if unicode.IsNumber(rune(char)) {
-				if (index+1<len(row) && unicode.IsNumber(rune(row[index+1]))){
-					secDigit,_ = strconv.Atoi(string(char))
-				} else{ 
-					count,_ := strconv.Atoi(string(char))
-					if (secDigit!=0){
-						colEnd = secDigit*10+count
+				if index+1 < len(row) && unicode.IsNumber(rune(row[index+1])) {
+					secDigit, _ = strconv.Atoi(string(char))
+				} else {
+					count, _ := strconv.Atoi(string(char))
+					if secDigit != 0 {
+						colEnd = secDigit*10 + count
 						secDigit = 0
-					} else { colEnd = count}
-					i:= col
-					for (col < i+colEnd){
-						board.Tiles[rowIndex][col] = Square{IsEmpty:true,Id:id}
-						col++	
-						id+=1
+					} else {
+						colEnd = count
+					}
+					i := col
+					for col < i+colEnd {
+						board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id}
+						col++
+						id += 1
 					}
 				}
-			} else{
+			} else {
 				var color Color
-				if(unicode.IsUpper(rune(char))){
+				if unicode.IsUpper(rune(char)) {
 					color = White
-				} else{
+				} else {
 					color = Black
 				}
 				board.Tiles[rowIndex][col] = Square{
-					IsEmpty:false, 
-					Id:id,
+					IsEmpty: false,
+					Id:      id,
 				}
-				val,ok := StrToTypeMap[string(unicode.ToLower(char))]
-				
-				if (!ok){
-					customPiece:=&CustomPiece{PieceName:string(char)}
-					board.Tiles[rowIndex][col].Piece = Piece{Color: color,Type:Custom}
+				val, ok := StrToTypeMap[string(unicode.ToLower(char))]
+
+				if !ok {
+					customPiece := &CustomPiece{PieceName: string(char)}
+					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: Custom}
 					board.Tiles[rowIndex][col].Piece.CustomPiece = customPiece
 				} else {
-					board.Tiles[rowIndex][col].Piece = Piece{Color: color,Type:val}
+					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: val}
 					board.Tiles[rowIndex][col].Piece.Type = val
-					if (val==King){
-						if (color==Black){
-							board.BlackKing.Position = []int{rowIndex,col}
+					if val == King {
+						if color == Black {
+							board.BlackKing.Position = []int{rowIndex, col}
 						} else {
-							board.WhiteKing.Position = []int{rowIndex,col}
+							board.WhiteKing.Position = []int{rowIndex, col}
 						}
 					}
 				}
 				col++
-				id+=1
+				id += 1
 			}
 		}
 	}
 	return board
 }
 
-func ConvertBoardtoFEN(board *Board) string{
+func ConvertBoardtoFEN(board *Board) string {
 	var fen bytes.Buffer
 	var name string
-	for row:=0;row<board.Rows; row++{
+	for row := 0; row < board.Rows; row++ {
 		var empty int = 0
-		for col:=0;col<board.Cols;col++{
-			if board.Tiles[row][col].IsEmpty{
-				empty+=1
-			} else{
-				if empty>0{
-					str:=strconv.Itoa(empty)
+		for col := 0; col < board.Cols; col++ {
+			if board.Tiles[row][col].IsEmpty {
+				empty += 1
+			} else {
+				if empty > 0 {
+					str := strconv.Itoa(empty)
 					fen.WriteString(str)
-					empty=0
+					empty = 0
 				}
-				if (board.Tiles[row][col].Piece.Type==Custom){
+				if board.Tiles[row][col].Piece.Type == Custom {
 					name = board.Tiles[row][col].Piece.CustomPiece.PieceName
-				} else { name = typeToStrMap[board.Tiles[row][col].Piece.Type]}
-				if (board.Tiles[row][col].Piece.Color==White){
+				} else {
+					name = typeToStrMap[board.Tiles[row][col].Piece.Type]
+				}
+				if board.Tiles[row][col].Piece.Color == White {
 					name = strings.ToUpper(name)
 				}
 				fen.WriteString(name)
 			}
-			
+
 		}
-		if empty>0{
-			str:=strconv.Itoa(empty)
+		if empty > 0 {
+			str := strconv.Itoa(empty)
 			fen.WriteString(str)
-			empty=0
+			empty = 0
 		}
 		fen.WriteString("/")
 	}
