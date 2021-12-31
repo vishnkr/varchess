@@ -548,8 +548,15 @@ func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
 		}
 	}
 
-	var rowDiff, colDiff int = move.SrcRow - move.DestRow, move.SrcCol - move.DestCol
-	if len(jumpPattern) != 0 {
+	var rowDiff, colDiff, multiplier int
+	if piece.Color == White{
+		rowDiff,colDiff = move.DestRow - move.SrcRow, move.DestCol - move.SrcCol
+		multiplier = 1
+	} else {
+		rowDiff,colDiff = move.SrcRow-move.DestRow, move.SrcCol - move.DestCol
+		multiplier = -1
+	}
+	if len(jumpPattern) != 0 {		
 		for _, pair := range jumpPattern {
 			if pair[0] == rowDiff && pair[1] == colDiff {
 				return true, "valid custom jump move"
@@ -558,16 +565,16 @@ func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
 	}
 
 	for _, direction := range slidePattern {
-		var rowOffset, colOffset int = direction[0], direction[1]
-		var tempRow, tempCol int = move.SrcRow + rowOffset, move.SrcCol + colOffset
+		var dx,dy int = direction[0]*multiplier, direction[1]*multiplier 
+		var tempRow, tempCol int = move.SrcRow+dx, move.SrcCol + dy
 		for tempRow >= 0 && tempCol >= 0 && tempRow < board.Rows && tempCol < board.Cols {
 			if tempRow == move.DestRow && tempCol == move.DestCol {
 				return true, "valid custom slide move"
 			} else if !board.IsEmpty(tempRow, tempCol) {
 				break
 			} else {
-				tempRow += rowOffset
-				tempCol += colOffset
+				tempRow += dx
+				tempCol += dy
 			}
 		}
 	}
