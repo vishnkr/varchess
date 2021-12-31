@@ -74,8 +74,8 @@ export default {
             var row,col
             var difference
             for (difference of patterns.jumpPattern){
-                row = this.curPos[0]-difference[0]
-                col = this.curPos[1]-difference[1]
+                row = this.curPos[0]+difference[0]
+                col = this.curPos[1]+difference[1]
                 if(row>=0 && row<=this.rows && col>=0 && col<=this.cols){
                 this.mpTabData[[row,col]] = 'move-jump-pattern'
                 }
@@ -91,7 +91,6 @@ export default {
                     col += direction[1]
                 }
             }
-
         },
             
         isEven(val){return val%2==0},

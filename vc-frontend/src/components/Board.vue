@@ -14,6 +14,7 @@
         :row="square.row" :col="square.col"  
         :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
         :selectedSrc="selectedSrc"
+        :color="getSquareColor(square.tileType,square.tileId)"
         :mpTabData="mpTabData? mpTabData: null"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
@@ -26,6 +27,7 @@
 
 <script>
 import BoardSquare from './BoardSquare.vue';
+
 export default {
   components: { BoardSquare },
   props:['board','isflipped','playerColor',"editorMode","editorData","boardSize","mpTabData"],
@@ -47,9 +49,19 @@ export default {
             rows: 0,
             cols:0,
             selectedSrc: null,
+            highlightData:null, 
         }
     },
     methods:{
+      getSquareColor(tileType,tileId){
+        var color = {default: tileType=="d"? "DarkSquare" : tileType == "l" ? "LightSquare" : "Disabled",highlight:null};
+        if (this.highlightData){
+          if (tileId==this.highlightData.selected){
+            color.highlight = "FromSquare";
+          }
+        } 
+        return color
+      },
       handleEditorSquareClick(type,row,col){
         if (type=="regular"){
           this.editorModeSquareClicked(row,col)
@@ -58,13 +70,13 @@ export default {
         }
       },
       setSlidePattern(slideDirections){
-        var tileIDs = []
+        let tileIDs = []
         for(var i = 0;i<this.boardState1D.length;i++){
           this.$refs.squares[i].removeColorFromSquare()
         }
         for (var direction of slideDirections){
-          var row = this.editorData.piecePos[0]+direction[0]
-          var col = this.editorData.piecePos[1]+direction[1]
+          let row = this.editorData.piecePos[0]+direction[0]
+          let col = this.editorData.piecePos[1]+direction[1]
           while(row<this.boardState.rows && row>=0 && col<this.boardState.cols && col>=0){
             tileIDs.push(this.boardState.tiles[row][col].tileId)
             row+=direction[0]
@@ -97,14 +109,8 @@ export default {
           this.boardState.tiles[moveInfo.destRow][moveInfo.destCol] = {isPiecePresent:true, pieceType:moveInfo.piece.toLowerCase(),pieceColor:moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'}
           this.board.tiles[moveInfo.srcRow][moveInfo.srcCol]= {isPiecePresent:false, pieceType:null,pieceColor:null}
           if(moveInfo.castle){
-            var newRookPos,oldRookPos
-            if(moveInfo.destCol<moveInfo.srcCol){
-              oldRookPos = 0;
-              newRookPos = moveInfo.srcCol-1
-            } else {
-              oldRookPos = this.board.tiles[0].length -1;
-              newRookPos = moveInfo.srcCol+1
-            }
+            var oldRookPos = moveInfo.destCol<moveInfo.srcCol? 0 : this.board.tiles[0].length -1;
+            var newRookPos = moveInfo.destCol<moveInfo.srcCol? moveInfo.srcCol-1 : moveInfo.srcCol+1
             this.board.tiles[moveInfo.srcRow][newRookPos].isPiecePresent = true
             this.boardState.tiles[moveInfo.destRow][newRookPos].pieceType = 'r'
             this.boardState.tiles[moveInfo.destRow][newRookPos].pieceColor = moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'
@@ -120,10 +126,11 @@ export default {
           if(pieceInfo && this.playerColor == pieceInfo.pieceColor[0]){
             this.selectedSrc = {id:pieceInfo.id,pieceColor:pieceInfo.pieceColor[0],pieceType:pieceInfo.pieceType}
             this.$store.commit('setSelection',{row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
+            this.highlightData.selected = pieceInfo.id;
           }
           else{ 
             this.selectedSrc = null
-
+            this.highlightData = null
           }
         },
         updateBoardState1D(flipped){
