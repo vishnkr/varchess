@@ -10,14 +10,13 @@ import (
 	"varchess/pkg/server"
 
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	/*err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file")
-	}
+	}*/
 	port := os.Getenv("PORT")
 	var addr = flag.String("addr", ":"+port, "http server address")
 	router := mux.NewRouter()
