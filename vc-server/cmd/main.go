@@ -24,6 +24,7 @@ func main() {
 	router.HandleFunc("/", rootHandler)
 	router.HandleFunc("/login", auth.AuthUserHandler).Methods("GET")
 	router.HandleFunc("/signup", auth.CreateAccountHandler).Methods("POST")
+	router.HandleFunc("/getPossibleToSquares",server.GetPossibleSquares).Methods("POST")
 	wsServer := server.NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {

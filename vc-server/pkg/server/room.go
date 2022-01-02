@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -17,6 +18,10 @@ type Room struct {
 	Id      string
 	P1      *Client
 	P2      *Client
+}
+type PossibleMoves struct{
+	Piece string `json:"piece"`
+	Moves [][]int `json:"moves"`
 }
 
 var RoomsMap = make(map[string]*Room)
@@ -91,6 +96,38 @@ func (room *Room) BroadcastToMembersExceptSender(message []byte, c *Client) {
 			member.send <- message
 		}
 	}
+}
+
+func GetPossibleSquares(w http.ResponseWriter, r *http.Request){
+	//optimize this request to be done once before every move instead of once after every click, store result in client side
+	if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token, Authorization")
+		return
+	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	var objmap map[string]interface{}
+	json.NewDecoder(r.Body).Decode(&objmap)
+	fmt.Println(objmap)
+	var pColor game.Color
+	srcRow,srcCol,color :=  int(objmap["srcRow"].(float64)), int(objmap["srcCol"].(float64)), objmap["color"].(string)
+	piece := game.StrToTypeMap[objmap["piece"].(string)]
+	room,_:= RoomsMap[objmap["roomId"].(string)]
+	if (color =="white"){pColor=game.White} else {pColor=game.Black} 
+	board := room.Game.Board
+	moves := make([][]int,0)
+	valid:= board.GetAllValidMoves(pColor)
+	
+	for move,p := range valid{
+		if p.Type==piece && move.SrcRow==srcRow && move.SrcCol==srcCol{
+			moves = append(moves,[]int{move.DestRow,move.DestCol})
+		}
+	}
+	fmt.Print(srcCol,srcRow,piece,moves)
+	response := &PossibleMoves{Moves:moves,Piece: objmap["piece"].(string)}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (c *Client) AddtoRoom(roomId string) {
