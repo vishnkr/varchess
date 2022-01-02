@@ -12,9 +12,8 @@
         :pieceColor="square.pieceColor" 
         :x="square.x" :y="square.y" 
         :row="square.row" :col="square.col"  
-        :isHighlighted="selectedSrc && square.tileId==selectedSrc.id && selectedSrc.pieceColor==playerColor"
+        :highlight="highlightData"
         :selectedSrc="selectedSrc"
-        :color="getSquareColor(square.tileType,square.tileId)"
         :mpTabData="mpTabData? mpTabData: null"
         v-on:sendSelectedPiece="setSelectedPiece"
         v-on:destinationSelect="emitDestinationSelect"
@@ -50,18 +49,10 @@ export default {
             cols:0,
             selectedSrc: null,
             highlightData:null, 
+            roomId: this.$route.params.roomId,
         }
     },
     methods:{
-      getSquareColor(tileType,tileId){
-        var color = {default: tileType=="d"? "DarkSquare" : tileType == "l" ? "LightSquare" : "Disabled",highlight:null};
-        if (this.highlightData){
-          if (tileId==this.highlightData.selected){
-            color.highlight = "FromSquare";
-          }
-        } 
-        return color
-      },
       handleEditorSquareClick(type,row,col){
         if (type=="regular"){
           this.editorModeSquareClicked(row,col)
@@ -121,16 +112,17 @@ export default {
           this.updateBoardState1D(this.isflipped)
           this.selectedSrc = null
         },
-        setSelectedPiece(pieceInfo){
+        async setSelectedPiece(pieceInfo){
           
           if(pieceInfo && this.playerColor == pieceInfo.pieceColor[0]){
+            let tomoves = await this.$store.dispatch('getPossibleToSquares',{roomId:this.roomId,color:pieceInfo.pieceColor,srcRow:pieceInfo.row-1,srcCol:pieceInfo.col-1,piece:pieceInfo.pieceType});
             this.selectedSrc = {id:pieceInfo.id,pieceColor:pieceInfo.pieceColor[0],pieceType:pieceInfo.pieceType}
             this.$store.commit('setSelection',{row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
-            this.highlightData.selected = pieceInfo.id;
+            this.highlightData = {from:pieceInfo.id,to:tomoves.moves};
           }
           else{ 
-            this.selectedSrc = null
-            this.highlightData = null
+            this.selectedSrc = null;
+            this.highlightData = null;
           }
         },
         updateBoardState1D(flipped){

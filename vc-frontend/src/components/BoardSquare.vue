@@ -1,6 +1,6 @@
 <template>
   <div class="square" :id="tileId" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', mpTabData? mpTabData[[this.row,this.col]]:null , !mpTabData && isPiecePresent && isHighlighted?'highlight-from':null,
+        :class="[tileType=='d'? 'dark':'light', mpTabData? mpTabData[[this.row,this.col]]:null , !mpTabData && highlight? this.getHighlightType():null,
         addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null, ]"
          @mousedown="clickSquare">
       <div v-if="isPiecePresent" >
@@ -18,6 +18,21 @@ export default {
       //this.squareColor = colorConstants[this.color.highlighted? this.color.highlighted : this.color.default];
     },
     methods:{
+      getHighlightType(){
+        if (this.selectedSrc){
+
+          if (this.highlight.from==this.tileId){
+            return 'highlight-from'
+          } else{
+              for (var square of this.highlight.to){
+                if (square[0]+1==this.row && square[1]+1==this.col){
+
+                  return 'highlight-to'
+                }
+              }
+          }
+        }
+      },
       addColorToSquare(moveType){
         this.addColor = moveType;
       },
@@ -61,13 +76,13 @@ export default {
         squareColor:null,
       }
     },
-    props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','isHighlighted','selectedSrc','color'],
+    props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
     computed:{
         cssVar(){
         return {
         '--x': this.x,
         '--y': this.y,
-        '--color':this.squareColor
+        //'--color':this.squareColor
         }
       },
        //to be used later in portal mode
@@ -93,8 +108,8 @@ export default {
   background-color: var(--color);
 }
 
-.highlight-possible{
-  background-color: #d9bf77 !important;
+.highlight-to{
+  background: rgba(231, 207, 98, 0.884) !important;
 }
 
 .highlight-from{

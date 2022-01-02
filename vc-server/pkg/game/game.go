@@ -175,7 +175,7 @@ func (board *Board) unmakeMove(piece Piece, move Move) {
 
 func (board *Board) IsGameOver(color Color) (bool, string) {
 	check := board.IsKingUnderCheck(color)
-	moves := board.getAllValidMoves(color)
+	moves := board.GetAllValidMoves(color)
 	if len(moves) == 0 {
 		if check {
 			return true, GetOpponentColor(color).String()
@@ -215,7 +215,7 @@ func (board *Board) isSquareInBoardRange(row int, col int) bool {
 }
 
 // getAllValidMoves: filter out illegal moves from pseudo legal move map
-func (board *Board) getAllValidMoves(color Color) map[*Move]Piece {
+func (board *Board) GetAllValidMoves(color Color) map[*Move]Piece {
 	movesList := board.getAllPseudoLegalMoves(color)
 	for move, piece := range movesList {
 		if board.isDestOccupied(piece.Color, move.DestRow, move.DestCol) {
