@@ -67,6 +67,7 @@ export default {
   data(){
     return {
       errorText: null,
+      isAuthenticated:true,
     }
   },
   methods:{

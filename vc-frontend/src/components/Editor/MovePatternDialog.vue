@@ -78,7 +78,7 @@
 </template>
 
 <script>
-import Board from '../Board.vue'
+import Board from '../Board/Board.vue'
 export default {
     components:{Board},
     props:['dialog','pieceType','pieceColor','editorData','ws'],

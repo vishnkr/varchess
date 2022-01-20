@@ -162,7 +162,7 @@
 import { convertBoardStateToFEN } from '../../utils/fen';
 import {createRoomWithCustomPatterns} from '../../utils/websocket';
 import {validateStartSetup} from '../../utils/validator';
-import Board from '../Board.vue';
+import Board from '../Board/Board.vue';
 import  MovePatternDialog from './MovePatternDialog.vue';
 export default {
   components:{MovePatternDialog,Board},
@@ -230,42 +230,42 @@ export default {
       
     },
     setupDefaultBoardMaxSize(){
-        for(var col =0;col<this.maxBoardState.rows;col++){
+        for(let row =0;row<this.maxBoardState.rows;row++){
           this.maxBoardState.tiles.push([])
-          for(var row=0;row<this.maxBoardState.cols;row++){
+          for(let col=0;col<this.maxBoardState.cols;col++){
             var tile = {}
-            tile.tileType = this.isLight(col,row)? 'l' : 'd';
+            tile.tileType = this.isLight(row,col)? 'l' : 'd';
             if(this.isEmpty){
               tile.isPiecePresent=false
             }
-            else if( (row===0||row==7) && (col===0||col===7)) {
+            else if( (col===0||col==7) && (row===0||row===7)) {
                 tile.pieceType='r';
                 tile.isPiecePresent=true
             }
-            else if((row===1||row==6) && (col===0||col===7)){
+            else if((col===1||col==6) && (row===0||row===7)){
                 tile.pieceType='n';
                 tile.isPiecePresent=true
             }
-            else if((row===2||row==5) && (col===0||col===7)){
+            else if((col===2||col==5) && (row===0||row===7)){
                 tile.pieceType='b';
                 tile.isPiecePresent=true
             }
-            else if((row===3) && (col===0||col===7)){
+            else if((col===3) && (row===0||row===7)){
                 tile.pieceType='q';
                 tile.isPiecePresent=true
             }
-            else if((row===4) && (col===0||col===7)){
+            else if((col===4) && (row===0||row===7)){
                 tile.pieceType='k';
                 tile.isPiecePresent=true
             }
-            else if((col===1||col===6) && row<8){
+            else if((row===1||row===6) && col<8){
                 tile.pieceType='p';
                 tile.isPiecePresent=true
             }
             else{tile.isPiecePresent=false}
-            if(col==0||col==1){tile.pieceColor='black'}
-            else if(col==6||col==7){tile.pieceColor='white'}
-            this.maxBoardState.tiles[col].push(tile)
+            if(row==0||row==1){tile.pieceColor='black'}
+            else if(row==6||row==7){tile.pieceColor='white'}
+            this.maxBoardState.tiles[row].push(tile)
           }
         }
         this.boardState.rows = this.rows

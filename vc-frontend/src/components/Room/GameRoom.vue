@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import Board from '../Board.vue'
+import Board from '../Board/Board.vue'
 import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'

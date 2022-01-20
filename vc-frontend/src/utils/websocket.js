@@ -14,7 +14,6 @@ WS.onopen = function(){
     console.log("Socket opened");
 }
 WS.onerror = function(){
-    console.log('got error')
     store.commit('websocketError','Connection to server could not be established! Try again soon!')
 }
 WS.onmessage = function(msg){
@@ -51,8 +50,6 @@ WS.onmessage = function(msg){
                     }
                     if(apiMsg.result){
                         store.commit('setResult',apiMsg.result)
-                    } else if (apiMsg.check){
-                        alert("Check!");
                     }
                     break;
                 }
@@ -62,11 +59,10 @@ WS.onmessage = function(msg){
                     }
                     break;
                 }
-                case "clientList":{ //if new client joins or leaves room
-                    var client
+                case "clientList":{ 
                     let msgData = JSON.parse(apiMsg.data);
                     if(msgData.activityType==="join"){
-                        for(client of msgData.clientList){
+                        for(let client of msgData.clientList){
                             if(!store.state.roomClients[apiMsg.roomId][client]){
                                 store.commit('addClientToRoom',{roomId:msgData.roomId,username:client})
                             }

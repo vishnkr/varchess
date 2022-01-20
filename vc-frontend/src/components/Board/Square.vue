@@ -1,22 +1,21 @@
 <template>
   <div class="square" :id="tileId" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', mpTabData? mpTabData[[this.row,this.col]]:null , !mpTabData && highlight? this.getHighlightType():null,
-        addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null, ]"
+        :class="[tileType=='d'? 'dark':'light', 
+        mpTabData? mpTabData[[this.row,this.col]]:null , 
+        !mpTabData && highlight? this.getHighlightType():null,
+        addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null]"
          @mousedown="clickSquare">
       <div v-if="isPiecePresent" >
-      <board-piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
+      <piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
       </div>
   </div>
 </template>
 
 <script>
-import BoardPiece from './BoardPiece'
-//import colorConstants from '../utils/colorConstants';
+import Piece from './Piece'
+
 export default {
-    components:{BoardPiece},
-    mounted(){
-      //this.squareColor = colorConstants[this.color.highlighted? this.color.highlighted : this.color.default];
-    },
+    components:{Piece},
     methods:{
       getHighlightType(){
         if (this.selectedSrc){
@@ -40,30 +39,29 @@ export default {
         this.addColor= this.addColor==='jump'? 'jump' : null;
         },
       clickSquare(){
-        
-        var pieceType;
+        let pieceInfo = {id:this.tileId,row:this.row,col:this.col}
         if(this.editorMode){
           var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
           if (this.editorData.isSetMovement){ 
             this.addColor = this.addColor ? null : this.editorData.moveType
           }
+          console.log(this.row,this.col)
           this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
           if(this.isPiecePresent & (!this.selectedSrc || this.selectedSrc && this.selectedSrc.pieceColor == (this.pieceColor=='white' ? 'w':'b') && this.selectedSrc.id!=this.tileId)){ // start pos is selected
-              pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase()
-              this.$emit("sendSelectedPiece",{id:this.tileId,pieceType:pieceType,pieceColor:this.pieceColor,row:this.row,col:this.col})
+              pieceInfo.pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase();
+              this.$emit("sendSelectedPiece",{...pieceInfo,pieceColor:this.pieceColor})
               // get possible move squares and highlight them
           } else { // dest pos is selected
             //stop displaying possible squares here
           if(this.$store.state.curStartPos.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
               this.$store.commit('undoSelection')
               this.$emit("sendSelectedPiece",null)
-              
             } else{
               if(this.isPiecePresent){
-                this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType,row:this.row,col:this.col})
+                this.$emit("destinationSelect",{...pieceInfo,isPiecePresent:true,pieceColor:this.pieceColor,pieceType:this.pieceType})
               } else{
-                this.$emit("destinationSelect",{id:this.tileId,isPiecePresent:false,row:this.row,col:this.col})
+                this.$emit("destinationSelect",{...pieceInfo,isPiecePresent:false})
               }
             }
         }
@@ -85,10 +83,7 @@ export default {
         //'--color':this.squareColor
         }
       },
-       //to be used later in portal mode
-      getPortal(){
-        return require('../assets/images/exit.svg');
-      },
+      
     }
 }
 </script>
@@ -109,7 +104,8 @@ export default {
 }
 
 .highlight-to{
-  background: rgba(231, 207, 98, 0.884) !important;
+  background: rgba(217,191,119, 0.6) !important;
+  border: 0.5px solid;
 }
 
 .highlight-from{

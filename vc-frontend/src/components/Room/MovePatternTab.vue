@@ -36,8 +36,8 @@
 
 <script>
 
-import Piece from '../BoardPiece.vue'
-import Board from '../Board.vue'
+import Piece from '../Board/Piece.vue'
+import Board from '../Board/Board.vue'
 export default {
     components:{Piece, Board},
     created(){
