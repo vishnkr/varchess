@@ -19,7 +19,7 @@ export default {
         col: Number,
     },
     computed:{
-        getPieceURL(){ return require(`../assets/images/pieces/${this.color}/${this.pieceType}.svg`)},
+        getPieceURL(){ return require(`../../assets/images/pieces/${this.color}/${this.pieceType}.svg`)},
         cssVars(){
             return {
             '--x': this.row,
