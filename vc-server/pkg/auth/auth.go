@@ -1,23 +1,88 @@
 package auth
 
 import (
+	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"encoding/base64"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 var db *sql.DB
 
-const TestVariable int = 5
+var googleAuthConfig = oauth2.Config{
+	RedirectURL:  "http://localhost:5000/auth/google/callback",
+	ClientID:     os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+	Endpoint:     google.Endpoint,
+}
 
+const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
+
+func OauthGoogleLogin(w http.ResponseWriter, r *http.Request){
+	fmt.Println(os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
+	fmt.Println("Sec",os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),googleAuthConfig)
+	oauthState := genOauthCookie(w)
+	u := googleAuthConfig.AuthCodeURL(oauthState)
+	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
+}
+
+func genOauthCookie(w http.ResponseWriter) string{
+	var exp =time.Now().Add(365 * 24 * time.Hour)
+	b:=make([]byte,16)
+	rand.Read(b)
+	state := base64.URLEncoding.EncodeToString(b)
+	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: exp}
+	http.SetCookie(w, &cookie)
+	return state
+}
+
+func OauthGoogleCallback(w http.ResponseWriter, r *http.Request){
+	oauthState, _ := r.Cookie("oauthstate")
+	if r.FormValue("state") != oauthState.Value{
+		log.Println("invalid oauth google state")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+	data, err := getUserDataFromGoogle(r.FormValue("code"))
+	if err != nil {
+		log.Println(err.Error())
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+	fmt.Fprintf(w, "UserInfo: %s\n", data)
+}
+
+func getUserDataFromGoogle(code string)([]byte,error){
+	token, err := googleAuthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
+	}
+	response, err := http.Get(oauthGoogleUrlAPI + token.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
+	}
+	defer response.Body.Close()
+	contents, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed read response: %s", err.Error())
+	}
+	return contents, nil
+}
 type Credentials struct {
 	ID       uint64 `json:"user_id" db:"user_id"`
 	Token    string `json:"token"`

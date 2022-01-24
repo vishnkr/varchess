@@ -22,6 +22,8 @@ func main() {
 	router.HandleFunc("/getRoomId", server.RoomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}", server.BoardStateHandler).Methods("GET", "OPTIONS")
 	router.HandleFunc("/", rootHandler)
+	router.HandleFunc("/auth/google/login",auth.OauthGoogleLogin).Methods("GET")
+	router.HandleFunc("/auth/google/callback",auth.OauthGoogleCallback).Methods("GET")
 	router.HandleFunc("/login", auth.AuthUserHandler).Methods("GET")
 	router.HandleFunc("/signup", auth.CreateAccountHandler).Methods("POST")
 	router.HandleFunc("/getPossibleToSquares",server.GetPossibleSquares).Methods("POST")
