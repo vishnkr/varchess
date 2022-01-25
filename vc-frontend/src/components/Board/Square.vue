@@ -162,7 +162,7 @@ export default {
     }
 }
 */
-@media only screen and (max-device-width: 480px) {
+@media only screen and (max-device-width: 280px) {
   .square {
   background: transparent;
   border: 1px solid transparent;

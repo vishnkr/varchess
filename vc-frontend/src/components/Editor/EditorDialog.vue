@@ -1,15 +1,16 @@
 <template>
   <div class="board-editor">
     <div class="side-panel">
-      <v-card class="mx-auto" max-width="550">
+      <v-card class="mx-auto" max-width="500">
         <v-list-item>
           <v-list-item-content>
             <div class="card-top">
                 <v-list-item-title class="headline">
                 Game Editor
                 </v-list-item-title>
+              
               <v-btn color="red" dark style="margin-right:5px;" @click="clearBoard"><v-icon>mdi-delete</v-icon> Clear</v-btn>
-              <v-btn color="success" depressed @click="enterRoom">
+              <v-btn color="success" class="button__full" depressed @click="enterRoom">
                   Save Setup
                 </v-btn>
             </div>
@@ -353,11 +354,18 @@ export default {
   background-color: #21af49 !important;
 }
 
-@media only screen and (max-device-width: 480px) {
+@media only screen and (max-device-width: 580px) {
   .board-editor{
     display: flex;
     flex-direction: column;
   }
+  .side-panel{
+    margin:1%;
+  }
+  .board{
+    flex:3;
+  }
+  
 
 }
 </style>
