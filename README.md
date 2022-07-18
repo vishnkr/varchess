@@ -5,7 +5,7 @@ Varchess is a multiplayer chess website where you can create your own chess vari
 
 #### Built using Vue.js (frontend), Go (websocket server and game logic).
 
-#### LIVE LINK - https://varchess.tech/
+#### LIVE LINK - https://varchess.tech/ (currently : https://varchess.netlify.app until domain name issues are resolved)
 
 
 ![Editor](https://i.imgur.com/aWI8KoW.png)
