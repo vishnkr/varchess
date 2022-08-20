@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -60,6 +61,13 @@ func ConvertFENtoBoard(fen string) *Board {
 					}
 				}
 			} else {
+				fmt.Println("char",string(char),char)
+				if (char=='.'){
+					board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id,IsDisabled:true}
+					col++
+					id += 1
+					continue
+				}
 				var color Color
 				if unicode.IsUpper(rune(char)) {
 					color = White
@@ -108,6 +116,10 @@ func ConvertBoardtoFEN(board *Board) string {
 					str := strconv.Itoa(empty)
 					fen.WriteString(str)
 					empty = 0
+				}
+				if (board.Tiles[row][col].IsDisabled){
+					fen.WriteString(".")
+					continue
 				}
 				if board.Tiles[row][col].Piece.Type == Custom {
 					name = board.Tiles[row][col].Piece.CustomPiece.PieceName

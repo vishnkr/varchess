@@ -56,6 +56,11 @@ export default {
     methods:{
       handleEditorSquareClick(type,row,col){
         if (type=="regular"){
+          if (this.editorData.isDisableTileOn){
+            //perform disable
+            this.boardState.tiles[row-1][col-1].disabled = !this.boardState.tiles[row-1][col-1].disabled
+            return
+          }
           this.editorModeSquareClicked(row,col)
         } else {
           this.$emit('setMP',row,col)
@@ -140,7 +145,7 @@ export default {
                 tile.x= flipped? flipX : x;
                 tile.row = x;
                 tile.col = y;
-                tile.tileType = this.isLight(y,x)? 'l' : 'd';
+                tile.tileType = tile.disabled ? 'disabled' : this.isLight(y,x)? 'l' : 'd';
                 tile.y= flipped? flipY : y;
                 y+=1
                 flipY-=1
@@ -182,7 +187,7 @@ export default {
 #board-container{
 
     max-width: var(--container_size);
-    width:100%;
+    width:80%;
     max-height: var(--container_size);
 
 }

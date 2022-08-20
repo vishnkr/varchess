@@ -44,7 +44,7 @@
                     ></v-slider>
                   </div>
                   <v-checkbox
-                    v-model="isDisableTileOn"
+                    v-model="editorData.isDisableTileOn"
                     label="Toggle: Disable selected tile"
                   ></v-checkbox>
 
@@ -294,7 +294,12 @@ export default {
   },
   data(){
     return{
-      editorData: {curPieceColor:'white',curPiece:'p',added:{},defined:{}},
+      editorData: {
+        curPieceColor:'white',
+        curPiece:'p',
+        isDisableTileOn:false,
+        added:{},
+        defined:{}},
       labels: [5,6,7,8,9,10,11,12,13,14,15,16],
       pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
       customPieces:['a','j','d','i','g','s','u','v','z'],
@@ -306,7 +311,6 @@ export default {
       dialog:false,
       colorSelect: 'white',
       pieceSelect: 'pawn',
-      isDisableTileOn: false,
       boardState:{tiles:[]},
       maxBoardState:{tiles:[],rows:16,cols:16},
       username: this.$route.params.username,

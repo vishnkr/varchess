@@ -5,9 +5,9 @@ services:
         build:
             context: ./vc-server
             dockerfile: Dockerfile
-        command: bash -c "go build && ./vc-server -b 0.0.0.0:8000 --timeout 120"
+        command: bash -c "make build_run"
         volumes:
-            - './vc-server:/app/server'
+            - './vc-server:/app/vc-server'
         ports:
             - 5000:5000
 
@@ -20,7 +20,7 @@ services:
           context: ./vc-frontend
           dockerfile: Dockerfile
         volumes:
-          - './vc-frontend:/app/frontend'
+          - './vc-frontend:/app'
         ports:
           - 8080:8080
         environment:

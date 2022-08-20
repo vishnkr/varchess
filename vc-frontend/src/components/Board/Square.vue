@@ -1,9 +1,10 @@
 <template>
   <div class="square" :id="tileId" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', 
+        :class="[disabled || tileType=='disabled' ? 'disabled' : tileType=='d'? 'dark':'light', 
         mpTabData? mpTabData[[this.row,this.col]]:null , 
         !mpTabData && highlight? this.getHighlightType():null,
         addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null]"
+
          @mousedown="clickSquare">
       <div v-if="isPiecePresent" >
       <piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
@@ -41,6 +42,9 @@ export default {
       clickSquare(){
         let pieceInfo = {id:this.tileId,row:this.row,col:this.col}
         if(this.editorMode){
+          if (this.editorData.isDisableTileOn){
+            this.disabled = !this.disabled
+          }
           var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
           if (this.editorData.isSetMovement){ 
             this.addColor = this.addColor ? null : this.editorData.moveType
@@ -72,6 +76,7 @@ export default {
       return {
         addColor:null,
         squareColor:null,
+        disabled:false
       }
     },
     props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
@@ -89,8 +94,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 .square {
   background: transparent;
   border: 1px solid transparent;
@@ -124,6 +127,9 @@ export default {
     background-color: #e4f5cb;
 }
 
+.disabled{
+  background-color: dimgray !important;
+}
 .move-slide-pattern{
   background-color: #ac422a !important;
   border-color: black;

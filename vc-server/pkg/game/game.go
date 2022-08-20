@@ -51,7 +51,9 @@ func DisplayBoardState(board *Board) {
 	var piece string
 	for i := 0; i < board.Rows; i++ {
 		for j := 0; j < board.Cols; j++ {
-			if !board.Tiles[i][j].IsEmpty {
+			if (board.Tiles[i][j].IsDisabled){
+				piece = "X"
+			} else if !board.Tiles[i][j].IsEmpty {
 				if board.Tiles[i][j].Piece.CustomPiece != nil {
 					piece = board.Tiles[i][j].Piece.CustomPiece.PieceName
 				} else {

@@ -43,6 +43,7 @@ type Square struct {
 	Id      int
 	Piece   Piece
 	IsEmpty bool
+	IsDisabled bool
 }
 
 type KingPiece struct {
