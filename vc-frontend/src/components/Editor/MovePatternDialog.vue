@@ -39,7 +39,7 @@
                 ref="MPBoard" 
                 :board="boardState"
                 :editorMode="true"
-                :editorData="editData"
+                :editorState="editData"
                 v-on:setMP="addPattern"
                 />
             </div>
@@ -81,7 +81,7 @@
 import Board from '../Board/Board.vue'
 export default {
     components:{Board},
-    props:['dialog','pieceType','pieceColor','editorData','ws'],
+    props:['dialog','pieceType','pieceColor','editorState'],
     watch:{
       moveType(){
         this.editData.moveType = this.moveType
@@ -108,10 +108,10 @@ export default {
           }
         },
         closeDialog(){
-            this.$emit("closeDialog")
+            this.$emit("close-dialog")
         },
         savePattern(){
-          this.$emit("movePatterns",this.editorData.customPiece,this.jumpPattern,this.slideDirections)
+          this.$emit("emit-move-pattern",this.editorState.customPiece,this.jumpPattern,this.slideDirections)
           this.closeDialog()
         },
         isEven(val){return val%2==0},
@@ -125,8 +125,8 @@ export default {
               tile.tileType = this.isLight(col,row)? 'l' : 'd';
               if(row==4 && col==4){
                 tile.isPiecePresent=true
-                tile.pieceType = this.editorData.customPiece
-                tile.pieceColor = this.editorData.curPieceColor
+                tile.pieceType = this.editorState.customPiece
+                tile.pieceColor = this.editorState.curPieceColor
               } else{ tile.isPiecePresent=false }
               this.boardState.tiles[col].push(tile)
             }
@@ -145,7 +145,7 @@ export default {
             moveType: 'jump',
             slideDirections:[],
             directions: {'North':[-1,0],'South':[1,0],'East':[0,1],'West':[0,-1],'North East':[-1,1], 'North West':[-1,-1], 'South East':[1,1], 'South West':[1,-1]},
-            editData: {...this.editorData},
+            editData: {...this.editorState},
             jumpPattern: [],
         }
     },

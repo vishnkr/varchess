@@ -42,14 +42,13 @@ export default {
       clickSquare(){
         let pieceInfo = {id:this.tileId,row:this.row,col:this.col}
         if(this.editorMode){
-          if (this.editorData.isDisableTileOn){
+          if (this.editorState.isDisableTileOn){
             this.disabled = !this.disabled
           }
-          var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
-          if (this.editorData.isSetMovement){ 
-            this.addColor = this.addColor ? null : this.editorData.moveType
+          var clickType  =  this.editorState.isSetMovement ? "setPattern" : "regular"
+          if (this.editorState.isSetMovement){ 
+            this.addColor = this.addColor ? null : this.editorState.moveType
           }
-          console.log(this.row,this.col)
           this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
           if(this.isPiecePresent & (!this.selectedSrc || this.selectedSrc && this.selectedSrc.pieceColor == (this.pieceColor=='white' ? 'w':'b') && this.selectedSrc.id!=this.tileId)){ // start pos is selected
@@ -79,7 +78,7 @@ export default {
         disabled:false
       }
     },
-    props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
+    props:['tileType','editorMode','editorState','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
     computed:{
         cssVar(){
         return {

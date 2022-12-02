@@ -22,126 +22,21 @@
                 Board Editor
               </v-tab>
               <v-tab-item style="padding-left:10px" key="board-edit">
-                <div>
-                  <div>
-                    <v-list-item-title style="padding-top:10px">Board height (rows)</v-list-item-title>
-                    <v-slider
-                      v-model="labelRow"
-                      :max="labels.length-1"
-                      @input="updateBoardDimensions"
-                      :tick-labels="labels"
-                      color="orange darken-3"
-                    ></v-slider>
-                  </div>
-                  <div>
-                    <v-list-item-title>Board width (cols)</v-list-item-title>
-                    <v-slider
-                      v-model="labelCol"
-                      :max="labels.length-1"
-                      @input="updateBoardDimensions"
-                      :tick-labels="labels"
-                      color="orange darken-3"
-                    ></v-slider>
-                  </div>
-                  <v-checkbox
-                    v-model="editorData.isDisableTileOn"
-                    label="Toggle: Disable selected tile"
-                  ></v-checkbox>
-
-                </div>
+               <board-editor 
+               :editorState="editorState"
+               @update-board-dimensions="updateBoardDimensions"
+               />
               </v-tab-item>
 
               <v-tab>
                 Piece Placement
               </v-tab>
               <v-tab-item style="padding-left:10px"  key="piece-place">
-                <div>
-                  <v-list-item-title style="padding-top:10px">Choose color</v-list-item-title>
-                  <v-radio-group
-                    v-model="editorData.curPieceColor"
-                    row
-                  >
-                    <v-radio
-                      label="Black"
-                      value="black"
-                    ></v-radio>
-                    <v-radio
-                      label="White"
-                      value="white"
-                    ></v-radio>
-                  </v-radio-group>
-                </div>
-                <div>
-                  <v-list-item-title style="padding-top:10px">Choose piece</v-list-item-title>
-                  <v-radio-group
-                    v-model="editorData.curPiece"
-                    column
-                  >
-                    <v-radio v-for="piece in pieceList"
-                      :key="`${piece.toLowerCase()}`"
-                      :label="`${piece}`"
-                      :value="`${pieceMap[piece].toLowerCase()}`"
-                    ></v-radio>
-                    
-                  </v-radio-group>
-                </div>
-                <div v-if="editorData.curPiece=='c'">
-                  <div class="custom-pieces">
-                    <v-btn
-                      depressed
-                      color="primary"
-                      @click="dialog=true"
-                      class="move-button"
-                    >
-                      Set Move Pattern
-                    </v-btn>
-                    <div class="piece-scroll">
-                      <v-card
-                        elevation="16"
-                        max-width="150"
-                        class="mx-auto"
-                      >
-                        <v-virtual-scroll
-                          
-                          :items="pieceFilter"
-                          height="200"
-                          item-height="64"
-                        >
-                          <template v-slot:default="{ item }">
-                            <v-radio-group v-model="editorData.customPiece">
-                            <v-list-item class="scroll-item" :class="{added : editorData.added[item.piece], defined: editorData.defined[item.piece]}">
-                                <v-radio
-                                  :key="item.piece"
-                                  :value="item.piece"
-                                  @click="editorData.customPiece = item.piece"
-                                >
-                                  Select
-                                </v-radio>
-                              <v-list-item-content>
-                                <img class="resize" :src="item.src">
-                              </v-list-item-content>
-
-                              <v-list-item-action>
-                                
-                                <move-pattern-dialog v-if="dialog" 
-                                  v-on:closeDialog="closeDialog" 
-                                  v-on:movePatterns="setMovePattern"
-                                  :dialog="dialog"
-                                  :editorData="editorData"
-                                  :pieceColor="editorData.curPieceColor"
-                                  :pieceType="editorData.customPiece"
-                                  :ws="ws"
-                                  />
-                              </v-list-item-action>
-                            </v-list-item>
-                            <v-divider></v-divider>
-                            </v-radio-group>
-                          </template>
-                        </v-virtual-scroll>
-                      </v-card>
-                    </div>
-                  </div>
-                </div>
+                <piece-editor 
+                :editorState="editorState"
+                @update-piece-state="updatePieceState"
+                @set-move-pattern="setMovePattern"
+                />
               </v-tab-item>
           </v-tabs>
         </v-list-item-content>
@@ -151,7 +46,7 @@
     </div>
     
     <board :board="boardState" :isflipped="false" :editorMode="true" 
-    :editorData="editorData" :key="change" 
+    :editorState="editorState" :key="change" 
     v-on:sendEditorboardState="formatBoardState"
     v-on:customPieceAdd="customPieceAdd"
     />
@@ -163,21 +58,17 @@ import { convertBoardStateToFEN } from '../../utils/fen';
 import {createRoomWithCustomPatterns} from '../../utils/websocket';
 import {validateStartSetup} from '../../utils/validator';
 import Board from '../Board/Board.vue';
-import  MovePatternDialog from './MovePatternDialog.vue';
+import BoardEditor from './BoardEditor.vue';
+import PieceEditor from './PieceEditor.vue';
+
 export default {
-  components:{MovePatternDialog,Board},
+  components:{BoardEditor,PieceEditor,Board},
   created(){
     this.setupDefaultBoardMaxSize()
   },
   methods:{
-    getPieceURL(piece){
-      return require(`../../assets/images/pieces/${this.colorSelect}/${piece}.svg`)
-    },
     customPieceAdd(piece){
-      this.editorData.added[piece]=true
-    },
-    closeDialog(){
-      this.dialog=false
+      this.editorState.added[piece]=true
     },
     clearBoard(){
       for(var row of this.boardState.tiles){
@@ -207,11 +98,24 @@ export default {
    },
 
     setMovePattern(piece,jumpPattern,slidePattern){
+      for (let pattern of this.customMovePatterns){
+        if (pattern.piece === piece) {
+          pattern.jumpPattern = jumpPattern;
+          pattern.slidePattern = slidePattern;
+        }
+        return
+      }
       this.customMovePatterns.push({piece:piece,jumpPattern:jumpPattern,slidePattern:slidePattern});
-      this.editorData.defined[piece] = true;
+      this.editorState.defined[piece] = true;
     },
-    updateBoardDimensions(){
+    updateBoardDimensions(dimensions){
+      this.rows = dimensions.rows;
+      this.cols = dimensions.cols;
       this.formatBoardState(this.maxBoardState);
+    },
+
+    updatePieceState(editorState){
+      this.editorState = editorState;
     },
 
     isEven(val){return val%2==0},
@@ -277,39 +181,21 @@ export default {
       items () {
         return Array.from({ length: this.pieces.length }, (k, v) => v + 1)
       },
-      pieceFilter(){
-        var pieceUrls = []
-        for(var piece of this.customPieces){
-          pieceUrls.push({piece:piece,src :this.getPieceURL(piece)})
-        }        
-        return pieceUrls
-      },
-      rows(){
-        return this.labels[this.labelRow]
-      },
-      cols(){
-        return this.labels[this.labelCol]
-      }
 
   },
   data(){
     return{
-      editorData: {
+      editorState: {
         curPieceColor:'white',
         curPiece:'p',
         isDisableTileOn:false,
         added:{},
-        defined:{}},
-      labels: [5,6,7,8,9,10,11,12,13,14,15,16],
-      pieceList: ['Pawn','King','Queen','Bishop','Knight','Rook','Custom'],
-      customPieces:['a','j','d','i','g','s','u','v','z'],
-      pieceMap: {'Pawn':'p','King':'k','Queen':'q','Bishop':'b','Knight':'n','Rook':'r','Custom':'c'},
+        defined:{}
+      },
       customMovePatterns:[],
-      labelRow: 3,
-      labelCol: 3,
       change:0,
-      dialog:false,
-      colorSelect: 'white',
+      rows:8,
+      cols:8,
       pieceSelect: 'pawn',
       boardState:{tiles:[]},
       maxBoardState:{tiles:[],rows:16,cols:16},
