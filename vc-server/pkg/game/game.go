@@ -10,7 +10,7 @@ type Game struct {
 	MoveList []string
 	Pgn      string
 	Result   string
-	Turn     string
+	Turn     Color
 }
 
 type Board struct {
@@ -46,6 +46,17 @@ func (board *Board) IsEmpty(row int, col int) bool {
 	return board.isSquareInBoardRange(row, col) && board.Tiles[row][col].IsEmpty
 }
 
+func IsSameMove(move1 Move, move2 Move) bool{
+	return move1.SrcCol==move2.SrcCol && move1.SrcRow==move2.SrcRow && move1.DestCol==move2.DestCol && move1.DestRow == move2.DestRow
+}
+
+func (g *Game) ChangeTurn() {
+	if g.Turn == White {
+		g.Turn = Black
+	} else {
+		g.Turn = White
+	}
+}
 //visual helper function
 func DisplayBoardState(board *Board) {
 	var piece string
@@ -54,8 +65,8 @@ func DisplayBoardState(board *Board) {
 			if (board.Tiles[i][j].IsDisabled){
 				piece = "X"
 			} else if !board.Tiles[i][j].IsEmpty {
-				if board.Tiles[i][j].Piece.CustomPiece != nil {
-					piece = board.Tiles[i][j].Piece.CustomPiece.PieceName
+				if board.Tiles[i][j].Piece.CustomPieceName != "" {
+					piece = board.Tiles[i][j].Piece.CustomPieceName
 				} else {
 					piece = board.Tiles[i][j].Piece.String()
 				}
@@ -78,49 +89,9 @@ func (board *Board) isSameColorPieceAtDest(color Color, destRow int, destCol int
 	return false
 }
 
-//IsValidMove: checks if a move made by given piece is valid, return string is just used for debugging purposes
-func (board *Board) IsValidMove(piece Piece, move *Move) (bool, string) {
-	if !board.isPieceStartPosValid(piece, move.SrcRow, move.SrcCol) {
-		return false, "start pos not valid for given piece"
-	}
-	//check if same piece color exists at destination
-	if board.isSameColorPieceAtDest(piece.Color, move.DestRow, move.DestCol) {
-		return false, "same color piece at dest"
-	}
-	if board.willCauseCheck(piece, move) {
-		return false, "under check/discovered check"
-	}
-	switch piece.Type {
-	case Rook:
-		return isRookMoveValid(piece, board, move)
-	case Bishop:
-		return isBishopMoveValid(piece, board, move)
-	case Knight:
-		if Abs((move.SrcRow-move.DestRow)*(move.SrcCol-move.DestCol)) == 2 {
-			return true, "valid knight"
-		} else {
-			return false, "invalid knight"
-		}
-	case Pawn:
-		return isPawnMoveValid(piece, board, move)
-	case Queen:
-		rookCheck, res := isRookMoveValid(piece, board, move)
-		if !rookCheck {
-			return isBishopMoveValid(piece, board, move)
-		}
-		return rookCheck, res
-	case King:
-		return isKingMoveValid(piece, board, move)
-	case Custom:
-		return isCustomMoveValid(piece, board, move)
-
-	}
-	return false, "something's wrong"
-}
 
 func (board *Board) isDestOccupied(color Color, destRow int, destCol int) bool {
 	return !board.Tiles[destRow][destCol].IsEmpty && board.Tiles[destRow][destCol].Piece.Color == GetOpponentColor(color)
-
 }
 
 // PerformMove: modify board state after a move has been made
@@ -240,6 +211,7 @@ func (board *Board) getAllPseudoLegalMoves(color Color) map[*Move]Piece {
 		for colIndex, tile := range row {
 			if !tile.IsEmpty && tile.Piece.Color == color {
 				for k, v := range board.genPieceMoves(tile.Piece, rowIndex, colIndex) {
+					
 					validMoves[k] = v
 				}
 			}
@@ -253,14 +225,14 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 	var validMoves = make(map[*Move]Piece)
 	switch piece.Type {
 	case Bishop:
-		validMoves = board.genBishopMoves(piece, srcRow, srcCol)
+		dirs:= [][]int{{1,-1},{1,1},{-1,1},{-1,-1}}
+		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
 	case Rook:
-		validMoves = board.genRookMoves(piece, srcRow, srcCol)
+		dirs:= [][]int{{1,0},{0,1},{-1,0},{0,-1}}
+		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
 	case Queen:
-		validMoves = board.genRookMoves(piece, srcRow, srcCol)
-		for k, v := range board.genBishopMoves(piece, srcRow, srcCol) {
-			validMoves[k] = v
-		}
+		dirs:= [][]int{{1,0},{0,1},{-1,0},{0,-1},{1,-1},{1,1},{-1,1},{-1,-1}}
+		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
 	case King:
 		for row := -1; row <= 1; row += 1 {
 			for col := -1; col <= 1; col += 1 {
@@ -273,6 +245,18 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 				}
 			}
 		}
+		//validMoves board.genCastleMoves(piece,srcRow,srcCol)
+		if !board.hasKingMoved(piece.Color) {
+			var queenSideCastle = &Move{SrcRow:srcRow,SrcCol:srcCol,DestRow: srcRow, DestCol: srcCol-2,Castle: true}
+			var kingSideCastle = &Move{SrcRow:srcRow,SrcCol:srcCol,DestRow: srcRow, DestCol: srcCol+2,Castle: true}
+			if board.isValidCastle(queenSideCastle){
+				validMoves[queenSideCastle] = piece
+			}
+			if board.isValidCastle(kingSideCastle){
+				validMoves[kingSideCastle] = piece
+			}
+		}
+
 	case Knight:
 		jumpSquares := [][]int{{-2, -1}, {-2, 1}, {-1, 2}, {-1, -2}, {1, -2}, {1, 2}, {2, -1}, {2, 1}}
 		for _, pair := range jumpSquares {
@@ -311,116 +295,36 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 				validMoves[move] = piece
 			}
 		}
+	case Custom:
+		return board.genCustomMoves(piece,srcRow,srcCol)
 	}
+	
+
 	return validMoves
 }
 
-// genBishopMoves: generate pseudo-legal bishop moves
-func (board *Board) genBishopMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece {
-	var validMoves = make(map[*Move]Piece)
-	diagonals := [][]int{{1, 1, board.Rows - 1}, {1, -1, board.Rows - 1}, {-1, 1, 0}, {-1, -1, 0}}
-	for _, value := range diagonals {
-		xOffset, yOffset, endRow := value[0], value[1], value[2]
-		pathLength := Abs(srcRow - endRow)
-		for i := 1; i <= pathLength; i++ {
-			x := srcRow + i*xOffset
-			y := srcCol + i*yOffset
-			if board.isSquareInBoardRange(x, y) && !board.isSameColorPieceAtDest(piece.Color, x, y) {
-				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: x, DestCol: y}
-				validMoves[move] = piece
-				if !board.IsEmpty(x, y) {
-					break
+func (board *Board) isValidCastle(move *Move)bool{
+		var tile int
+		if move.SrcCol+2 == move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type == Rook { //castle to the right
+			tile = move.SrcCol + 1
+			for tile < board.Cols-1 {
+				if !board.Tiles[move.SrcRow][tile].IsEmpty {
+					return false
 				}
-			} else {
-				break
+				tile += 1
 			}
-		}
-	}
-	return validMoves
-}
-
-func (board *Board) genRookMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece {
-	directions := []int{-1, 1}
-	//check horizontal
-	var validMoves = make(map[*Move]Piece)
-	for _, xOffset := range directions {
-		for i := srcCol + xOffset; i >= 0 && i < board.Cols; i += xOffset {
-			if !board.isSameColorPieceAtDest(piece.Color, srcRow, i) {
-				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: srcRow, DestCol: i}
-				validMoves[move] = piece
-			} else {
-				break
-			}
-			if !board.IsEmpty(srcRow, i) {
-				break
-			}
-		}
-	}
-	//check vertical
-	for _, yOffset := range directions {
-		for i := srcRow + yOffset; i >= 0 && i < board.Rows; i += yOffset {
-			if !board.isSameColorPieceAtDest(piece.Color, i, srcCol) {
-				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: i, DestCol: srcCol}
-				validMoves[move] = piece
-			} else {
-				break
-			}
-			if !board.IsEmpty(i, srcCol) {
-				break
-			}
-		}
-	}
-	return validMoves
-}
-
-// isKingMoveValid: determine if a king move is valid
-func isKingMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
-	if move.Castle {
-		if !board.hasKingMoved(piece.Color) {
-			if move.SrcRow == move.DestRow {
-				var tile int
-				if move.SrcCol+2 == move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type == Rook { //castle to the right
-					tile = move.SrcCol + 1
-					for tile < board.Cols-1 {
-						if !board.Tiles[move.SrcRow][tile].IsEmpty {
-							return false, "castle path blocked"
-						}
-						tile += 1
-					}
-					return true, "valid castle"
-				} else if move.SrcCol-2 == move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type == Rook {
-					tile = move.SrcCol - 1
-					for tile > 0 {
-						if !board.Tiles[move.SrcRow][tile].IsEmpty {
-							return false, "castle path blocked"
-						}
-						tile -= 1
-					}
-					return true, "valid castle"
-				} else {
-					return false, "invalid castle dest"
+			return true
+		} else if move.SrcCol-2 == move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type == Rook {
+			tile = move.SrcCol - 1
+			for tile > 0 {
+				if !board.Tiles[move.SrcRow][tile].IsEmpty {
+					return false
 				}
+				tile -= 1
 			}
-		} else {
-			return false, "king has already moved"
+			return true
 		}
-	} else {
-		if Abs(move.SrcRow-move.DestRow) <= 1 && Abs(move.SrcCol-move.DestCol) <= 1 {
-			for row := -1; row <= 1; row += 1 {
-				for col := -1; col <= 1; col += 1 {
-					if (row == 0) && (col == 0) {
-						continue
-					}
-					if board.isSquareInBoardRange(move.DestRow+row, move.DestCol+col) && board.Tiles[move.DestRow+row][move.DestCol+col].Piece.Type == King &&
-						board.Tiles[move.DestRow+row][move.DestCol+col].Piece.Color == GetOpponentColor(piece.Color) {
-						return false, "moving into check"
-					}
-				}
-			}
-			return true, "valid king move"
-		}
-	}
-	return false, "invalid king move"
+		return false
 }
 
 func (board *Board) hasKingMoved(color Color) bool {
@@ -431,119 +335,12 @@ func (board *Board) hasKingMoved(color Color) bool {
 	}
 }
 
-// isRoomMoveValid determines if a rook move is valid
-func isRookMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
-	//horizontal or vertical block
-	if move.SrcCol == move.DestCol && move.SrcRow != move.DestRow {
-		//vertical move
-		start, end := Min(move.SrcRow, move.DestRow), Max(move.SrcRow, move.DestRow)
-		for i := start + 1; i < end; i++ {
-			if !board.IsEmpty(i, move.SrcCol) {
-				return false, ("rook path blocked")
-			}
-		}
-		return true, "valid rook move"
-	} else if move.SrcRow == move.DestRow && move.SrcCol != move.DestCol {
-		//horizontal move
-		start, end := Min(move.SrcCol, move.DestCol), Max(move.SrcCol, move.DestCol)
-		for i := start + 1; i < end; i++ {
-			if !board.IsEmpty(move.SrcRow, i) {
-				return false, ("rook path blocked")
-			}
-		}
-		return true, "valid rook move"
-	} else {
-		return false, "invalid rook move"
-	}
-}
-
-// isBishopMoveValid determines if a Bishop move is valid
-func isBishopMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
-	pathLength := Abs(move.SrcRow - move.DestRow)
-	if pathLength != Abs(move.SrcCol-move.DestCol) {
-		return false, "not diagonal"
-	}
-	var xOffset, yOffset int
-	if move.SrcRow < move.DestRow && move.SrcCol < move.DestCol {
-		xOffset = 1
-		yOffset = 1
-	} else if move.SrcRow > move.DestRow && move.SrcCol < move.DestCol {
-		xOffset = -1
-		yOffset = 1
-	} else if move.SrcRow < move.DestRow && move.SrcCol > move.DestCol {
-		xOffset = 1
-		yOffset = -1
-	} else {
-		xOffset = -1
-		yOffset = -1
-	}
-	for i := 1; i < pathLength; i++ {
-		x := move.SrcRow + i*xOffset
-		y := move.SrcCol + i*yOffset
-		if !board.IsEmpty(x, y) {
-			// Obstacle found before reaching target: the move is invalid
-			return false, "obstacle in bishop path"
-		}
-	}
-	return true, "valid"
-}
-
-// isBishopMoveValid determines if a bishop move is valid
-func isPawnMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
-	//not considering en passant yet
-	var doubleMoveStartRank, rowOffset, promoteDestRow int
-	if piece.Color == Black {
-		doubleMoveStartRank = 1
-		rowOffset = 1
-		promoteDestRow = board.Rows - 1
-	} else {
-		doubleMoveStartRank = board.Rows - 2
-		rowOffset = -1
-		promoteDestRow = 0
-	}
-	if move.DestCol == move.SrcCol && move.SrcRow != move.DestRow {
-		if Abs(move.SrcRow-move.DestRow) == 2 && move.SrcRow == doubleMoveStartRank {
-			if (piece.Color == Black && board.IsEmpty(move.SrcRow+1, move.SrcCol)) || (piece.Color == White && board.IsEmpty(move.SrcRow-1, move.SrcCol)) {
-				return true, "double pawn move allowed"
-			} else {
-				return false, "double move blocked"
-			}
-		} else if Abs(move.SrcRow-move.DestRow) == 1 && !piece.isBackwardPawnMove(move) {
-			if board.IsEmpty(move.DestRow, move.DestCol) {
-				if move.Promote != 0 && move.DestRow == promoteDestRow {
-					return true, "pawn promoted"
-				}
-				return true, "valid single pawn move"
-			} else {
-
-				return false, "dest blocked"
-			}
-		}
-
-	} else if move.DestCol != move.SrcCol && move.SrcRow != move.DestRow {
-		//check if col row +-1 logic
-		if Abs(move.SrcCol-move.DestCol) == 1 && move.DestRow == move.SrcRow+rowOffset && !board.IsEmpty(move.DestRow, move.DestCol) {
-			return true, "valid pawn capture"
-		}
-		return false, "invalid pawn capture"
-	}
-	return false, "not a valid pawn move"
-}
-
-func ChangeTurn(turn string) string {
-	if turn == "w" {
-		return "b"
-	} else {
-		return "w"
-	}
-}
-
 func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
 	//Check jump moves followed by slide moves
 	var jumpPattern, slidePattern [][]int
 	//find pattern for the piece, will change this to a hashmap later
 	for _, movePatterns := range board.CustomMovePatterns {
-		if movePatterns.PieceName == strings.ToLower(piece.CustomPiece.PieceName) {
+		if movePatterns.PieceName == strings.ToLower(piece.CustomPieceName) {
 			jumpPattern = movePatterns.JumpPattern
 			slidePattern = movePatterns.SlidePattern
 			break
@@ -582,4 +379,51 @@ func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
 	}
 
 	return false, "no"
+}
+
+func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece{
+	var validMoves = make(map[*Move]Piece)
+	for _, movePatterns := range board.CustomMovePatterns {
+		if movePatterns.PieceName == strings.ToLower(piece.CustomPieceName) {
+			multiplier:= 1
+			if piece.Color == Black{
+				multiplier = -1
+			}
+			for _, pair := range  movePatterns.JumpPattern {
+				var destRow,destCol int = srcRow+(multiplier*pair[0]),srcCol+(multiplier*pair[1])
+				if board.isSquareInBoardRange(destRow,destCol) && !(piece.Color == board.getPieceColor(destRow, destCol)) {
+					move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: destRow, DestCol: destCol}
+					validMoves[move]=piece
+				}
+			}
+			for k,v := range board.genSlideMoves(movePatterns.SlidePattern,piece,srcRow,srcCol){
+				validMoves[k] = v
+			}
+			break
+		}
+	}
+	return validMoves
+}
+
+func (board *Board) genSlideMoves(directions [][]int,piece Piece,srcRow int,srcCol int)map[*Move]Piece{
+	var validMoves = make(map[*Move]Piece)
+	multiplier := 1
+	if piece.Color ==Black{
+		multiplier = -1
+	}
+	for _, direction := range directions {
+		var dx,dy int = direction[0]*multiplier, direction[1]*multiplier
+		var tempRow, tempCol int = srcRow+dx, srcCol + dy
+		for board.isSquareInBoardRange(tempRow,tempCol) {
+			if !board.isSameColorPieceAtDest(piece.Color,tempRow,tempCol) {
+				move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: tempRow, DestCol: tempCol, }
+				validMoves[move] = piece
+				if !board.IsEmpty(tempRow, tempCol){ break }
+			} else { break}
+			tempRow += dx
+			tempCol += dy
+			
+		}
+	}
+	return validMoves
 }

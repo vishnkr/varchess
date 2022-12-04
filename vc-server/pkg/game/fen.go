@@ -2,7 +2,6 @@ package game
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -61,7 +60,6 @@ func ConvertFENtoBoard(fen string) *Board {
 					}
 				}
 			} else {
-				fmt.Println("char",string(char),char)
 				if (char=='.'){
 					board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id,IsDisabled:true}
 					col++
@@ -81,9 +79,8 @@ func ConvertFENtoBoard(fen string) *Board {
 				val, ok := StrToTypeMap[string(unicode.ToLower(char))]
 
 				if !ok {
-					customPiece := &CustomPiece{PieceName: string(char)}
 					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: Custom}
-					board.Tiles[rowIndex][col].Piece.CustomPiece = customPiece
+					board.Tiles[rowIndex][col].Piece.CustomPieceName = string(char)
 				} else {
 					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: val}
 					board.Tiles[rowIndex][col].Piece.Type = val
@@ -122,7 +119,7 @@ func ConvertBoardtoFEN(board *Board) string {
 					continue
 				}
 				if board.Tiles[row][col].Piece.Type == Custom {
-					name = board.Tiles[row][col].Piece.CustomPiece.PieceName
+					name = board.Tiles[row][col].Piece.CustomPieceName
 				} else {
 					name = typeToStrMap[board.Tiles[row][col].Piece.Type]
 				}
