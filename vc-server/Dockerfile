@@ -8,5 +8,5 @@ COPY go.sum .
 RUN go mod download
 COPY . .
 
-CMD ["go build","./vc-server"]
-EXPOSE 5000:5000
+CMD ["make","build_run"]
+EXPOSE 5000
