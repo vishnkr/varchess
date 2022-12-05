@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"varchess/pkg/auth"
 	"varchess/pkg/server"
 
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-	var addr = flag.String("addr", ":5000", "http server address")
+	port := os.Getenv("PORT")
+	var addr = flag.String("addr", ":"+port, "http server address")
 	router := mux.NewRouter()
 	router.HandleFunc("/getRoomId", server.RoomHandler).Methods("POST")
 	router.HandleFunc("/getBoardFen/{roomId}", server.BoardStateHandler).Methods("GET", "OPTIONS")
