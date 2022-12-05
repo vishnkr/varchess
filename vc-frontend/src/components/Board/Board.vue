@@ -7,7 +7,7 @@
         :isPiecePresent="square.isPiecePresent" 
         :tileId="square.tileId"
         :editorMode="editorMode"
-        :editorData="editorData? editorData: null"
+        :editorState="editorState? editorState: null"
         :pieceType="square.pieceType" 
         :pieceColor="square.pieceColor" 
         :x="square.x" :y="square.y" 
@@ -29,9 +29,9 @@ import Square from './Square.vue';
 
 export default {
   components: { Square },
-  props:['board','isflipped','playerColor',"editorMode","editorData","boardSize","mpTabData"],
+  props:['board','isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
   watch: { 
-    isflipped() { // watch it
+    isflipped() { 
           this.updateBoardState1D(this.isflipped)
         }
   },
@@ -39,7 +39,6 @@ export default {
       this.boardState = this.board;
       this.rows = this.board.rows
       this.cols = this.board.cols
-      console.log(this.boardState)
       this.updateBoardState1D(this.isflipped)
   },
   data(){
@@ -56,6 +55,11 @@ export default {
     methods:{
       handleEditorSquareClick(type,row,col){
         if (type=="regular"){
+          if (this.editorState.isDisableTileOn){
+            //perform disable
+            this.boardState.tiles[row-1][col-1].disabled = !this.boardState.tiles[row-1][col-1].disabled
+            return
+          }
           this.editorModeSquareClicked(row,col)
         } else {
           this.$emit('setMP',row,col)
@@ -67,8 +71,8 @@ export default {
           this.$refs.squares[i].removeColorFromSquare()
         }
         for (let direction of slideDirections){
-          let row = this.editorData.piecePos[0]+direction[0]
-          let col = this.editorData.piecePos[1]+direction[1]
+          let row = this.editorState.piecePos[0]+direction[0]
+          let col = this.editorState.piecePos[1]+direction[1]
           while(row<this.boardState.rows && row>=0 && col<this.boardState.cols && col>=0){
             tileIDs.push(this.boardState.tiles[row][col].tileId)
             row+=direction[0]
@@ -80,20 +84,20 @@ export default {
         }
       },
       editorModeSquareClicked(row,col){
-        console.log(row,col)
         if(this.boardState.tiles[row-1][col-1].isPiecePresent){
           this.boardState.tiles[row-1][col-1].isPiecePresent = false;
         }
         else{
           this.boardState.tiles[row-1][col-1].isPiecePresent = true;
-          this.boardState.tiles[row-1][col-1].pieceColor = this.editorData.curPieceColor;
-          this.boardState.tiles[row-1][col-1].pieceType = this.editorData.curPiece =='c' ? this.editorData.customPiece : this.editorData.curPiece;
-          this.editorData.curPiece =='c'? this.$emit("customPieceAdd",this.editorData.customPiece) : null;
+          this.boardState.tiles[row-1][col-1].pieceColor = this.editorState.curPieceColor;
+          this.boardState.tiles[row-1][col-1].pieceType = this.editorState.curPiece =='c' ? this.editorState.customPiece : this.editorState.curPiece;
+          this.editorState.curPiece =='c'? this.$emit("customPieceAdd",this.editorState.customPiece) : null;
         }
         this.$emit("sendEditorBoardState",this.boardState)
         this.updateBoardState1D(this.isflipped)
         },
-        emitDestinationSelect(destInfo){
+
+      emitDestinationSelect(destInfo){
           this.$emit('destinationSelect',destInfo)
       },
         
@@ -140,7 +144,7 @@ export default {
                 tile.x= flipped? flipX : x;
                 tile.row = x;
                 tile.col = y;
-                tile.tileType = this.isLight(y,x)? 'l' : 'd';
+                tile.tileType = tile.disabled ? 'disabled' : this.isLight(y,x)? 'l' : 'd';
                 tile.y= flipped? flipY : y;
                 y+=1
                 flipY-=1
@@ -182,7 +186,7 @@ export default {
 #board-container{
 
     max-width: var(--container_size);
-    width:100%;
+    width:80%;
     max-height: var(--container_size);
 
 }

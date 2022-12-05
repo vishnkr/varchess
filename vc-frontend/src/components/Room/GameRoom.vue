@@ -18,6 +18,7 @@
                     {{result.toUpperCase()}} WINS!
                 </text>
           </svg>
+          
           <board :board="boardState" 
             ref="gameBoard" 
             :isflipped="isFlipped" 
@@ -27,7 +28,7 @@
             />
            
         </div>
-        <div class="column right-panel" style="z-index:2;">
+        <div class="column right-panel">
           <v-row row d-flex nowrap align="center" justify="center" class="px-2">
             <v-text-field width="10px" class="centered-input" v-model="shareLink" id="tocopy" readonly  ></v-text-field>
             <v-btn width="6.5rem" class="ma-2" rounded dark color="blue" @click="copyText">Copy<v-icon>fas fa-link</v-icon></v-btn>
@@ -78,8 +79,9 @@ import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
 import WS,{sendMoveInfo,sendResign,sendDrawOffer} from '../../utils/websocket';
+//import PlayerBar from './PlayerBar.txt';
 export default {
-  components: { Chat,Board,Members,MovePatternTab },
+  components: { Chat, Board, Members, MovePatternTab },
   computed:{
   },
   mounted(){
@@ -121,16 +123,17 @@ export default {
         return value!=this.player1 && value!=this.player2
       })
     },
+    
     validateMove(destInfo){
       var srcInfo = this.$store.state.curStartPos
-      var piece = this.getPlayerColor()=='w' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='b' ? srcInfo.piece.toLowerCase() : srcInfo.piece
+      var piece = this.getPlayerColor()=='white' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='black' ? srcInfo.piece.toLowerCase() : srcInfo.piece
       var info = {roomId: this.roomId,
           piece: piece,
           srcRow: srcInfo.row,
           srcCol: srcInfo.col,
           destRow: destInfo.row,
           destCol: destInfo.col,
-          color:this.getPlayerColor(),
+          color:this.getPlayerColor()[0],
         } 
         if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){
           
@@ -139,17 +142,21 @@ export default {
       sendMoveInfo(this.ws,info)
     },
     getPlayerColor(){
-      return this.player1 == this.username ? 'w' : this.player2 == this.username ? 'b' : null;
+      return this.player1 == this.username ? 'white' : this.player2 == this.username ? 'black' : null;
+    },
+    getOpponentColor(){
+      var plColor = this.getPlayerColor();
+      return plColor == 'white' ? "black" : plColor!=null ? "white": null;
     },
     flip(){
       this.isFlipped=!this.isFlipped
       this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
     },
     resign(){
-      sendResign(this.ws,{roomId:this.roomId,type:'resign',color:this.getPlayerColor()})
+      sendResign(this.ws,{roomId:this.roomId,type:'resign',color:this.getPlayerColor()[0]})
     },
     offerDraw(){
-      sendDrawOffer(this.ws,{roomId:this.roomId,type:'draw',color:this.getPlayerColor()})
+      sendDrawOffer(this.ws,{roomId:this.roomId,type:'draw',color:this.getPlayerColor()[0]})
     },
     isFlippedCheck(){
       this.isFlipped = this.player2 ? this.username === this.player2 : false;

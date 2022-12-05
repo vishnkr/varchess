@@ -8,10 +8,14 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
     for (row of boardState.tiles){
         empty = 0;
         for (cell of row){
-            if (cell.isPiecePresent){
+            if (cell.isPiecePresent || cell.disabled){
                 if(empty>0){
                     fen+=empty;
                     empty=0;
+                }
+                if (cell.disabled){
+                    fen+="."
+                    continue
                 }
                 if(cell.pieceColor=='black'){
                     fen+= cell.pieceType!="Knight" || cell.pieceType!="knight"  ? cell.pieceType[0].toLowerCase() : 'n';
@@ -36,6 +40,7 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
 }
 
 function convertFENtoBoardState(fen){
+    console.log("converting fen",fen)
     var splitFen = fen.split(' ');
     var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
     var rows = splitFen[0].split('/');
@@ -46,7 +51,10 @@ function convertFENtoBoardState(fen){
         secDigit = 0
         for(var j = 0; j < rows[i].length; j++){
             char = rows[i].charAt(j);
-            if (/\d/.test(char)){
+            if (char === "."){
+                boardState.tiles[i].push({isPiecePresent:false,disabled:true});
+            }
+            else if (/\d/.test(char)){
                 if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
                     secDigit=char
                 } else{

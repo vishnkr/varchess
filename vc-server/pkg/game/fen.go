@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -60,6 +61,12 @@ func ConvertFENtoBoard(fen string) *Board {
 					}
 				}
 			} else {
+				if (char=='.'){
+					board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id,IsDisabled:true}
+					col++
+					id += 1
+					continue
+				}
 				var color Color
 				if unicode.IsUpper(rune(char)) {
 					color = White
@@ -73,9 +80,8 @@ func ConvertFENtoBoard(fen string) *Board {
 				val, ok := StrToTypeMap[string(unicode.ToLower(char))]
 
 				if !ok {
-					customPiece := &CustomPiece{PieceName: string(char)}
 					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: Custom}
-					board.Tiles[rowIndex][col].Piece.CustomPiece = customPiece
+					board.Tiles[rowIndex][col].Piece.CustomPieceName = string(char)
 				} else {
 					board.Tiles[rowIndex][col].Piece = Piece{Color: color, Type: val}
 					board.Tiles[rowIndex][col].Piece.Type = val
@@ -102,6 +108,15 @@ func ConvertBoardtoFEN(board *Board) string {
 		var empty int = 0
 		for col := 0; col < board.Cols; col++ {
 			if board.Tiles[row][col].IsEmpty {
+				if (board.Tiles[row][col].IsDisabled){
+					if empty > 0 {
+						str := strconv.Itoa(empty)
+						fen.WriteString(str)
+						empty = 0
+					}
+					fen.WriteString(".")
+					continue
+				}
 				empty += 1
 			} else {
 				if empty > 0 {
@@ -110,7 +125,7 @@ func ConvertBoardtoFEN(board *Board) string {
 					empty = 0
 				}
 				if board.Tiles[row][col].Piece.Type == Custom {
-					name = board.Tiles[row][col].Piece.CustomPiece.PieceName
+					name = board.Tiles[row][col].Piece.CustomPieceName
 				} else {
 					name = typeToStrMap[board.Tiles[row][col].Piece.Type]
 				}
@@ -130,5 +145,6 @@ func ConvertBoardtoFEN(board *Board) string {
 	}
 	fenString := fen.String()[:len(fen.String())-1]
 	fenString += " w KQkq - 0 1"
+	fmt.Println("converting to ",fenString)
 	return fenString
 }

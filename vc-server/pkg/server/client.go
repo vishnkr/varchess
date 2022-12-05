@@ -197,7 +197,7 @@ func (c *Client) PerformMove(data *MessageStruct) {
 	piece := game.Piece{}
 	if !ok {
 		piece.Type = game.Custom
-		piece.CustomPiece = &game.CustomPiece{PieceName: move.PieceType}
+		piece.CustomPieceName = move.PieceType
 	} else {
 		piece.Type = val
 	}
@@ -211,13 +211,16 @@ func (c *Client) PerformMove(data *MessageStruct) {
 	room, ok := RoomsMap[move.RoomId]
 
 	if ok {
-		var res bool
+		var res bool = false
 		curGame := room.Game
-		if curGame.Turn == move.Color {
-			res, _ = curGame.Board.IsValidMove(piece, &move)
-		} else {
-			res, _ = false, "wrong color"
-		}
+		if curGame.Turn == piece.Color {
+			validMoves := curGame.Board.GetAllValidMoves(curGame.Turn)
+			for mv,movePiece := range validMoves{
+				if piece == movePiece && game.IsSameMove(*mv,move){
+					res = true
+				}
+			}
+		} 
 		if res {
 			curGame.Board.PerformMove(piece, move)
 			//check for checkmates/check on opponents
@@ -239,9 +242,8 @@ func (c *Client) PerformMove(data *MessageStruct) {
 			if message, err := json.Marshal(moveResp); err == nil {
 				room.BroadcastToMembers(message)
 			}
-			curGame.Turn = game.ChangeTurn(curGame.Turn)
+			curGame.ChangeTurn()
 		}
-		//fmt.Println("move valid:",res,reason)
 		response := Response{Status: "successful"}
 		marshalledMessage, _ := json.Marshal(response)
 		c.send <- marshalledMessage
