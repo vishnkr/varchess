@@ -1,9 +1,10 @@
 <template>
   <div class="square" :id="tileId" :style="cssVar" 
-        :class="[tileType=='d'? 'dark':'light', 
+        :class="[disabled || tileType=='disabled' ? 'disabled' : tileType=='d'? 'dark':'light', 
         mpTabData? mpTabData[[this.row,this.col]]:null , 
         !mpTabData && highlight? this.getHighlightType():null,
         addColor==='jump' ? 'move-jump-pattern'  : addColor==='slide' ? 'move-slide-pattern': null]"
+
          @mousedown="clickSquare">
       <div v-if="isPiecePresent" >
       <piece  :color="pieceColor" :pieceType="pieceType" :row="row" :col="col"/>
@@ -41,11 +42,13 @@ export default {
       clickSquare(){
         let pieceInfo = {id:this.tileId,row:this.row,col:this.col}
         if(this.editorMode){
-          var clickType  =  this.editorData.isSetMovement ? "setPattern" : "regular"
-          if (this.editorData.isSetMovement){ 
-            this.addColor = this.addColor ? null : this.editorData.moveType
+          if (this.editorState.isDisableTileOn){
+            this.disabled = !this.disabled
           }
-          console.log(this.row,this.col)
+          var clickType  =  this.editorState.isSetMovement ? "setPattern" : "regular"
+          if (this.editorState.isSetMovement){ 
+            this.addColor = this.addColor ? null : this.editorState.moveType
+          }
           this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
           if(this.isPiecePresent & (!this.selectedSrc || this.selectedSrc && this.selectedSrc.pieceColor == (this.pieceColor=='white' ? 'w':'b') && this.selectedSrc.id!=this.tileId)){ // start pos is selected
@@ -72,9 +75,10 @@ export default {
       return {
         addColor:null,
         squareColor:null,
+        disabled:false
       }
     },
-    props:['tileType','editorMode','editorData','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
+    props:['tileType','editorMode','editorState','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
     computed:{
         cssVar(){
         return {
@@ -89,8 +93,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 .square {
   background: transparent;
   border: 1px solid transparent;
@@ -105,7 +107,7 @@ export default {
 
 .highlight-to{
   background: rgba(217,191,119, 0.6) !important;
-  border: 0.5px solid;
+  border: 0.2px solid;
 }
 
 .highlight-from{
@@ -124,6 +126,9 @@ export default {
     background-color: #e4f5cb;
 }
 
+.disabled{
+  background-color: dimgray !important;
+}
 .move-slide-pattern{
   background-color: #ac422a !important;
   border-color: black;

@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -69,7 +68,7 @@ func (c *Client) CreateRoom(roomId string, startFen string) *Room {
 	RoomsMap[roomId] = &Room{
 		Game: &game.Game{
 			Board: game.ConvertFENtoBoard(startFen),
-			Turn:  "w",
+			Turn:  game.White,
 		},
 		Clients: make(map[*Client]bool),
 		Id:      c.roomId,
@@ -110,7 +109,6 @@ func GetPossibleSquares(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	var objmap map[string]interface{}
 	json.NewDecoder(r.Body).Decode(&objmap)
-	fmt.Println(objmap)
 	var pColor game.Color
 	srcRow,srcCol,color :=  int(objmap["srcRow"].(float64)), int(objmap["srcCol"].(float64)), objmap["color"].(string)
 	piece := game.StrToTypeMap[objmap["piece"].(string)]
@@ -119,13 +117,11 @@ func GetPossibleSquares(w http.ResponseWriter, r *http.Request){
 	board := room.Game.Board
 	moves := make([][]int,0)
 	valid:= board.GetAllValidMoves(pColor)
-	
 	for move,p := range valid{
 		if p.Type==piece && move.SrcRow==srcRow && move.SrcCol==srcCol{
 			moves = append(moves,[]int{move.DestRow,move.DestCol})
 		}
 	}
-	fmt.Print(srcCol,srcRow,piece,moves)
 	response := &PossibleMoves{Moves:moves,Piece: objmap["piece"].(string)}
 	json.NewEncoder(w).Encode(response)
 }
@@ -138,9 +134,9 @@ func (c *Client) AddtoRoom(roomId string) {
 		var gameInfo GameInfo
 		if len(curRoom.Clients) == 1 {
 			RoomsMap[roomId].P2 = c
-			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: c.username, Turn: curRoom.Game.Turn, RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
+			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: c.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
 		} else {
-			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: curRoom.P2.username, Turn: curRoom.Game.Turn, RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
+			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: curRoom.P2.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
 		}
 		gameInfo.Members = append(gameInfo.Members, c.username)
 		RoomsMap[roomId].Clients[c] = true

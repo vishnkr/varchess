@@ -4,9 +4,9 @@ BIN = vc-server
 build:
 	go build -o ${BIN} ${CMD}
 run:
-	./vc-server
+	./${BIN}
 
 build_run: build run
 clean:
 	go clean
-	rm ./vc-server
+	rm ./{BIN}

@@ -24,11 +24,7 @@ const (
 type Piece struct {
 	Type        Type
 	Color       Color
-	CustomPiece *CustomPiece
-}
-
-type CustomPiece struct {
-	PieceName string
+	CustomPieceName string
 }
 
 type SqColor uint8
@@ -43,6 +39,7 @@ type Square struct {
 	Id      int
 	Piece   Piece
 	IsEmpty bool
+	IsDisabled bool
 }
 
 type KingPiece struct {
@@ -100,7 +97,7 @@ var StrToTypeMap = map[string]Type{"p": Pawn, "n": Knight, "b": Bishop, "r": Roo
 func (board *Board) isPieceStartPosValid(piece Piece, row int, col int) bool {
 	var validType bool
 	if board.Tiles[row][col].Piece.Type == Custom {
-		validType = board.Tiles[row][col].Piece.CustomPiece.PieceName == piece.CustomPiece.PieceName
+		validType = board.Tiles[row][col].Piece.CustomPieceName == piece.CustomPieceName
 	} else {
 		validType = board.Tiles[row][col].Piece.Type == piece.Type
 	}

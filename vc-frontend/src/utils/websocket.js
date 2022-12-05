@@ -68,7 +68,7 @@ WS.onmessage = function(msg){
                             }
                         }
                     } else {
-                        for(client of store.state.roomClients[msgData.roomId]){
+                        for(let  client of store.state.roomClients[msgData.roomId]){
                             if(!msgData.clientList.includes(client)){
                                 store.commit('removeClientfromRoom',{roomId:msgData.roomId,username:client})
                             }
