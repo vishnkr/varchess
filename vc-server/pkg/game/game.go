@@ -239,8 +239,9 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 				if row == 0 && col == 0 {
 					continue
 				}
-				if board.isSquareInBoardRange(srcRow+row, srcCol+col) && (!board.isSameColorPieceAtDest(piece.Color, srcRow+row, srcCol+col) || board.IsEmpty(srcRow+row, srcCol+col)) {
-					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: srcRow + row, DestCol: srcCol + col}
+				destRow,destCol := srcRow+row, srcCol+col
+				if board.isSquareInBoardRange(destRow,destRow) && (!board.isSameColorPieceAtDest(piece.Color, destRow,destRow) || board.IsEmpty(srcRow+row, srcCol+col)) && !board.isSquareDisabled(destRow,destRow) {
+					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: destRow, DestCol: destCol}
 					validMoves[move] = piece
 				}
 			}
@@ -262,7 +263,7 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 		for _, pair := range jumpSquares {
 			targetRow := srcRow + pair[0]
 			targetCol := srcCol + pair[1]
-			if board.isSquareInBoardRange(targetRow, targetCol) && !board.isSameColorPieceAtDest(piece.Color, targetRow, targetCol) {
+			if board.isSquareInBoardRange(targetRow, targetCol) && !board.isSameColorPieceAtDest(piece.Color, targetRow, targetCol) && !board.isSquareDisabled(targetRow, targetCol) {
 				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: targetRow, DestCol: targetCol}
 				validMoves[move] = piece
 			}
@@ -280,17 +281,17 @@ func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 		for i := -1; i <= 1; i++ {
 			//non-capture moves
 			if i == 0 {
-				if board.IsEmpty(targetRow, srcCol) {
+				if board.IsEmpty(targetRow, srcCol) && !board.isSquareDisabled(targetRow, srcCol) {
 					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: targetRow, DestCol: srcCol}
 					validMoves[move] = piece
 				}
-				if board.IsEmpty(targetRow+rowOffset, srcCol) && srcRow == doubleMoveStartRank {
+				if board.IsEmpty(targetRow+rowOffset, srcCol) && srcRow == doubleMoveStartRank && !board.isSquareDisabled(targetRow+rowOffset, srcCol) {
 					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: targetRow + rowOffset, DestCol: srcCol}
 					validMoves[move] = piece
 				}
 			}
 			//capture moves
-			if board.isSquareInBoardRange(targetRow, srcCol+i) && !board.IsEmpty(targetRow, srcCol+i) && !board.isSameColorPieceAtDest(piece.Color, targetRow, srcCol+i) {
+			if board.isSquareInBoardRange(targetRow, srcCol+i) && !board.IsEmpty(targetRow, srcCol+i) && !board.isSquareDisabled(targetRow, srcCol+i) && !board.isSameColorPieceAtDest(piece.Color, targetRow, srcCol+i) {
 				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: targetRow, DestCol: srcCol + i, Captured: board.Tiles[targetRow][srcCol+i].Piece}
 				validMoves[move] = piece
 			}
@@ -308,7 +309,7 @@ func (board *Board) isValidCastle(move *Move)bool{
 		if move.SrcCol+2 == move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type == Rook { //castle to the right
 			tile = move.SrcCol + 1
 			for tile < board.Cols-1 {
-				if !board.Tiles[move.SrcRow][tile].IsEmpty {
+				if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow,tile){
 					return false
 				}
 				tile += 1
@@ -317,7 +318,7 @@ func (board *Board) isValidCastle(move *Move)bool{
 		} else if move.SrcCol-2 == move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type == Rook {
 			tile = move.SrcCol - 1
 			for tile > 0 {
-				if !board.Tiles[move.SrcRow][tile].IsEmpty {
+				if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow,tile){
 					return false
 				}
 				tile -= 1
@@ -335,52 +336,6 @@ func (board *Board) hasKingMoved(color Color) bool {
 	}
 }
 
-func isCustomMoveValid(piece Piece, board *Board, move *Move) (bool, string) {
-	//Check jump moves followed by slide moves
-	var jumpPattern, slidePattern [][]int
-	//find pattern for the piece, will change this to a hashmap later
-	for _, movePatterns := range board.CustomMovePatterns {
-		if movePatterns.PieceName == strings.ToLower(piece.CustomPieceName) {
-			jumpPattern = movePatterns.JumpPattern
-			slidePattern = movePatterns.SlidePattern
-			break
-		}
-	}
-
-	var rowDiff, colDiff, multiplier int
-	if piece.Color == White{
-		rowDiff,colDiff = move.DestRow - move.SrcRow, move.DestCol - move.SrcCol
-		multiplier = 1
-	} else {
-		rowDiff,colDiff = move.SrcRow-move.DestRow, move.SrcCol - move.DestCol
-		multiplier = -1
-	}
-	if len(jumpPattern) != 0 {		
-		for _, pair := range jumpPattern {
-			if pair[0] == rowDiff && pair[1] == colDiff {
-				return true, "valid custom jump move"
-			}
-		}
-	}
-
-	for _, direction := range slidePattern {
-		var dx,dy int = direction[0]*multiplier, direction[1]*multiplier 
-		var tempRow, tempCol int = move.SrcRow+dx, move.SrcCol + dy
-		for tempRow >= 0 && tempCol >= 0 && tempRow < board.Rows && tempCol < board.Cols {
-			if tempRow == move.DestRow && tempCol == move.DestCol {
-				return true, "valid custom slide move"
-			} else if !board.IsEmpty(tempRow, tempCol) {
-				break
-			} else {
-				tempRow += dx
-				tempCol += dy
-			}
-		}
-	}
-
-	return false, "no"
-}
-
 func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece{
 	var validMoves = make(map[*Move]Piece)
 	for _, movePatterns := range board.CustomMovePatterns {
@@ -391,7 +346,7 @@ func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Mov
 			}
 			for _, pair := range  movePatterns.JumpPattern {
 				var destRow,destCol int = srcRow+(multiplier*pair[0]),srcCol+(multiplier*pair[1])
-				if board.isSquareInBoardRange(destRow,destCol) && !(piece.Color == board.getPieceColor(destRow, destCol)) {
+				if board.isSquareInBoardRange(destRow,destCol) && !(piece.Color == board.getPieceColor(destRow, destCol)) && !board.isSquareDisabled(destRow,destCol){
 					move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: destRow, DestCol: destCol}
 					validMoves[move]=piece
 				}
@@ -415,7 +370,7 @@ func (board *Board) genSlideMoves(directions [][]int,piece Piece,srcRow int,srcC
 		var dx,dy int = direction[0]*multiplier, direction[1]*multiplier
 		var tempRow, tempCol int = srcRow+dx, srcCol + dy
 		for board.isSquareInBoardRange(tempRow,tempCol) {
-			if !board.isSameColorPieceAtDest(piece.Color,tempRow,tempCol) {
+			if !board.isSameColorPieceAtDest(piece.Color,tempRow,tempCol) && !board.isSquareDisabled(tempRow,tempCol) {
 				move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: tempRow, DestCol: tempCol, }
 				validMoves[move] = piece
 				if !board.IsEmpty(tempRow, tempCol){ break }
@@ -426,4 +381,8 @@ func (board *Board) genSlideMoves(directions [][]int,piece Piece,srcRow int,srcC
 		}
 	}
 	return validMoves
+}
+
+func (board *Board) isSquareDisabled(row int,col int) bool{
+	return board.Tiles[row][col].IsDisabled
 }

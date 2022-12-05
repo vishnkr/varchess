@@ -31,7 +31,7 @@ export default {
   components: { Square },
   props:['board','isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
   watch: { 
-    isflipped() { // watch it
+    isflipped() { 
           this.updateBoardState1D(this.isflipped)
         }
   },

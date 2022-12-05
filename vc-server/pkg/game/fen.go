@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -107,16 +108,21 @@ func ConvertBoardtoFEN(board *Board) string {
 		var empty int = 0
 		for col := 0; col < board.Cols; col++ {
 			if board.Tiles[row][col].IsEmpty {
+				if (board.Tiles[row][col].IsDisabled){
+					if empty > 0 {
+						str := strconv.Itoa(empty)
+						fen.WriteString(str)
+						empty = 0
+					}
+					fen.WriteString(".")
+					continue
+				}
 				empty += 1
 			} else {
 				if empty > 0 {
 					str := strconv.Itoa(empty)
 					fen.WriteString(str)
 					empty = 0
-				}
-				if (board.Tiles[row][col].IsDisabled){
-					fen.WriteString(".")
-					continue
 				}
 				if board.Tiles[row][col].Piece.Type == Custom {
 					name = board.Tiles[row][col].Piece.CustomPieceName
@@ -139,5 +145,6 @@ func ConvertBoardtoFEN(board *Board) string {
 	}
 	fenString := fen.String()[:len(fen.String())-1]
 	fenString += " w KQkq - 0 1"
+	fmt.Println("converting to ",fenString)
 	return fenString
 }

@@ -107,7 +107,7 @@ export default {
 
 .highlight-to{
   background: rgba(217,191,119, 0.6) !important;
-  border: 0.5px solid;
+  border: 0.2px solid;
 }
 
 .highlight-from{
