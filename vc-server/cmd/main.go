@@ -32,7 +32,6 @@ func main() {
 	})
 	log.Print("listening on ", *addr, "\n")
 	log.Fatal(http.ListenAndServe(*addr, router))
-	//replStart()
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
