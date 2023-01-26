@@ -57,6 +57,7 @@ func (g *Game) ChangeTurn() {
 		g.Turn = White
 	}
 }
+
 //visual helper function
 func DisplayBoardState(board *Board) {
 	var piece string
@@ -174,7 +175,7 @@ func (board *Board) IsKingUnderCheck(color Color) bool {
 	} else {
 		kingPos = board.BlackKing.Position
 	}
-	oppMoves := board.getAllPseudoLegalMoves(GetOpponentColor(color))
+	oppMoves := board.GetAllPseudoLegalMoves(GetOpponentColor(color))
 	for move := range oppMoves {
 		if kingPos[0] == move.DestRow && kingPos[1] == move.DestCol {
 			return true
@@ -189,7 +190,7 @@ func (board *Board) isSquareInBoardRange(row int, col int) bool {
 
 // getAllValidMoves: filter out illegal moves from pseudo legal move map
 func (board *Board) GetAllValidMoves(color Color) map[*Move]Piece {
-	movesList := board.getAllPseudoLegalMoves(color)
+	movesList := board.GetAllPseudoLegalMoves(color)
 	for move, piece := range movesList {
 		if board.isDestOccupied(piece.Color, move.DestRow, move.DestCol) {
 			move.Captured = board.Tiles[move.DestRow][move.DestCol].Piece
@@ -205,7 +206,7 @@ func (board *Board) GetAllValidMoves(color Color) map[*Move]Piece {
 }
 
 // getAllPseudoLegalMoves: compiles all pseudo legal moves for given player
-func (board *Board) getAllPseudoLegalMoves(color Color) map[*Move]Piece {
+func (board *Board) GetAllPseudoLegalMoves(color Color) map[*Move]Piece {
 	var validMoves map[*Move]Piece = make(map[*Move]Piece)
 	for rowIndex, row := range board.Tiles {
 		for colIndex, tile := range row {

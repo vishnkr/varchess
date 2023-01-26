@@ -14,6 +14,9 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
+	if port==""{
+		port = "5000"
+	}
 	var addr = flag.String("addr", ":"+port, "http server address")
 	router := mux.NewRouter()
 	router.HandleFunc("/getRoomId", server.RoomHandler).Methods("POST")
