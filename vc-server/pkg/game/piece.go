@@ -3,14 +3,14 @@ package game
 type Type uint8
 
 const (
-	Custom Type = iota
+	Empty Type = iota
 	Pawn
 	Knight
 	Bishop
 	Rook
 	Queen
 	King
-	Empty
+	Custom
 )
 
 type Color uint8
