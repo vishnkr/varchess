@@ -129,7 +129,7 @@ func (board *Board) PerformMove(piece Piece, move Move) {
 }
 
 //umakeMove: revert board to original state before perform move
-func (board *Board) unmakeMove(piece Piece, move Move) {
+func (board *Board) UnmakeMove(piece Piece, move Move) {
 	board.Tiles[move.SrcRow][move.SrcCol].IsEmpty = false
 	if (move.Captured != Piece{}) {
 		board.Tiles[move.DestRow][move.DestCol].Piece = move.Captured
@@ -200,7 +200,6 @@ func (board *Board) GetAllValidMoves(color Color) map[*Move]Piece {
 		if copyBoard.IsKingUnderCheck(color) {
 			delete(movesList, move)
 		}
-		copyBoard.unmakeMove(piece, *move)
 	}
 	return movesList
 }
@@ -211,7 +210,7 @@ func (board *Board) GetAllPseudoLegalMoves(color Color) map[*Move]Piece {
 	for rowIndex, row := range board.Tiles {
 		for colIndex, tile := range row {
 			if !tile.IsEmpty && tile.Piece.Color == color {
-				for k, v := range board.genPieceMoves(tile.Piece, rowIndex, colIndex) {
+				for k, v := range board.GenPieceMoves(tile.Piece, rowIndex, colIndex) {
 					
 					validMoves[k] = v
 				}
@@ -222,7 +221,7 @@ func (board *Board) GetAllPseudoLegalMoves(color Color) map[*Move]Piece {
 }
 
 // genPieceMoves: generate pseudo legal moves for given piece
-func (board *Board) genPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece {
+func (board *Board) GenPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece {
 	var validMoves = make(map[*Move]Piece)
 	switch piece.Type {
 	case Bishop:

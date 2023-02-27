@@ -4,11 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
-	"net/http"
 	"time"
 	"varchess/pkg/game"
-
-	"github.com/gorilla/mux"
 )
 
 type Room struct {
@@ -35,20 +32,6 @@ func genRandSeq(length int) string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
-}
-
-func RoomHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	uniqueRoomId := genRandSeq(6)
-	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
-		uniqueRoomId = genRandSeq(6)
-	}
-	response := MessageStruct{
-		Type: "getRoomId",
-		Data: uniqueRoomId,
-	}
-	json.NewEncoder(w).Encode(response)
 }
 
 type GameInfo struct {
@@ -97,35 +80,6 @@ func (room *Room) BroadcastToMembersExceptSender(message []byte, c *Client) {
 	}
 }
 
-func GetPossibleSquares(w http.ResponseWriter, r *http.Request){
-	//optimize this request to be done once before every move instead of once after every click, store result in client side
-	if r.Method == "OPTIONS" {
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token, Authorization")
-		return
-	}
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	var objmap map[string]interface{}
-	json.NewDecoder(r.Body).Decode(&objmap)
-	var pColor game.Color
-	srcRow,srcCol,color :=  int(objmap["srcRow"].(float64)), int(objmap["srcCol"].(float64)), objmap["color"].(string)
-	piece := game.StrToTypeMap[objmap["piece"].(string)]
-	room,_:= RoomsMap[objmap["roomId"].(string)]
-	if (color =="white"){pColor=game.White} else {pColor=game.Black} 
-	board := room.Game.Board
-	moves := make([][]int,0)
-	valid:= board.GetAllValidMoves(pColor)
-	for move,p := range valid{
-		if p.Type==piece && move.SrcRow==srcRow && move.SrcCol==srcCol{
-			moves = append(moves,[]int{move.DestRow,move.DestCol})
-		}
-	}
-	response := &PossibleMoves{Moves:moves,Piece: objmap["piece"].(string)}
-	json.NewEncoder(w).Encode(response)
-}
-
 func (c *Client) AddtoRoom(roomId string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -164,29 +118,4 @@ type BoardState struct {
 	Fen          string
 	RoomId       string
 	MovePatterns []game.MovePatterns `json:"movePatterns"`
-}
-
-func BoardStateHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == "OPTIONS" {
-		return
-	} else {
-		params := mux.Vars(r)
-		id := params["roomId"]
-		room, ok := RoomsMap[id]
-		if ok {
-			response := BoardState{
-				Fen:    game.ConvertBoardtoFEN(room.Game.Board),
-				RoomId: id,
-			}
-			if room.Game.Board.CustomMovePatterns != nil {
-				response.MovePatterns = room.Game.Board.CustomMovePatterns
-			}
-			json.NewEncoder(w).Encode(response)
-		} else {
-			errResponse := MessageStruct{Type: "error", Data: "Room does not exist/has been closed"}
-			json.NewEncoder(w).Encode(errResponse)
-		}
-	}
 }
