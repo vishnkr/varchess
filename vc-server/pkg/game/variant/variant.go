@@ -20,18 +20,27 @@ const (
 	Promote
 )
 
-type VariantMoveType int
+type VariantMoveType uint8
 const (
 	NullVariantMove VariantMoveType = iota
 	DuckPlacement 
+)
+
+type Result uint8
+const (
+	InProgress Result = iota
+	White
+	Black
+	Draw
 )
 
 type VariantProps struct{
 	variantType VariantType
 	board *game.Board
 	turn game.Color
-	validMoves []VariantMove
+	validMoves map [game.Piece][]VariantMove
 	gameData interface{}
+	result Result
 }
 
 func (props *VariantProps) switchTurn(){
@@ -46,29 +55,31 @@ type VariantMove struct{
 	Src int `json:"src"`
 	Dest int `json:"dest"`
 	MoveType ClassicMoveType `json:"classicMoveType"`
-	VariantMoveType VariantMoveType `json:"variantmoveType,omitempty"`
-	VariantMoveInfo interface{}
+	VariantMoveType VariantMoveType `json:"variantMoveType,omitempty"`
+	VariantMoveInfo interface{} `json:"variantMoveInfo,omitempty"`
 }
 
 type Variant interface{
 	IsLegalMove(VariantMove) bool
-	IsGameOver() bool
+	GetGameResult() Result
 	makeMove(VariantMove) error
 	unmakeMove(VariantMove)
-	GetPseudoLegalMoves(color game.Color) []VariantMove
+	GetPseudoLegalMoves(color game.Color) map [game.Piece][]VariantMove
 	UpdateValidMoves()
-	IsKingUnderCheck() bool
 	PerformMove() error
 }
 
 
-func filterLegalVariantMoves(moves []VariantMove, isLegalMove func(VariantMove) bool) (ret []VariantMove){
-	for _, mv := range moves{
-		if isLegalMove(mv){
-			ret = append(ret, mv)
+func filterLegalVariantMoves(pseudoMoves *map[game.Piece][]VariantMove, isLegalMove func(VariantMove) bool) {
+	for piece,moves := range *pseudoMoves{
+		mvs := make([]VariantMove,0)
+		for _, mv := range moves{
+			if !isLegalMove(mv){
+				mvs = append(mvs,mv)
+			}
 		}
+		(*pseudoMoves)[piece] = mvs
 	}
-	return
 }
 
 func toPos(row int, col int) int{
