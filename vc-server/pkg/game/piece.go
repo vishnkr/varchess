@@ -22,8 +22,8 @@ const (
 )
 
 type Piece struct {
-	Type        Type
-	Color       Color
+	Type            Type
+	Color           Color
 	CustomPieceName string
 }
 
@@ -35,10 +35,10 @@ const (
 )
 
 type Square struct {
-	SqColor SqColor
-	Id      int
-	Piece   Piece
-	IsEmpty bool
+	SqColor    SqColor
+	Id         int
+	Piece      Piece
+	IsEmpty    bool
 	IsDisabled bool
 }
 

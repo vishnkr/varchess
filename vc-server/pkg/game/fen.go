@@ -61,8 +61,8 @@ func ConvertFENtoBoard(fen string) *Board {
 					}
 				}
 			} else {
-				if (char=='.'){
-					board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id,IsDisabled:true}
+				if char == '.' {
+					board.Tiles[rowIndex][col] = Square{IsEmpty: true, Id: id, IsDisabled: true}
 					col++
 					id += 1
 					continue
@@ -108,7 +108,7 @@ func ConvertBoardtoFEN(board *Board) string {
 		var empty int = 0
 		for col := 0; col < board.Cols; col++ {
 			if board.Tiles[row][col].IsEmpty {
-				if (board.Tiles[row][col].IsDisabled){
+				if board.Tiles[row][col].IsDisabled {
 					if empty > 0 {
 						str := strconv.Itoa(empty)
 						fen.WriteString(str)
@@ -145,6 +145,6 @@ func ConvertBoardtoFEN(board *Board) string {
 	}
 	fenString := fen.String()[:len(fen.String())-1]
 	fenString += " w KQkq - 0 1"
-	fmt.Println("converting to ",fenString)
+	fmt.Println("converting to ", fenString)
 	return fenString
 }
