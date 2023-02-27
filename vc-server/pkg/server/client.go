@@ -215,12 +215,12 @@ func (c *Client) PerformMove(data *MessageStruct) {
 		curGame := room.Game
 		if curGame.Turn == piece.Color {
 			validMoves := curGame.Board.GetAllValidMoves(curGame.Turn)
-			for mv,movePiece := range validMoves{
-				if piece == movePiece && game.IsSameMove(*mv,move){
+			for mv, movePiece := range validMoves {
+				if piece == movePiece && game.IsSameMove(*mv, move) {
 					res = true
 				}
 			}
-		} 
+		}
 		if res {
 			curGame.Board.PerformMove(piece, move)
 			//check for checkmates/check on opponents

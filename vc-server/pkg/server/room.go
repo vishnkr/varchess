@@ -15,8 +15,8 @@ type Room struct {
 	P1      *Client
 	P2      *Client
 }
-type PossibleMoves struct{
-	Piece string `json:"piece"`
+type PossibleMoves struct {
+	Piece string  `json:"piece"`
 	Moves [][]int `json:"moves"`
 }
 

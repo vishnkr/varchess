@@ -46,8 +46,8 @@ func (board *Board) IsEmpty(row int, col int) bool {
 	return board.isSquareInBoardRange(row, col) && board.Tiles[row][col].IsEmpty
 }
 
-func IsSameMove(move1 Move, move2 Move) bool{
-	return move1.SrcCol==move2.SrcCol && move1.SrcRow==move2.SrcRow && move1.DestCol==move2.DestCol && move1.DestRow == move2.DestRow
+func IsSameMove(move1 Move, move2 Move) bool {
+	return move1.SrcCol == move2.SrcCol && move1.SrcRow == move2.SrcRow && move1.DestCol == move2.DestCol && move1.DestRow == move2.DestRow
 }
 
 func (g *Game) ChangeTurn() {
@@ -63,7 +63,7 @@ func DisplayBoardState(board *Board) {
 	var piece string
 	for i := 0; i < board.Rows; i++ {
 		for j := 0; j < board.Cols; j++ {
-			if (board.Tiles[i][j].IsDisabled){
+			if board.Tiles[i][j].IsDisabled {
 				piece = "X"
 			} else if !board.Tiles[i][j].IsEmpty {
 				if board.Tiles[i][j].Piece.CustomPieceName != "" {
@@ -89,7 +89,6 @@ func (board *Board) isSameColorPieceAtDest(color Color, destRow int, destCol int
 	}
 	return false
 }
-
 
 func (board *Board) isDestOccupied(color Color, destRow int, destCol int) bool {
 	return !board.Tiles[destRow][destCol].IsEmpty && board.Tiles[destRow][destCol].Piece.Color == GetOpponentColor(color)
@@ -211,7 +210,7 @@ func (board *Board) GetAllPseudoLegalMoves(color Color) map[*Move]Piece {
 		for colIndex, tile := range row {
 			if !tile.IsEmpty && tile.Piece.Color == color {
 				for k, v := range board.GenPieceMoves(tile.Piece, rowIndex, colIndex) {
-					
+
 					validMoves[k] = v
 				}
 			}
@@ -225,22 +224,22 @@ func (board *Board) GenPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 	var validMoves = make(map[*Move]Piece)
 	switch piece.Type {
 	case Bishop:
-		dirs:= [][]int{{1,-1},{1,1},{-1,1},{-1,-1}}
-		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
+		dirs := [][]int{{1, -1}, {1, 1}, {-1, 1}, {-1, -1}}
+		validMoves = board.genSlideMoves(dirs, piece, srcRow, srcCol)
 	case Rook:
-		dirs:= [][]int{{1,0},{0,1},{-1,0},{0,-1}}
-		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
+		dirs := [][]int{{1, 0}, {0, 1}, {-1, 0}, {0, -1}}
+		validMoves = board.genSlideMoves(dirs, piece, srcRow, srcCol)
 	case Queen:
-		dirs:= [][]int{{1,0},{0,1},{-1,0},{0,-1},{1,-1},{1,1},{-1,1},{-1,-1}}
-		validMoves = board.genSlideMoves(dirs,piece,srcRow,srcCol)
+		dirs := [][]int{{1, 0}, {0, 1}, {-1, 0}, {0, -1}, {1, -1}, {1, 1}, {-1, 1}, {-1, -1}}
+		validMoves = board.genSlideMoves(dirs, piece, srcRow, srcCol)
 	case King:
 		for row := -1; row <= 1; row += 1 {
 			for col := -1; col <= 1; col += 1 {
 				if row == 0 && col == 0 {
 					continue
 				}
-				destRow,destCol := srcRow+row, srcCol+col
-				if board.isSquareInBoardRange(destRow,destRow) && (!board.isSameColorPieceAtDest(piece.Color, destRow,destRow) || board.IsEmpty(srcRow+row, srcCol+col)) && !board.isSquareDisabled(destRow,destRow) {
+				destRow, destCol := srcRow+row, srcCol+col
+				if board.isSquareInBoardRange(destRow, destRow) && (!board.isSameColorPieceAtDest(piece.Color, destRow, destRow) || board.IsEmpty(srcRow+row, srcCol+col)) && !board.isSquareDisabled(destRow, destRow) {
 					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: destRow, DestCol: destCol}
 					validMoves[move] = piece
 				}
@@ -248,12 +247,12 @@ func (board *Board) GenPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 		}
 		//validMoves board.genCastleMoves(piece,srcRow,srcCol)
 		if !board.hasKingMoved(piece.Color) {
-			var queenSideCastle = &Move{SrcRow:srcRow,SrcCol:srcCol,DestRow: srcRow, DestCol: srcCol-2,Castle: true}
-			var kingSideCastle = &Move{SrcRow:srcRow,SrcCol:srcCol,DestRow: srcRow, DestCol: srcCol+2,Castle: true}
-			if board.isValidCastle(queenSideCastle){
+			var queenSideCastle = &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: srcRow, DestCol: srcCol - 2, Castle: true}
+			var kingSideCastle = &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: srcRow, DestCol: srcCol + 2, Castle: true}
+			if board.isValidCastle(queenSideCastle) {
 				validMoves[queenSideCastle] = piece
 			}
-			if board.isValidCastle(kingSideCastle){
+			if board.isValidCastle(kingSideCastle) {
 				validMoves[kingSideCastle] = piece
 			}
 		}
@@ -297,35 +296,34 @@ func (board *Board) GenPieceMoves(piece Piece, srcRow int, srcCol int) map[*Move
 			}
 		}
 	case Custom:
-		return board.genCustomMoves(piece,srcRow,srcCol)
+		return board.genCustomMoves(piece, srcRow, srcCol)
 	}
-	
 
 	return validMoves
 }
 
-func (board *Board) isValidCastle(move *Move)bool{
-		var tile int
-		if move.SrcCol+2 == move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type == Rook { //castle to the right
-			tile = move.SrcCol + 1
-			for tile < board.Cols-1 {
-				if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow,tile){
-					return false
-				}
-				tile += 1
+func (board *Board) isValidCastle(move *Move) bool {
+	var tile int
+	if move.SrcCol+2 == move.DestCol && board.Tiles[move.SrcRow][board.Cols-1].Piece.Type == Rook { //castle to the right
+		tile = move.SrcCol + 1
+		for tile < board.Cols-1 {
+			if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow, tile) {
+				return false
 			}
-			return true
-		} else if move.SrcCol-2 == move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type == Rook {
-			tile = move.SrcCol - 1
-			for tile > 0 {
-				if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow,tile){
-					return false
-				}
-				tile -= 1
-			}
-			return true
+			tile += 1
 		}
-		return false
+		return true
+	} else if move.SrcCol-2 == move.DestCol && board.Tiles[move.SrcRow][0].Piece.Type == Rook {
+		tile = move.SrcCol - 1
+		for tile > 0 {
+			if !board.Tiles[move.SrcRow][tile].IsEmpty || board.isSquareDisabled(move.SrcRow, tile) {
+				return false
+			}
+			tile -= 1
+		}
+		return true
+	}
+	return false
 }
 
 func (board *Board) hasKingMoved(color Color) bool {
@@ -336,22 +334,22 @@ func (board *Board) hasKingMoved(color Color) bool {
 	}
 }
 
-func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece{
+func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Move]Piece {
 	var validMoves = make(map[*Move]Piece)
 	for _, movePatterns := range board.CustomMovePatterns {
 		if movePatterns.PieceName == strings.ToLower(piece.CustomPieceName) {
-			multiplier:= 1
-			if piece.Color == Black{
+			multiplier := 1
+			if piece.Color == Black {
 				multiplier = -1
 			}
-			for _, pair := range  movePatterns.JumpPattern {
-				var destRow,destCol int = srcRow+(multiplier*pair[0]),srcCol+(multiplier*pair[1])
-				if board.isSquareInBoardRange(destRow,destCol) && !(piece.Color == board.getPieceColor(destRow, destCol)) && !board.isSquareDisabled(destRow,destCol){
-					move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: destRow, DestCol: destCol}
-					validMoves[move]=piece
+			for _, pair := range movePatterns.JumpPattern {
+				var destRow, destCol int = srcRow + (multiplier * pair[0]), srcCol + (multiplier * pair[1])
+				if board.isSquareInBoardRange(destRow, destCol) && !(piece.Color == board.getPieceColor(destRow, destCol)) && !board.isSquareDisabled(destRow, destCol) {
+					move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: destRow, DestCol: destCol}
+					validMoves[move] = piece
 				}
 			}
-			for k,v := range board.genSlideMoves(movePatterns.SlidePattern,piece,srcRow,srcCol){
+			for k, v := range board.genSlideMoves(movePatterns.SlidePattern, piece, srcRow, srcCol) {
 				validMoves[k] = v
 			}
 			break
@@ -360,29 +358,33 @@ func (board *Board) genCustomMoves(piece Piece, srcRow int, srcCol int) map[*Mov
 	return validMoves
 }
 
-func (board *Board) genSlideMoves(directions [][]int,piece Piece,srcRow int,srcCol int)map[*Move]Piece{
+func (board *Board) genSlideMoves(directions [][]int, piece Piece, srcRow int, srcCol int) map[*Move]Piece {
 	var validMoves = make(map[*Move]Piece)
 	multiplier := 1
-	if piece.Color ==Black{
+	if piece.Color == Black {
 		multiplier = -1
 	}
 	for _, direction := range directions {
-		var dx,dy int = direction[0]*multiplier, direction[1]*multiplier
-		var tempRow, tempCol int = srcRow+dx, srcCol + dy
-		for board.isSquareInBoardRange(tempRow,tempCol) {
-			if !board.isSameColorPieceAtDest(piece.Color,tempRow,tempCol) && !board.isSquareDisabled(tempRow,tempCol) {
-				move := &Move{SrcRow: srcRow, SrcCol:srcCol, DestRow: tempRow, DestCol: tempCol, }
+		var dx, dy int = direction[0] * multiplier, direction[1] * multiplier
+		var tempRow, tempCol int = srcRow + dx, srcCol + dy
+		for board.isSquareInBoardRange(tempRow, tempCol) {
+			if !board.isSameColorPieceAtDest(piece.Color, tempRow, tempCol) && !board.isSquareDisabled(tempRow, tempCol) {
+				move := &Move{SrcRow: srcRow, SrcCol: srcCol, DestRow: tempRow, DestCol: tempCol}
 				validMoves[move] = piece
-				if !board.IsEmpty(tempRow, tempCol){ break }
-			} else { break}
+				if !board.IsEmpty(tempRow, tempCol) {
+					break
+				}
+			} else {
+				break
+			}
 			tempRow += dx
 			tempCol += dy
-			
+
 		}
 	}
 	return validMoves
 }
 
-func (board *Board) isSquareDisabled(row int,col int) bool{
+func (board *Board) isSquareDisabled(row int, col int) bool {
 	return board.Tiles[row][col].IsDisabled
 }
