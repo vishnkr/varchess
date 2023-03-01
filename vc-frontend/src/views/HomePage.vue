@@ -70,20 +70,19 @@
               color="primary"
               dark
             ><h3>Choose Game Setup</h3></v-toolbar>
-            <v-card-actions class="justify-end">
+            <v-card-actions class="justify-start">
               <v-radio-group
                     v-model="mode"
                     row
+                    dense
                   >
-                    <v-radio
-                      label="Standard 8x8 board"
-                      value="standard"
-                    ></v-radio>
-                    <v-radio
-                      label="Custom Variant"
-                      value="custom"
-                    ></v-radio>
+                    <v-radio v-for = "gameMode in game_modes" :key="gameMode.key" :label="gameMode.name" :value="gameMode.key">
+                      <template #prepend-inner>
+                        <font-awesome-icon icon="info-circle" />
+                      </template>
+                    </v-radio>
                   </v-radio-group>
+                <v-spacer></v-spacer>
               <v-btn
                 color="error"
                 @click="dialog=false"
@@ -108,7 +107,9 @@
 import WS,{createRoom} from '../utils/websocket';
 import axios from 'axios';
 import { convertFENtoBoardState } from '../utils/fen';
-
+import { GAME_MODES } from '../utils/constants';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 export default {
   components:{},
@@ -148,7 +149,7 @@ export default {
     },
     async enterRoom(){
       if(this.username){
-        await axios.post(`${this.server_host}/getRoomId`)
+        await axios.post(`${this.server_host}/room-id`)
         .then((response) => {
           this.roomId = response.data.data;
           this.connectToWebsocket()
@@ -178,6 +179,8 @@ export default {
       standardFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
       roomId: null,
       server_host: process.env.VUE_APP_SERVER_HOST,
+      game_modes: GAME_MODES
+      
     }
   }
 }

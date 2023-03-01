@@ -31,7 +31,7 @@ export default {
       },
     methods:{
       async getBoardFen() {
-        await axios.get(`${this.server_host}/getBoardFen/${this.roomId}`).then((response)=>{
+        await axios.get(`${this.server_host}/board-fen/${this.roomId}`).then((response)=>{
           if(response.data.type && response.data.type=="error"){
             this.$store.commit('websocketError',response.data.data)
           } else {

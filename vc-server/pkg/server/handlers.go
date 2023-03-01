@@ -1,10 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"varchess/pkg/game"
 
 	"github.com/gorilla/mux"
@@ -53,14 +53,6 @@ func (s *Server) BoardStateHandler(w http.ResponseWriter, r *http.Request) error
 	}
 }
 
-type PossibleSquaresRequestBody struct{
-	SrcRow int `json:"srcRow"`
-	SrcCol int `json:"srcCol"`
-	Color string `json:"color"`
-	RoomId string `json:"roomId"`
-	Piece string `json:"piece"`
-}
-
 func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) error {
 	//optimize this request to be done once before every move instead of once after every click, store result in client side
 	if r.Method == "OPTIONS" {
@@ -71,19 +63,31 @@ func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) erro
 		return nil
 	}
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	req:= &PossibleSquaresRequestBody{}
-	err:= json.NewDecoder(r.Body).Decode(&req)
-	if err!=nil{
-		return errors.New("Invalid request body format")
-	}
+	query := r.URL.Query()
+    roomID := query.Get("roomid")
+    color := query.Get("color")
+    pieceStr := query.Get("piece")
+    startRow := query.Get("src_row")
+    startCol := query.Get("src_col")
 
 	var pColor game.Color
-	piece := game.StrToTypeMap[req.Piece]
-	room := RoomsMap[req.RoomId]
+	piece := game.StrToTypeMap[pieceStr]
+	room := RoomsMap[roomID]
 	if room == nil {
 		return errors.New("Room does not exist")
 	}
-	if req.Color == "white" {
+
+	srcRow, err := strconv.Atoi(startRow)
+    if err != nil {
+        return errors.New("Invalid src row: " + startRow)
+    }
+	
+    srcCol, err := strconv.Atoi(startCol)
+    if err != nil {
+        return errors.New("Invalid src column: " + startCol)
+    }
+
+	if color == "white" {
 		pColor = game.White
 	} else {
 		pColor = game.Black
@@ -92,10 +96,10 @@ func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) erro
 	moves := make([][]int, 0)
 	valid := board.GetAllValidMoves(pColor)
 	for move, p := range valid {
-		if p.Type == piece && move.SrcRow == req.SrcRow && move.SrcCol == req.SrcCol {
+		if p.Type == piece && move.SrcRow == srcRow && move.SrcCol == srcCol {
 			moves = append(moves, []int{move.DestRow, move.DestCol})
 		}
 	}
-	response := &PossibleMoves{Moves: moves, Piece: req.Piece}
+	response := &PossibleMoves{Moves: moves, Piece: pieceStr}
 	return WriteJSON(w, http.StatusOK, response)
 }

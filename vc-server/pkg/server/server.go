@@ -43,12 +43,12 @@ func NewServer(listenAddr string, store store.Storage) *Server {
 
 func (s *Server) Start() error {
 	router := mux.NewRouter()
-	router.HandleFunc("/getRoomId", makeHTTPHandleFunc(s.RoomHandler)).Methods("POST")
-	router.HandleFunc("/getBoardFen/{roomId}", makeHTTPHandleFunc(s.BoardStateHandler)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/room-id", makeHTTPHandleFunc(s.RoomHandler)).Methods("POST")
+	router.HandleFunc("/board-fen/{roomId}", makeHTTPHandleFunc(s.BoardStateHandler)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/", rootHandler)
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.AuthenticateUserHandler)).Methods("GET")
 	router.HandleFunc("/signup", makeHTTPHandleFunc(s.CreateAccountHandler)).Methods("POST")
-	router.HandleFunc("/getPossibleToSquares", makeHTTPHandleFunc(s.GetPossibleSquares)).Methods("GET")
+	router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.GetPossibleSquares)).Methods("GET")
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
