@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"unicode"
 	"varchess/pkg/store"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -44,7 +45,11 @@ func (s *Server) CreateAccountHandler(w http.ResponseWriter, r *http.Request) er
 	if err != nil {
 		WriteJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
 	}
-	//TODO: password validation
+	if !validatePassword(user.Password) {
+		return WriteJSON(w, http.StatusUnprocessableEntity, 
+			ApiError { Error: "Invalid password"})
+
+	}
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
@@ -94,4 +99,22 @@ func displayResult(result *sql.Rows) {
 		}
 		fmt.Printf("%d is %s\n", userid, password)
 	}
+}
+
+func validatePassword(password string) bool {
+    hasUpper, hasLower, hasNumber, hasSpecial := false, false, false, false
+
+    for _, ch := range password {
+        switch {
+        case unicode.IsUpper(ch):
+            hasUpper = true
+        case unicode.IsLower(ch):
+            hasLower = true
+        case unicode.IsNumber(ch):
+            hasNumber = true
+        case unicode.IsPunct(ch) || unicode.IsSymbol(ch):
+            hasSpecial = true
+        }
+    }
+    return hasUpper && hasLower && hasNumber && hasSpecial && len(password) >= 7
 }

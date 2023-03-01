@@ -91,6 +91,15 @@ func (c *Client) Read() {
 	defer c.disconnect("Read")
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	messageHandlers := map[string]func(*MessageStruct){
+        "createRoom": c.handleCreateRoom,
+        "joinRoom": c.handleJoinRoom,
+        "chatMessage": c.handleChatMessage,
+        "resign": c.handleResultOffer,
+        "draw": c.handleResultOffer,
+        "performMove": c.handlePerformMove,
+    }
+
 	for {
 		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
@@ -104,29 +113,9 @@ func (c *Client) Read() {
 		reqData := MessageStruct{}
 		json.Unmarshal([]byte(msg), &reqData)
 		log.Println("received data:", reqData)
-		switch reqData.Type {
-		case "createRoom", "joinRoom":
-			userInfo := UserRoomInfo{}
-			json.Unmarshal([]byte(reqData.Data), &userInfo)
-			c.username = userInfo.Username
-			if reqData.Type == "createRoom" {
-				room := c.CreateRoom(userInfo.RoomId, userInfo.StartFEN)
-				if len(userInfo.CustomMovePatterns) != 0 {
-					room.Game.Board.CustomMovePatterns = userInfo.CustomMovePatterns
-				}
-			} else {
-				c.AddtoRoom(userInfo.RoomId)
-			}
-
-		case "chatMessage":
-			c.SendChatMessage(&reqData)
-
-		case "resign", "draw":
-			c.ResultOffer(&reqData)
-
-		case "performMove":
-			c.PerformMove(&reqData)
-		}
+		if handler, ok := messageHandlers[reqData.Type]; ok {
+            handler(&reqData)
+        }
 	}
 }
 
@@ -156,10 +145,12 @@ func (c *Client) Write() {
 	}
 }
 
-func (c *Client) ResultOffer(data *MessageStruct) {
+func (c *Client) handleResultOffer(data *MessageStruct) {
 	resultMessage := &ResultMessage{}
 	json.Unmarshal([]byte(data.Data), &resultMessage)
-	if data.Type == "resign" {
+	room:= RoomsMap[resultMessage.RoomId]
+	switch data.Type {
+	case "resign":
 		if resultMessage.Color == "w" {
 			resultMessage.Result = "black"
 		} else if resultMessage.Color == "b" {
@@ -167,14 +158,35 @@ func (c *Client) ResultOffer(data *MessageStruct) {
 		}
 		resultMessage.Type = "result"
 		if message, err := json.Marshal(resultMessage); err == nil {
-			RoomsMap[resultMessage.RoomId].BroadcastToMembers(message)
+			room.BroadcastToMembers(message)
 		}
-	} else {
-		fmt.Println("offer draw")
+	case "drawOffer":
+        room.DrawOffer.IsOffered = true
+        room.DrawOffer.Color = resultMessage.Color
+        msg := fmt.Sprintf("%s has offered a draw", resultMessage.Color)
+        if message, err := json.Marshal(MessageStruct{Type: "drawOffer", Data: msg}); err == nil {
+            room.BroadcastToMembers(message)
+        }
+	case "drawDecision":
+		if room.DrawOffer.IsOffered{
+			if resultMessage.Result == "accept"{
+				resultMessage.Type = "result"
+                resultMessage.Result = "draw"
+                if message, err := json.Marshal(resultMessage); err == nil {
+                    room.BroadcastToMembers(message)
+                }
+			}
+		} else{
+			msg := fmt.Sprintf("%s has declined the draw offer", resultMessage.Color)
+			if message, err := json.Marshal(MessageStruct{Type: "drawDeclined", Data: msg}); err == nil {
+				room.BroadcastToMembers(message)
+			}
+		}
+		room.DrawOffer.IsOffered = false
 	}
 }
 
-func (c *Client) SendChatMessage(data *MessageStruct) {
+func (c *Client) handleChatMessage(data *MessageStruct) {
 	chatMessage := ChatMessage{}
 	json.Unmarshal([]byte(data.Data), &chatMessage)
 	if room, ok := RoomsMap[chatMessage.RoomId]; ok {
@@ -189,7 +201,7 @@ func (c *Client) SendChatMessage(data *MessageStruct) {
 	}
 }
 
-func (c *Client) PerformMove(data *MessageStruct) {
+func (c *Client) handlePerformMove(data *MessageStruct) {
 	move := game.Move{}
 	json.Unmarshal([]byte(data.Data), &(move))
 	moveResp := &MoveResponse{Piece: move.PieceType, SrcRow: move.SrcRow, SrcCol: move.SrcCol, DestRow: move.DestRow, DestCol: move.DestCol}
@@ -248,6 +260,65 @@ func (c *Client) PerformMove(data *MessageStruct) {
 		marshalledMessage, _ := json.Marshal(response)
 		c.send <- marshalledMessage
 	} else {
+		message := MessageStruct{Type: "error", Data: "Room does not exist, connection expired"}
+		if errMessage, err := json.Marshal(message); err == nil {
+			c.send <- errMessage
+		}
+	}
+}
+
+
+func (c *Client) handleCreateRoom(data *MessageStruct){
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	userInfo := &UserRoomInfo{}
+	json.Unmarshal([]byte(data.Data), &userInfo)
+	c.username = userInfo.Username
+	c.roomId = userInfo.RoomId
+	RoomsMap[userInfo.RoomId] = &Room{
+		Game: &game.Game{
+			Board: game.ConvertFENtoBoard(userInfo.StartFEN),
+			Turn:  game.White,
+		},
+		Clients: make(map[*Client]bool),
+		Id:      c.roomId,
+		P1:      c,
+		DrawOffer: DrawOffer{IsOffered: false},
+	}
+	game.DisplayBoardState(RoomsMap[userInfo.RoomId].Game.Board)
+	RoomsMap[userInfo.RoomId].Clients[c] = true
+	gameInfo := GameInfo{Type: "gameInfo", P1: c.username, Turn: "w", RoomId: userInfo.RoomId, Members: []string{}}
+	gameInfo.Members = append(gameInfo.Members, c.username)
+	marshalledInfo, _ := json.Marshal(gameInfo)
+	RoomsMap[userInfo.RoomId].BroadcastToMembers(marshalledInfo)
+	if len(userInfo.CustomMovePatterns) != 0 {
+		RoomsMap[userInfo.RoomId].Game.Board.CustomMovePatterns = userInfo.CustomMovePatterns
+	}
+	return
+}
+
+func (c *Client) handleJoinRoom(data *MessageStruct) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	userInfo := &UserRoomInfo{}
+	json.Unmarshal([]byte(data.Data), &userInfo)
+	roomId:= userInfo.RoomId
+	curRoom, ok := RoomsMap[roomId]
+	if ok {
+		var gameInfo GameInfo
+		if len(curRoom.Clients) == 1 {
+			RoomsMap[roomId].P2 = c
+			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: c.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
+		} else {
+			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: curRoom.P2.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
+		}
+		gameInfo.Members = append(gameInfo.Members, c.username)
+		RoomsMap[roomId].Clients[c] = true
+		c.roomId = roomId
+		marshalledInfo, _ := json.Marshal(gameInfo)
+		RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
+	} else {
+		log.Println("Room close")
 		message := MessageStruct{Type: "error", Data: "Room does not exist, connection expired"}
 		if errMessage, err := json.Marshal(message); err == nil {
 			c.send <- errMessage
