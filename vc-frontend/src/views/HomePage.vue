@@ -103,15 +103,30 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import WS,{createRoom} from '../utils/websocket';
 import axios from 'axios';
-import { convertFENtoBoardState } from '../utils/fen';
-import { GAME_MODES } from '../utils/constants';
+import { GAME_MODES, GameMode } from '../utils/constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {EditorRouteParams} from '../types';
+import Vue from 'vue';
+import { defineProps } from 'vue';
 
-export default {
+interface Data {
+  createClicked: boolean;
+  errorText: string | null;
+  mode: string;
+  username: string | null;
+  ws: WebSocket | null;
+  dialog: boolean;
+  standardFen: string;
+  roomId: string | null;
+  server_host: string | undefined;
+  game_modes: GameMode[];
+}
+
+export default Vue.extend({
   components:{},
   props:['shared'],
   mounted: function() {
@@ -140,25 +155,41 @@ export default {
       this.ws = WS;
       
     },
-    isEven(val){return val%2==0},
-    isLight(row,col){
-        return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
-
-    getStandardBoard(){
-      return {...convertFENtoBoardState(this.standardFen), rows:8,cols:8}
+    isEven(val:number){return val%2==0},
+    isLight(row:number,col:number){
+        return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))
     },
+
     async enterRoom(){
       if(this.username){
         await axios.post(`${this.server_host}/room-id`)
         .then((response) => {
           this.roomId = response.data.data;
           this.connectToWebsocket()
-          if(this.mode=='custom'){
-            this.$router.push({name:'Editor',params:{username: this.username,roomId: this.roomId, ws: this.ws}})
-          }else{
-            createRoom(this.ws,this.roomId,this.username, this.standardFen);
-            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, ws: this.ws, boardState: this.getStandardBoard()}})
+          if (this.username != null && this.roomId != null){
+            if(this.mode=='custom'){
+              this.$router.push({
+                name:'Editor',
+                params: {
+                  username: this.username,
+                  roomId: this.roomId, 
+              } as EditorRouteParams
+              });
+            }else{
+              createRoom(this.ws!,this.roomId,this.username, this.standardFen);
+              this.$router.push({
+                name:'Game', 
+                params: {
+                  username: this.username,
+                  roomId: this.roomId, 
+                },
+                query:{
+                  boardFen: this.standardFen,
+                }
+              });
+            }
           }
+          
         }, (error) => {
           this.errorText = 'Server Not Responding'
           this.dialog=false
@@ -168,7 +199,7 @@ export default {
     },
 
   },
-  data:()=>{
+  data():Data{
     return {
       createClicked: false,
       errorText: null,
@@ -181,9 +212,9 @@ export default {
       server_host: process.env.VUE_APP_SERVER_HOST,
       game_modes: GAME_MODES
       
-    }
+    };
   }
-}
+});
 </script>
 
 <style scoped>

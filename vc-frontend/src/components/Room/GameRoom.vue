@@ -61,7 +61,7 @@
             <v-tab>
               Members
             </v-tab>
-            <v-tab-item><members :username="username" :members="members" :players="playerList"/></v-tab-item>
+            <v-tab-item><members :username="username" :members="membersList" :players="playerList"/></v-tab-item>
             <v-tab v-if="movePatterns && movePatterns.length!=0">
               Move Pattern
             </v-tab>
@@ -73,16 +73,134 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Board from '../Board/Board.vue'
 import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
 import WS,{sendMoveInfo,sendResign,sendDrawOffer} from '../../utils/websocket';
-//import PlayerBar from './PlayerBar.txt';
-export default {
+import { convertFENtoBoardState } from '../../utils/fen';
+import { Route } from 'vue-router/types/router';
+import { BoardState, GameInfo, MoveInfoPayload, MovePatterns } from '../../types';
+import { Component, Vue, Prop } from 'vue-property-decorator'
+
+
+type Button = {
+  text: string;
+  icon: string;
+  color: string;
+  onclick: () => void;
+};
+
+@Component({
+  components:{
+    Chat, 
+    Board,
+    Members, 
+    MovePatternTab,
+  },
+})
+export default class GameRoom extends Vue{
+  @Prop() username!: string;
+  @Prop() roomId!: string;
+  @Prop() boardFen!: string;
+
+  private gameBoard!: Vue & { updateBoardState1D(isFlipped: boolean): void };
+  shareLink: string =  this.getShareUrl();
+
+  playerList:string[] = [];
+  player1: string  = ""; 
+  player2: string |null = null;
+  moveSrc: number |null = null;
+  moveDest: number |null = null;
+  isFlipped: boolean = this.isFlippedCheck();
+  movePatterns: MovePatterns = this.$store.state.movePatterns;
+  turn: string | null = null;
+  gameInfo: GameInfo = this.$store.state.gameInfo;
+  result:string | null = null;
+  buttons:Button[] = [
+    {text:'Flip',icon:'fa-retweet',color:'black',onclick: this.flip},
+    {text:'Resign',icon:'fa-flag',color:'red darken-1',onclick:this.resign},
+    {text:'Offer Draw',icon:'fa-handshake',color:'blue darken-2',onclick:this.offerDraw}
+  ];
+  membersList: string[] = [];
+  boardState:BoardState | null=  null;
+  ws: WebSocket = WS;
+
+  created() {
+    this.player1 = this.$store.state.gameInfo[this.roomId];
+    this.boardState = this.boardFen ? convertFENtoBoardState(this.boardFen) : this.$store.state.boards[this.roomId];
+  }
+
+  getShareUrl(){ return `${window.location.origin}/join/${this.roomId}`}
+
+  updatePlayerList(){
+    var roomInfo = this.$store.state.gameInfo[this.roomId]
+    this.player1 = roomInfo.p1;
+    this.player2 = roomInfo && roomInfo.p2 ? roomInfo.p2 : null;
+    this.playerList = this.player1? this.player2? [this.player1,this.player2] : [this.player1] :[];
+    this.membersList = roomInfo && roomInfo.members.filter((value:string)=>{
+      return value!=this.player1 && value!=this.player2
+    })
+  }
+
+  validateMove(destInfo:{row:number, col:number}){
+    let srcInfo = this.$store.state.curStartPos;
+    let piece = this.getPlayerColor()=='white' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='black' ? srcInfo.piece.toLowerCase() : srcInfo.piece
+    let info:MoveInfoPayload = {roomId: this.roomId,
+        piece: piece,
+        srcRow: srcInfo.row,
+        srcCol: srcInfo.col,
+        destRow: destInfo.row,
+        destCol: destInfo.col,
+        color:this.getPlayerColor()![0],
+      } 
+    if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){     
+      info.castle=true
+    } 
+    sendMoveInfo(this.ws,info)
+  }
+
+  getPlayerColor(){
+    return this.player1 == this.username ? 'white' : this.player2 == this.username ? 'black' : null;
+  }
+
+  getOpponentColor(){
+    var plColor = this.getPlayerColor();
+    return plColor == 'white' ? "black" : plColor!=null ? "white": null;
+  }
+
+  flip(){
+    this.isFlipped=!this.isFlipped
+    this.gameBoard.updateBoardState1D(this.isFlipped);
+  }
+
+  resign(){
+    sendResign(this.ws,{roomId:this.roomId,color: this.getPlayerColor()![0]})
+  }
+
+  offerDraw(){
+    sendDrawOffer(this.ws,{roomId:this.roomId,color: this.getPlayerColor()![0]})
+  }
+
+  isFlippedCheck(){
+    this.isFlipped = this.player2 ? this.username === this.player2 : false;
+    return this.isFlipped;
+  }
+
+  copyText(){
+    let input:HTMLInputElement =document.getElementById("tocopy") as HTMLInputElement;
+    input.select();
+    navigator.clipboard.writeText(input.value);
+  }
+}
+/*
+export default Vue.extend<Data>({
   components: { Chat, Board, Members, MovePatternTab },
   computed:{
+    currentRoute():Route{
+      return this.$route;
+    }
   },
   mounted(){
     this.updatePlayerList()
@@ -108,7 +226,7 @@ export default {
         this.error = state.errorMessage;
       }
       else if(mutation.type ==="setResult"){
-        this.result = state.gameInfo.result;
+        this.result = state.gameInfo[this.roomId].result;
       }
     })
     
@@ -153,10 +271,10 @@ export default {
       this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
     },
     resign(){
-      sendResign(this.ws,{roomId:this.roomId,type:'resign',color:this.getPlayerColor()[0]})
+      sendResign(this.ws,{roomId:this.roomId,color:this.getPlayerColor()[0]})
     },
     offerDraw(){
-      sendDrawOffer(this.ws,{roomId:this.roomId,type:'draw',color:this.getPlayerColor()[0]})
+      sendDrawOffer(this.ws,{roomId:this.roomId,color:this.getPlayerColor()[0]})
     },
     isFlippedCheck(){
       this.isFlipped = this.player2 ? this.username === this.player2 : false;
@@ -171,7 +289,7 @@ export default {
     
   },
   data(){
-    return{
+    const initialState: Data = {
       shareLink: this.getShareUrl(),
       username: this.$route.params.username,
       roomId: this.$route.params.roomId,
@@ -187,11 +305,12 @@ export default {
       result:null,
       buttons:[{text:'Flip',icon:'fa-retweet',color:'black',onclick:this.flip},{text:'Resign',icon:'fa-flag',color:'red darken-1',onclick:this.resign},{text:'Offer Draw',icon:'fa-handshake',color:'blue darken-2',onclick:this.offerDraw}],
       members: [],
-      boardState:this.$route.params.boardState ? this.$route.params.boardState : this.$store.state.boards[this.roomId],
+      boardState:this.$route.params.boardState ? convertFENtoBoardState(this.$route.params.boardState) : this.$store.state.boards[this.roomId],
       ws: WS,
-    }
+    };
+    return initialState;
   }
-}
+});*/
 </script>
 
 <style scoped>

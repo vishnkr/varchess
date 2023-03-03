@@ -55,8 +55,8 @@ export default {
 
         checkRoom(){
             this.connectToWebsocket()
-            joinRoom(this.ws,this.roomId,this.username);
-            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws}})
+            joinRoom(this.ws ?? WS,this.roomId,this.username);
+            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws ?? WS}})
             //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
         connectToWebsocket() {

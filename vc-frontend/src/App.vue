@@ -13,11 +13,10 @@
         </div>
       <v-spacer></v-spacer>
       <div v-if="!isAuthenticated">
-      <v-btn rounded v-on="on" v-bind="attrs" color="primary" dark @click="signup">Sign up</v-btn>
+      <v-btn rounded v-bind="$attrs" color="primary" dark @click="signup">Sign up</v-btn>
       <v-btn rounded
               color="primary"
-              v-bind="attrs"
-              v-on="on"
+              v-bind="$attrs"
               dark 
               @click="login">Log in</v-btn>
       </div>
@@ -53,11 +52,13 @@
   </v-app>
 </template>
 
-<script>
-export default {
+
+<script lang="ts">
+import Vue from 'vue';
+
+export default Vue.extend({
   name: 'App',
   mounted(){
-    
     this.$store.subscribe((mutation, state) => {
        if(mutation.type==="websocketError"){
           this.errorText = state.errorMessage ? state.errorMessage : null;
@@ -73,7 +74,7 @@ export default {
   methods:{
     redirectToHome(){
     this.$router.push({name:'Home'})
-    location.reload()
+
     },
     login(){
       this.$router.push({name:'Login'})
@@ -82,14 +83,13 @@ export default {
       this.$router.push({name:'Signup'})
     }
   }
-};
+});
 </script>
 
 <style scoped>
 a:-webkit-any-link{
 text-decoration:none !important;
 }
-
 .title{
   cursor: pointer;
   display: inline-flex;
