@@ -4,6 +4,9 @@
 * and Vuex state can be modified in one place
 */
 //import WebSocket from 'reconnecting-websocket';
+
+
+import { MoveInfo, MoveInfoPayload } from "@/types";
 import store from "../store"
 const server_host = process.env.VUE_APP_SERVER_WS;
 const WS = new WebSocket(`${server_host}/ws`);
@@ -60,7 +63,7 @@ WS.onmessage = function(msg){
                     break;
                 }
                 case "clientList":{ 
-                    let msgData = JSON.parse(apiMsg.data);
+                   /* let msgData = JSON.parse(apiMsg.data);
                     if(msgData.activityType==="join"){
                         for(let client of msgData.clientList){
                             if(!store.state.roomClients[apiMsg.roomId][client]){
@@ -74,7 +77,7 @@ WS.onmessage = function(msg){
                             }
                         }
                     }
-                    break;
+                    break;*/
                 }
                 default:
                     break;
@@ -85,41 +88,42 @@ WS.onmessage = function(msg){
 }
 export default WS;
 
-export function sendJSONReq(socket,type,msg){
+export function sendJSONReq(socket:WebSocket,type:string,msg:any){
     if (!isOpen(socket)) return;
     socket.send(JSON.stringify({type:type,data:JSON.stringify(msg)})) //socket.send(json);
     
   }
 
-export function createRoom(socket,roomId,username,standardFen){
+export function createRoom(socket:WebSocket,roomId:string,username:string,standardFen:string){
     sendJSONReq(socket,'createRoom',{roomId:roomId, username:username, fen:standardFen});
 }
 
-export function createRoomWithCustomPatterns(socket,roomId,username,standardFen,customMovePatterns){
+export function createRoomWithCustomPatterns(socket:WebSocket,roomId:string,username:string,standardFen:string,customMovePatterns:any){
     sendJSONReq(socket,'createRoom',{roomId:roomId, username:username, fen:standardFen, movePatterns:customMovePatterns});
 }
 
-export function joinRoom(socket,roomId,username){
+export function joinRoom(socket:WebSocket,roomId:string,username:string){
     sendJSONReq(socket,'joinRoom',{roomId:roomId, username:username});
 }
 
-export function sendMessage(socket,json){
+export function sendMessage(socket:WebSocket,json: { message: string, username: string, roomId: string }){
     sendJSONReq(socket,'chatMessage',{message: json.message, username: json.username, roomId:json.roomId});
 }
-export function requestGameinfo(socket,roomId){
+export function requestGameinfo(socket:WebSocket,roomId: string){
     sendJSONReq(socket,'reqGameInfo',{roomId:roomId});
 }
 
-export function sendResign(socket,data){
+export function sendResign(socket:WebSocket,data:{roomId:string,color:string}){
     sendJSONReq(socket,'resign',{roomId:data.roomId,color:data.color})
 }
 
-export function sendDrawOffer(socket,data){
+export function sendDrawOffer(socket:WebSocket,data:{roomId:string,color:string}){
     sendJSONReq(socket,'draw',{roomId:data.roomId,color:data.color})
 }
 
-export function sendMoveInfo(socket,json){
-    if(!store.state.gameInfo.result){
+
+export function sendMoveInfo(socket:WebSocket,json:MoveInfoPayload){
+    if(!store.state.gameInfo?.result){
         sendJSONReq(socket,'performMove',{
             piece:json.piece, 
             roomId:json.roomId, 
@@ -133,5 +137,5 @@ export function sendMoveInfo(socket,json){
     }
 }
 
-function isOpen(ws) { return ws.readyState === ws.OPEN }
+function isOpen(ws:WebSocket) { return ws.readyState === ws.OPEN }
 

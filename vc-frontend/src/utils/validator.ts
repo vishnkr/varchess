@@ -4,44 +4,10 @@
 * always a valid start position.
 */
 
-function convertFENtoBoardState(fen){
-    var splitFen = fen.split(' ');
-    var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
-    var rows = splitFen[0].split('/');
-    var char;
-    var secDigit,colEnd = 0;
-    for (var i=0; i < rows.length;i++){
-        boardState.tiles.push([]);
-        secDigit = 0
-        for(var j = 0; j < rows[i].length; j++){
-            char = rows[i].charAt(j);
-            if (/\d/.test(char)){
-                if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
-                    secDigit=char
-                } else{
-                    if(secDigit!=0){
-                        colEnd = parseInt(secDigit)*10+parseInt(char)
-                    } else {colEnd=parseInt(char)}
-                    for(var empty=0; empty<colEnd;empty++){
-                        boardState.tiles[i].push({isPiecePresent:false});
-                    }
-                }
-            }
-            else{
-                boardState.tiles[i].push(
-                    {
-                        isPiecePresent: true,
-                        pieceColor: (char == char.toLowerCase() && char != char.toUpperCase())? 'black': 'white',
-                        pieceType: char.toLowerCase()
-                    }
-                    )
-            }
-        }
-    }
-    return boardState;
-}
+import { BoardState } from "@/types";
+import { convertFENtoBoardState } from "./fen";
 
-export function validateStartSetup(fen){
+export function validateStartSetup(fen:string){
     // does each side have exactly 1 king?
     //no checks/checkmate in start pos
     const boardState = convertFENtoBoardState(fen)
@@ -68,13 +34,20 @@ function isPlayerInCheck(color,board,kingPos){
 }
 }
 */
-export function countKings(boardState){
-    var wKing=0, bKing=0;
-    var returnObj = {};
-    var rowpos = 1
-    var colpos = 1
-    for(var row of boardState.tiles){
-        for (var cell of row){
+
+interface KingCount {
+    bpos: number[],
+    wpos: number[],
+    isValidKings?: boolean
+}
+
+export function countKings(boardState:BoardState){
+    let wKing=0, bKing=0;
+    let returnObj: KingCount = {bpos:[], wpos:[]};
+    let rowpos = 1
+    let colpos = 1
+    for(let row of boardState.tiles){
+        for (let cell of row){
             if (cell.isPiecePresent && cell.pieceType==='k'){
                 if(cell.pieceColor === 'black'){ 
                     returnObj.bpos = [rowpos,colpos]

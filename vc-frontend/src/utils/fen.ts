@@ -3,7 +3,8 @@
 * FEN (Forsyth–Edwards Notation) and vice-versa.
 */
 
-function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
+import { BoardState } from "@/types";
+function convertBoardStateToFEN(boardState:BoardState,turn:string,castlingAvailability:string,enPassant:string){
     var cell,row,empty,fen = '';
     for (row of boardState.tiles){
         empty = 0;
@@ -17,11 +18,12 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
                     fen+="."
                     continue
                 }
+                const pieceType = cell.pieceType ?? '';
                 if(cell.pieceColor=='black'){
-                    fen+= cell.pieceType!="Knight" || cell.pieceType!="knight"  ? cell.pieceType[0].toLowerCase() : 'n';
+                    fen+= pieceType.toLowerCase() != "knight"  ? pieceType[0].toLowerCase() : 'n';
                 }
                 else{
-                    fen+=  cell.pieceType!="Knight" || cell.pieceType!="knight" ? cell.pieceType[0].toUpperCase() : 'N';
+                    fen+= pieceType.toLowerCase() != "knight" ? pieceType[0].toUpperCase() : 'N';
                 }
             }
             else{
@@ -39,16 +41,17 @@ function convertBoardStateToFEN(boardState,turn,castlingAvailability,enPassant){
     return fen
 }
 
-function convertFENtoBoardState(fen){
+function convertFENtoBoardState(fen:string){
     console.log("converting fen",fen)
-    var splitFen = fen.split(' ');
-    var boardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
-    var rows = splitFen[0].split('/');
-    var char;
-    var secDigit,colEnd = 0;
+    let splitFen = fen.split(' ');
+    let boardState:BoardState = {tiles:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3]}
+    let rows = splitFen[0].split('/');
+    let char;
+    let secDigit = 0;
+    let colEnd = 0;
     for (var i=0; i < rows.length;i++){
         boardState.tiles.push([]);
-        secDigit = 0
+        secDigit = 0;
         for(var j = 0; j < rows[i].length; j++){
             char = rows[i].charAt(j);
             if (char === "."){
@@ -56,13 +59,13 @@ function convertFENtoBoardState(fen){
             }
             else if (/\d/.test(char)){
                 if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
-                    secDigit=char
+                    secDigit=parseInt(char);
                 } else{
                     if(secDigit!=0){
-                        colEnd = parseInt(secDigit)*10+parseInt(char)
+                        colEnd = secDigit*10+parseInt(char)
                     } else {colEnd=parseInt(char)}
                     for(var empty=0; empty<colEnd;empty++){
-                        boardState.tiles[i].push({isPiecePresent:false});
+                        boardState.tiles[i].push({isPiecePresent:false, disabled: false});
                     }
                 }
             }
@@ -71,7 +74,8 @@ function convertFENtoBoardState(fen){
                     {
                         isPiecePresent: true,
                         pieceColor: (char == char.toLowerCase() && char != char.toUpperCase())? 'black': 'white',
-                        pieceType: char.toLowerCase()
+                        pieceType: char.toLowerCase(),
+                        disabled: false
                     }
                     )
             }

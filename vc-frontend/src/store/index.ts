@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 //import VuexPersistence from 'vuex-persist'
-import state from './state.js'
-import mutations from './mutations.js'
-import actions from './actions.js'
+import state from './state'
+import mutations from './mutations'
+import actions from './actions'
 Vue.use(Vuex)
 
 /*const vuexLocal = new VuexPersistence({
