@@ -37,9 +37,6 @@ func CreateJwtToken(userid int) (string, error) {
 }
 
 func (s *Server) CreateAccountHandler(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	user := &store.User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -60,8 +57,6 @@ func (s *Server) CreateAccountHandler(w http.ResponseWriter, r *http.Request) er
 }
 
 func (s *Server) AuthenticateUserHandler(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	user := &store.User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {

@@ -51,8 +51,8 @@ const mutations ={
         state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
       }
     },
-    setServerError(state:RootState,payload:{isOnline:boolean,errorMessage:string|null}){
-      state.errorStatus = payload;
+    setServerStatus(state:RootState,payload:{isOnline:boolean,errorMessage:string|null}){
+      state.serverStatus = payload;
     },
 
     storeMovePatterns(state:RootState,payload:{movePatterns: MovePattern[]}){

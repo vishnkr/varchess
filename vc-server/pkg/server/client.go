@@ -15,7 +15,7 @@ import (
 
 type MessageStruct struct {
 	Type string `json:"type"`
-	Data string `json:"data,omitempty"`
+	Data json.RawMessage`json:"data,omitempty"`
 }
 
 type UserRoomInfo struct {
@@ -76,7 +76,7 @@ func newClient(conn *websocket.Conn, wsServer *WsServer) *Client {
 }
 
 func (c *Client) disconnect(Type string) {
-	log.Println("disconnect called from", Type)
+	log.Println("disconnect called from", Type, "for user",c.username)
 	c.conn.Close()
 	c.wsServer.unregister <- c
 }
@@ -106,10 +106,6 @@ func (c *Client) Read() {
 			return
 		}
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
-		if string(msg) == "pong" {
-			continue
-		}
-
 		reqData := MessageStruct{}
 		json.Unmarshal([]byte(msg), &reqData)
 		log.Println("received data:", reqData)
@@ -138,7 +134,7 @@ func (c *Client) Write() {
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(websocket.TextMessage, []byte("ping")); err != nil {
+			if err := c.conn.WriteMessage(websocket.PingMessage,nil); err != nil {
 				return
 			}
 		}
@@ -164,7 +160,7 @@ func (c *Client) handleResultOffer(data *MessageStruct) {
         room.DrawOffer.IsOffered = true
         room.DrawOffer.Color = resultMessage.Color
         msg := fmt.Sprintf("%s has offered a draw", resultMessage.Color)
-        if message, err := json.Marshal(MessageStruct{Type: "drawOffer", Data: msg}); err == nil {
+        if message, err := json.Marshal(MessageStruct{Type: "drawOffer", Data: json.RawMessage(msg)}); err == nil {
             room.BroadcastToMembers(message)
         }
 	case "drawDecision":
@@ -178,7 +174,7 @@ func (c *Client) handleResultOffer(data *MessageStruct) {
 			}
 		} else{
 			msg := fmt.Sprintf("%s has declined the draw offer", resultMessage.Color)
-			if message, err := json.Marshal(MessageStruct{Type: "drawDeclined", Data: msg}); err == nil {
+			if message, err := json.Marshal(MessageStruct{Type: "drawDeclined", Data: json.RawMessage(msg)}); err == nil {
 				room.BroadcastToMembers(message)
 			}
 		}
@@ -194,7 +190,9 @@ func (c *Client) handleChatMessage(data *MessageStruct) {
 			room.BroadcastToMembersExceptSender(message, c)
 		}
 	} else {
-		message := MessageStruct{Type: "error", Data: "Room does not exist, connection expired"}
+		errorMsg := "Room does not exist, connection expired"
+		errorMsgBytes, _ := json.Marshal(errorMsg)
+		message := MessageStruct{Type: "error", Data: json.RawMessage(errorMsgBytes)}
 		if errMessage, err := json.Marshal(message); err == nil {
 			c.send <- errMessage
 		}
@@ -260,7 +258,9 @@ func (c *Client) handlePerformMove(data *MessageStruct) {
 		marshalledMessage, _ := json.Marshal(response)
 		c.send <- marshalledMessage
 	} else {
-		message := MessageStruct{Type: "error", Data: "Room does not exist, connection expired"}
+		errorMsg := "Room does not exist, connection expired"
+		errorMsgBytes, _ := json.Marshal(errorMsg)
+		message := MessageStruct{Type: "error", Data: json.RawMessage(errorMsgBytes)}
 		if errMessage, err := json.Marshal(message); err == nil {
 			c.send <- errMessage
 		}
@@ -272,7 +272,11 @@ func (c *Client) handleCreateRoom(data *MessageStruct){
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	userInfo := &UserRoomInfo{}
-	json.Unmarshal([]byte(data.Data), &userInfo)
+	err := json.Unmarshal([]byte(data.Data), &userInfo)
+    if err != nil {
+        log.Println("error unmarshalling createRoom data:", err)
+        return
+    }
 	c.username = userInfo.Username
 	c.roomId = userInfo.RoomId
 	RoomsMap[userInfo.RoomId] = &Room{
@@ -319,7 +323,9 @@ func (c *Client) handleJoinRoom(data *MessageStruct) {
 		RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
 	} else {
 		log.Println("Room close")
-		message := MessageStruct{Type: "error", Data: "Room does not exist, connection expired"}
+		errorMsg := "Room does not exist, connection expired"
+		errorMsgBytes, _ := json.Marshal(errorMsg)
+		message := MessageStruct{Type: "error", Data: json.RawMessage(errorMsgBytes)}
 		if errMessage, err := json.Marshal(message); err == nil {
 			c.send <- errMessage
 		}

@@ -10,7 +10,7 @@ export interface RootState{
     currentMove: MoveInfo | null,
     clientInfo: ClientInfo | null,
     turn: 'w' | 'b',
-    errorStatus: ServerStatus,
+    serverStatus: ServerStatus,
     movePatterns: MovePatterns,
 
 }
@@ -28,7 +28,7 @@ const state: RootState = {
     currentMove: null,
     clientInfo: null,
     turn: 'w',
-    errorStatus: {isOnline:null,errorMessage:null},
+    serverStatus: {isOnline:null,errorMessage:null},
     movePatterns:null,
 }
 

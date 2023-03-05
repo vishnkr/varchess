@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,27 +15,30 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "home")
 }
 
+func (s *Server) ServerStatusHandler(w http.ResponseWriter, r *http.Request) error{
+    w.WriteHeader(http.StatusOK)
+    return nil
+}
+
 func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	uniqueRoomId := genRandSeq(6)
 	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
 		uniqueRoomId = genRandSeq(6)
 	}
+	dataBytes,err:=json.Marshal(uniqueRoomId)
+	if err!=nil{
+		fmt.Println(err)
+	}
 	response := MessageStruct{
 		Type: "getRoomId",
-		Data: uniqueRoomId,
+		Data: json.RawMessage(dataBytes),
 	}
 	WriteJSON(w,http.StatusOK,response)
 	return nil
 }
 
 func (s *Server) BoardStateHandler(w http.ResponseWriter, r *http.Request) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == "OPTIONS" {
-		return nil
-	}
 	params := mux.Vars(r)
 	id := params["roomId"]
 	room, ok := RoomsMap[id]
@@ -48,21 +52,15 @@ func (s *Server) BoardStateHandler(w http.ResponseWriter, r *http.Request) error
 		}
 		return WriteJSON(w, http.StatusOK, response)
 	} else {
-		errResponse := MessageStruct{Type: "error", Data: "Room does not exist/has been closed"}
+		errorMsg := "Room does not exist, connection expired"
+		errorMsgBytes, _ := json.Marshal(errorMsg)
+		errResponse := MessageStruct{Type: "error", Data: json.RawMessage(errorMsgBytes)}
 		return WriteJSON(w, http.StatusOK, errResponse)
 	}
 }
 
 func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) error {
 	//optimize this request to be done once before every move instead of once after every click, store result in client side
-	if r.Method == "OPTIONS" {
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
-
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token, Authorization")
-		return nil
-	}
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	query := r.URL.Query()
     roomID := query.Get("roomid")
     color := query.Get("color")

@@ -19,6 +19,7 @@ func main() {
 	if port == "" {
 		port = "5000"
 	}
+
 	var addr = flag.String("addr", ":"+port, "http server address")
 	store, err := store.NewStore()
 	if err != nil {
@@ -26,5 +27,6 @@ func main() {
 	}
 	server := server.NewServer(*addr, store)
 	log.Print("listening on ", *addr, "\n")
-	log.Fatal(server.Start())
+	var allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
+	log.Fatal(server.Start(allowedOrigins))
 }

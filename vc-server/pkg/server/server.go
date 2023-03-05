@@ -21,7 +21,6 @@ type Server struct {
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
-	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(v)
 }
 
@@ -33,7 +32,6 @@ func makeHTTPHandleFunc(f apiFunction) http.HandlerFunc {
 	}
 }
 
-
 func NewServer(listenAddr string, store store.Storage) *Server {
 	return &Server{
 		listenAddr: listenAddr,
@@ -41,18 +39,34 @@ func NewServer(listenAddr string, store store.Storage) *Server {
 	}
 }
 
-func (s *Server) Start() error {
+func (s *Server) Start(allowedOrigins string) error {
 	router := mux.NewRouter()
+	router.Use(setHeadersMiddleware(allowedOrigins))
 	router.HandleFunc("/room-id", makeHTTPHandleFunc(s.RoomHandler)).Methods("POST")
 	router.HandleFunc("/board-fen/{roomId}", makeHTTPHandleFunc(s.BoardStateHandler)).Methods("GET", "OPTIONS")
 	router.HandleFunc("/", rootHandler)
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.AuthenticateUserHandler)).Methods("GET")
 	router.HandleFunc("/signup", makeHTTPHandleFunc(s.CreateAccountHandler)).Methods("POST")
 	router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.GetPossibleSquares)).Methods("GET")
+	router.HandleFunc("/server-status", makeHTTPHandleFunc(func(w http.ResponseWriter, r *http.Request) error{
+		w.WriteHeader(http.StatusOK)
+		return nil
+	})).Methods("GET")
+	
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		ServeWsHandler(wsServer, w, r)
 	})
 	return http.ListenAndServe(s.listenAddr, router)
+}
+
+func setHeadersMiddleware(allowedOrigins string) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.Header().Set("Content-Type", "application/json")
+            w.Header().Set("Access-Control-Allow-Origin", allowedOrigins)
+            next.ServeHTTP(w, r)
+        })
+    }
 }

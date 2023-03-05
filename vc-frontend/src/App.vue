@@ -24,8 +24,7 @@
     </v-app-bar>
 
     <v-main>
-      
-       <v-alert v-if="errorText"
+      <v-alert v-if="errorText"
                   border="right"
                   colored-border
                   type="error"
@@ -56,13 +55,15 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapActions } from 'vuex';
+
 export default Vue.extend({
   
   name: 'App',
   mounted(){
+    this.$store.dispatch('checkServerStatus');
     this.$store.subscribe((mutation, state) => {
-       if(mutation.type==="websocketError"){
-          this.errorText = state.errorMessage ? state.errorMessage : null;
+       if(mutation.type==="setServerStatus"){
+          this.errorText = state.serverStatus.errorMessage ? state.serverStatus.errorMessage : null;
       }
      })
   },
@@ -74,6 +75,7 @@ export default Vue.extend({
   },
   methods:{
     ...mapActions('webSocket',['close']),
+    ...mapActions('root',['checkServerStatus']),
     redirectToHome(){ 
       this.$router.replace({path:'/'});
       this.close();

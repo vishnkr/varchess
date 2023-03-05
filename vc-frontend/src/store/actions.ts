@@ -1,5 +1,4 @@
 import axios from "axios";
-import { connect } from "http2";
 import { ActionContext } from "vuex";
 import { RootState } from "./state";
 
@@ -22,14 +21,14 @@ const actions = {
 
   async checkServerStatus({commit}:ActionContext<RootState,RootState>):Promise<void>{
     try{
-      const response = await axios.get('${BASE_URL}/server-status');
+      const response = await axios.get(`${BASE_URL}/server-status`);
       if (response.status==200){
         commit('setServerStatus',{isOnline:true,errorMessage:null})
       } else {
-        commit('setServerStatus',{isOnline:false,errorMessage:"Server is not online"})
+        commit('setServerStatus',{isOnline:false,errorMessage:"Can't connect to server"})
       }
     } catch(error) {
-      commit('setServerStatus',{isOnline:false,errorMessage:"Can't connect to server"})
+      commit('setServerStatus',{isOnline:false,errorMessage:"Connection to the server cannot be established at the moment, Please try again later."})
     }
   }
 };
