@@ -54,6 +54,8 @@ export interface MoveInfo{
     isValid?: boolean
     check?: boolean,
     result?: string,
+    roomId?:string
+    color?:string,
 }
 
 export interface MoveInfoPayload extends MoveInfo{
@@ -65,7 +67,6 @@ export interface ClientInfo{
     username: string,
     isPlayer: boolean,
     color?: string,
-    ws: WebSocket
 }
 
 export interface MovePattern{
@@ -76,4 +77,9 @@ export type MovePatterns = MovePattern[] | null;
 export interface EditorRouteParams extends Dictionary<string>{
     username: string;
     roomId: string;
+}
+
+export interface ServerStatus{
+    isOnline: boolean | null,
+    errorMessage: string | null
 }

@@ -1,4 +1,4 @@
-import { ClientInfo, ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns } from "@/types"
+import { ClientInfo, ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus } from "@/types"
 
 
 export interface RootState{
@@ -10,9 +10,13 @@ export interface RootState{
     currentMove: MoveInfo | null,
     clientInfo: ClientInfo | null,
     turn: 'w' | 'b',
-    errorMessage: string | null,
-    movePatterns: MovePatterns
+    errorStatus: ServerStatus,
+    movePatterns: MovePatterns,
 
+}
+export interface WebSocketState {
+    ws: WebSocket | null;
+    userId: string | null;
 }
 
 const state: RootState = {
@@ -24,7 +28,7 @@ const state: RootState = {
     currentMove: null,
     clientInfo: null,
     turn: 'w',
-    errorMessage:null,
+    errorStatus: {isOnline:null,errorMessage:null},
     movePatterns:null,
 }
 

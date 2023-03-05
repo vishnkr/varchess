@@ -78,12 +78,10 @@ import Board from '../Board/Board.vue'
 import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
-import WS,{sendMoveInfo,sendResign,sendDrawOffer} from '../../utils/websocket';
-import { convertFENtoBoardState } from '../../utils/fen';
-import { Route } from 'vue-router/types/router';
 import { BoardState, GameInfo, MoveInfoPayload, MovePatterns } from '../../types';
 import { Component, Vue, Prop } from 'vue-property-decorator'
-
+import { mapActions, Action } from 'vuex';
+import {namespace} from 'vuex-class';
 
 type Button = {
   text: string;
@@ -92,6 +90,8 @@ type Button = {
   onclick: () => void;
 };
 
+const webSocketModule = namespace('webSocket');
+
 @Component({
   components:{
     Chat, 
@@ -99,11 +99,17 @@ type Button = {
     Members, 
     MovePatternTab,
   },
+  methods: {
+    ...mapActions('webSocket', ['sendResign', 'sendDrawOffer', 'sendMoveInfo']),
+  },
 })
 export default class GameRoom extends Vue{
   @Prop() username!: string;
   @Prop() roomId!: string;
-  @Prop() boardFen!: string;
+
+  @webSocketModule.Action('sendMoveInfo') private sendMoveInfo!: (payload: any) => Promise<void>;
+  @webSocketModule.Action('sendDrawOffer') private sendDrawOffer!: (payload: any) => Promise<void>;
+  @webSocketModule.Action('sendResign') private sendResign!: (payload: any) => Promise<void>;
 
   private gameBoard!: Vue & { updateBoardState1D(isFlipped: boolean): void };
   shareLink: string =  this.getShareUrl();
@@ -125,11 +131,10 @@ export default class GameRoom extends Vue{
   ];
   membersList: string[] = [];
   boardState:BoardState | null=  null;
-  ws: WebSocket = WS;
 
   created() {
     this.player1 = this.$store.state.gameInfo[this.roomId];
-    this.boardState = this.boardFen ? convertFENtoBoardState(this.boardFen) : this.$store.state.boards[this.roomId];
+    this.boardState = this.$store.state.boards[this.roomId];
   }
 
   getShareUrl(){ return `${window.location.origin}/join/${this.roomId}`}
@@ -158,7 +163,7 @@ export default class GameRoom extends Vue{
     if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){     
       info.castle=true
     } 
-    sendMoveInfo(this.ws,info)
+    this.sendMoveInfo(info)
   }
 
   getPlayerColor(){
@@ -176,11 +181,11 @@ export default class GameRoom extends Vue{
   }
 
   resign(){
-    sendResign(this.ws,{roomId:this.roomId,color: this.getPlayerColor()![0]})
+    this.sendResign({roomId:this.roomId,color: this.getPlayerColor()![0]})
   }
 
   offerDraw(){
-    sendDrawOffer(this.ws,{roomId:this.roomId,color: this.getPlayerColor()![0]})
+    this.sendDrawOffer({roomId:this.roomId,color: this.getPlayerColor()![0]})
   }
 
   isFlippedCheck(){
@@ -194,123 +199,6 @@ export default class GameRoom extends Vue{
     navigator.clipboard.writeText(input.value);
   }
 }
-/*
-export default Vue.extend<Data>({
-  components: { Chat, Board, Members, MovePatternTab },
-  computed:{
-    currentRoute():Route{
-      return this.$route;
-    }
-  },
-  mounted(){
-    this.updatePlayerList()
-    this.$store.commit("setClientInfo",{
-      username:this.username,
-      isPlayer: this.username==this.player1 || this.username==this.player2,
-      color: this.username==this.player1 ? 'w' : this.username==this.player2 ? 'b' : null,
-      ws: this.ws
-      })
-
-    this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "updateGameInfo") {
-        this.player1 = state.gameInfo[this.roomId].p1 ? state.gameInfo[this.roomId].p1 : null;
-        this.player2 = state.gameInfo[this.roomId].p2 ? state.gameInfo[this.roomId].p2 : null;
-        this.updatePlayerList()
-        this.isFlippedCheck()
-        
-      }
-      else if(mutation.type === "performMove"){
-        this.$refs.gameBoard.performMove(this.$store.state.currentMove)
-      }
-      else if(mutation.type==="websocketError"){
-        this.error = state.errorMessage;
-      }
-      else if(mutation.type ==="setResult"){
-        this.result = state.gameInfo[this.roomId].result;
-      }
-    })
-    
-  },
-  methods:{
-    updatePlayerList(){
-      var roomInfo = this.$store.state.gameInfo[this.roomId]
-      this.player1 = roomInfo && roomInfo.p1 ? roomInfo.p1 : null;
-      this.player2 = roomInfo && roomInfo.p2 ? roomInfo.p2 : null;
-      this.playerList = this.player1? this.player2? [this.player1,this.player2] : [this.player1] : null
-      this.members = roomInfo && roomInfo.members.filter((value)=>{
-        return value!=this.player1 && value!=this.player2
-      })
-    },
-    
-    validateMove(destInfo){
-      var srcInfo = this.$store.state.curStartPos
-      var piece = this.getPlayerColor()=='white' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='black' ? srcInfo.piece.toLowerCase() : srcInfo.piece
-      var info = {roomId: this.roomId,
-          piece: piece,
-          srcRow: srcInfo.row,
-          srcCol: srcInfo.col,
-          destRow: destInfo.row,
-          destCol: destInfo.col,
-          color:this.getPlayerColor()[0],
-        } 
-        if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){
-          
-          info.castle=true
-        } 
-      sendMoveInfo(this.ws,info)
-    },
-    getPlayerColor(){
-      return this.player1 == this.username ? 'white' : this.player2 == this.username ? 'black' : null;
-    },
-    getOpponentColor(){
-      var plColor = this.getPlayerColor();
-      return plColor == 'white' ? "black" : plColor!=null ? "white": null;
-    },
-    flip(){
-      this.isFlipped=!this.isFlipped
-      this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
-    },
-    resign(){
-      sendResign(this.ws,{roomId:this.roomId,color:this.getPlayerColor()[0]})
-    },
-    offerDraw(){
-      sendDrawOffer(this.ws,{roomId:this.roomId,color:this.getPlayerColor()[0]})
-    },
-    isFlippedCheck(){
-      this.isFlipped = this.player2 ? this.username === this.player2 : false;
-      return this.isFlipped;
-    },
-    getShareUrl(){ return `${window.location.origin}/join/${this.$route.params.roomId}`},
-    copyText(){
-      let input=document.getElementById("tocopy");
-      input.select();
-      document.execCommand("copy");
-    },
-    
-  },
-  data(){
-    const initialState: Data = {
-      shareLink: this.getShareUrl(),
-      username: this.$route.params.username,
-      roomId: this.$route.params.roomId,
-      playerList:[],
-      player1: null, 
-      player2: null,
-      moveSrc: null,
-      moveDest: null,
-      isFlipped: this.isFlippedCheck(),
-      movePatterns: this.$store.state.movePatterns,
-      turn: null,
-      gameInfo: this.$store.state.gameInfo,
-      result:null,
-      buttons:[{text:'Flip',icon:'fa-retweet',color:'black',onclick:this.flip},{text:'Resign',icon:'fa-flag',color:'red darken-1',onclick:this.resign},{text:'Offer Draw',icon:'fa-handshake',color:'blue darken-2',onclick:this.offerDraw}],
-      members: [],
-      boardState:this.$route.params.boardState ? convertFENtoBoardState(this.$route.params.boardState) : this.$store.state.boards[this.roomId],
-      ws: WS,
-    };
-    return initialState;
-  }
-});*/
 </script>
 
 <style scoped>

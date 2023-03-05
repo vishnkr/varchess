@@ -16,10 +16,11 @@ const mutations ={
     },
     updateBoardState (state:RootState,payload:{roomId:string,boardState:BoardState}) {
         state.boards[payload.roomId] = payload.boardState;
-      },
+    },
+
     addMessage (state:RootState,messageInfo:PayloadWithRoomId<ChatMessage>) {
       if (state.chatMessages[messageInfo.roomId]){
-      state.chatMessages[messageInfo.roomId].push(messageInfo);
+        state.chatMessages[messageInfo.roomId].push(messageInfo);
       }
       else {
         state.chatMessages[messageInfo.roomId]=[messageInfo];
@@ -50,9 +51,10 @@ const mutations ={
         state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
       }
     },
-    websocketError(state:RootState,errorMessage:string){
-      state.errorMessage = errorMessage;
+    setServerError(state:RootState,payload:{isOnline:boolean,errorMessage:string|null}){
+      state.errorStatus = payload;
     },
+
     storeMovePatterns(state:RootState,payload:{movePatterns: MovePattern[]}){
       state.movePatterns = payload.movePatterns;
     },

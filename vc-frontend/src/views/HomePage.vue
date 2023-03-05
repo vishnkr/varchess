@@ -104,21 +104,20 @@
 </template>
 
 <script lang="ts">
-import WS,{createRoom} from '../utils/websocket';
 import axios from 'axios';
 import { GAME_MODES, GameMode } from '../utils/constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {EditorRouteParams} from '../types';
 import Vue from 'vue';
-import { defineProps } from 'vue';
+import { mapActions } from 'vuex'
+import { convertFENtoBoardState } from '../utils/fen';
 
 interface Data {
   createClicked: boolean;
   errorText: string | null;
   mode: string;
   username: string | null;
-  ws: WebSocket | null;
   dialog: boolean;
   standardFen: string;
   roomId: string | null;
@@ -132,13 +131,19 @@ export default Vue.extend({
   mounted: function() {
     this.$store.commit('resetState');
     this.$store.subscribe((mutation, state) => {
-       if(mutation.type==="websocketError"){
-        this.errorText = state.errorMessage;
+       if(mutation.type==="setServerStatus"){
+        if (state.serverStatus.errorMessage) {
+          this.errorText = state.serverStatus.errorMessage;
+        };
       }
      })
   },
   
   methods:{
+    ...mapActions('webSocket',['connect','close','createRoom']),
+    closeWebSocket() {
+      this.close()
+    },
     checkUsername(){
       if(!this.username || this.username==''){
         this.errorText = 'Enter Username';
@@ -151,10 +156,7 @@ export default Vue.extend({
         return true;
       } 
     },
-    connectToWebsocket() {
-      this.ws = WS;
-      
-    },
+
     isEven(val:number){return val%2==0},
     isLight(row:number,col:number){
         return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))
@@ -165,7 +167,7 @@ export default Vue.extend({
         await axios.post(`${this.server_host}/room-id`)
         .then((response) => {
           this.roomId = response.data.data;
-          this.connectToWebsocket()
+          this.connect();
           if (this.username != null && this.roomId != null){
             if(this.mode=='custom'){
               this.$router.push({
@@ -176,16 +178,14 @@ export default Vue.extend({
               } as EditorRouteParams
               });
             }else{
-              createRoom(this.ws!,this.roomId,this.username, this.standardFen);
+              this.createRoom({roomId:this.roomId,username:this.username, fen:this.standardFen});
+              this.$store.commit('updateBoardState',{roomId:this.roomId,boardState:convertFENtoBoardState(this.standardFen)});
               this.$router.push({
                 name:'Game', 
                 params: {
                   username: this.username,
                   roomId: this.roomId, 
                 },
-                query:{
-                  boardFen: this.standardFen,
-                }
               });
             }
           }
@@ -205,13 +205,11 @@ export default Vue.extend({
       errorText: null,
       mode:'standard',
       username: null,
-      ws: null,
       dialog: false,
       standardFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
       roomId: null,
       server_host: process.env.VUE_APP_SERVER_HOST,
       game_modes: GAME_MODES
-      
     };
   }
 });

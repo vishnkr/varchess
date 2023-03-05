@@ -12,9 +12,11 @@
 </template>
 
 <script>
-import {sendMessage} from '../../utils/websocket';
-export default {
-    props: ['username','roomId','ws'],
+import { mapActions } from 'vuex';
+import Vue from 'vue';
+
+export default Vue.extend({
+    props: ['username','roomId'],
     data(){
         return{
             newMessage: null,
@@ -22,10 +24,12 @@ export default {
         }
     },
     methods:{
+        ...mapActions('webSocket',['sendMessage']),
+
         createMessage(){
             if(this.newMessage){
                 var newmessage = {message: this.newMessage, username: this.username, roomId:this.roomId}
-                sendMessage(this.ws,newmessage);
+                this.sendMessage(newmessage);
                 this.$emit('sendChatMessage',newmessage);
                 this.newMessage=null;
                 this.errorText=null;
@@ -36,7 +40,7 @@ export default {
         }
     }
 
-}
+});
 </script>
 
 <style scoped>

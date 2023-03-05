@@ -22,14 +22,16 @@
 
 <script>
 import { convertFENtoBoardState } from '../../utils/fen';
-import WS, {joinRoom} from '../../utils/websocket';
+import { mapActions } from 'vuex';
 import axios from 'axios';
+import Vue from 'vue';
 export default {
     mounted: function() {
        this.getBoardFen();
        this.connectToWebsocket()
       },
     methods:{
+      ...mapActions('webSocket',['connect','joinRoom']),
       async getBoardFen() {
         await axios.get(`${this.server_host}/board-fen/${this.roomId}`).then((response)=>{
           if(response.data.type && response.data.type=="error"){
@@ -53,15 +55,11 @@ export default {
         });
       },
 
-        checkRoom(){
-            this.connectToWebsocket()
-            joinRoom(this.ws ?? WS,this.roomId,this.username);
-            this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws ?? WS}})
-            //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
-        },
-        connectToWebsocket() {
-        this.ws = WS
-        
+      checkRoom(){
+          this.connect();
+          this.joinRoom(this.roomId,this.username);
+          this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws ?? WS}})
+          //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
         },
     },
     data(){

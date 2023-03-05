@@ -20,7 +20,6 @@ const routes = [
       props: (route:Route) => ({
         username: route.params.username,
         roomId: route.params.roomId,
-        boardState: route.params.boardState
       })
     },
     {

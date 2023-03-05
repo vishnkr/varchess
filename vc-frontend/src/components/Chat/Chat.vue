@@ -11,7 +11,7 @@
                   </div>
               </div>
               <div class="card-action">
-                  <create-message v-on:sendChatMessage="setChatMessage" :username="username" :roomId="roomId" :ws="ws" />
+                  <create-message v-on:sendChatMessage="setChatMessage" :username="username" :roomId="roomId"/>
               </div>
           </v-card>
       </div>
@@ -20,8 +20,9 @@
 
 <script>
 import CreateMessage from '../Chat/CreateMessage';
-import WS from '../../utils/websocket';
-export default {
+import Vue from 'vue';
+
+export default Vue.extend({
     components: {CreateMessage},
     computed:{
         newMessages(){
@@ -38,7 +39,6 @@ export default {
     },
     data(){
         return{
-            ws: WS,
             messages: [],
             count: 0,
         }
@@ -49,7 +49,7 @@ export default {
             this.$store.commit('addMessage',messageInfo);
         }
     }
-}
+});
 </script>
 
 <style scoped>

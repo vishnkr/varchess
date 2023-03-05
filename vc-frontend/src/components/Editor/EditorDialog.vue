@@ -53,20 +53,22 @@
   </div>
 </template>
 
-<script>
+<script >
 import { convertBoardStateToFEN } from '../../utils/fen';
-import {createRoomWithCustomPatterns} from '../../utils/websocket';
 import {validateStartSetup} from '../../utils/validator';
 import Board from '../Board/Board.vue';
 import BoardEditor from './BoardEditor.vue';
 import PieceEditor from './PieceEditor.vue';
+import { mapActions } from 'vuex';
+import Vue from 'vue';
 
-export default {
+export default Vue.extend({
   components:{BoardEditor,PieceEditor,Board},
   created(){
     this.setupDefaultBoardMaxSize()
   },
   methods:{
+    ...mapActions('webSocket',['createRoomWithCustomPatterns']),
     customPieceAdd(piece){
       this.editorState.added[piece]=true
     },
@@ -205,7 +207,7 @@ export default {
     }
   }
 
-}
+});
 </script>
 
 <style scoped>

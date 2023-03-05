@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import state from './state'
 import mutations from './mutations'
 import actions from './actions'
+import webSocketModule from './modules/webSocket'
 Vue.use(Vuex)
 
 /*const vuexLocal = new VuexPersistence({
@@ -14,9 +15,9 @@ const store = new Vuex.Store({
     state,
     mutations,
     actions,
-    //getters,
-    //strict: debug,
-    //plugins: [vuexLocal.plugin]
+    modules:{
+        webSocket:webSocketModule
+    },
 })
 
 export default store

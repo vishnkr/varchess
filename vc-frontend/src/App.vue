@@ -55,8 +55,9 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
+import { mapActions } from 'vuex';
 export default Vue.extend({
+  
   name: 'App',
   mounted(){
     this.$store.subscribe((mutation, state) => {
@@ -72,9 +73,10 @@ export default Vue.extend({
     }
   },
   methods:{
-    redirectToHome(){
-    this.$router.push({name:'Home'})
-
+    ...mapActions('webSocket',['close']),
+    redirectToHome(){ 
+      this.$router.replace({path:'/'});
+      this.close();
     },
     login(){
       this.$router.push({name:'Login'})
