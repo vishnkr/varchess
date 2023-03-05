@@ -49,7 +49,6 @@ type MoveResponse struct {
 	Result  string    `json:"result,omitempty"`
 }
 
-//used when player resigns or draw agreement occurs
 type ResultMessage struct {
 	Type   string `json:"type,omitempty"`
 	RoomId string `json:"roomId"`
@@ -64,9 +63,9 @@ type Client struct {
 	send     chan []byte
 	roomId   string
 	username string
+	disconnected sync.Once
 }
 
-//,roomId string, username string
 func newClient(conn *websocket.Conn, wsServer *WsServer) *Client {
 	return &Client{
 		conn:     conn,
@@ -88,7 +87,7 @@ const (
 )
 
 func (c *Client) Read() {
-	defer c.disconnect("Read")
+	defer c.disconnected.Do(func() { c.disconnect("Read") })
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	messageHandlers := map[string]func(*MessageStruct){
@@ -118,7 +117,7 @@ func (c *Client) Read() {
 func (c *Client) Write() {
 	ticker := time.NewTicker(pingTime)
 	defer ticker.Stop()
-	defer c.disconnect("write")
+	defer c.disconnected.Do(func() { c.disconnect("Write") })
 	for {
 		select {
 		case msg, ok := <-c.send:

@@ -4,7 +4,6 @@ import { ActionContext } from 'vuex';
 import { MoveInfo, MoveInfoPayload } from '@/types';
 
 const server_host = process.env.VUE_APP_SERVER_WS;
-const WS = new WebSocket(`${server_host}/ws`);
 
 function isOpen(ws: WebSocket) {
   return ws.readyState === WebSocket.OPEN;
@@ -27,15 +26,15 @@ const webSocketModule: Module<WebSocketState, RootState> = {
   actions: {
     connect({ commit, rootState }) {
       const ws = new WebSocket(`${server_host}/ws`);
-      WS.onopen = function(){
+      ws.onopen = function(){
         console.log("Socket opened");
       }
 
-      WS.onerror = function(){
+      ws.onerror = function(){
         commit('websocketError','Connection to server could not be established! Try again soon!')
       }
 
-      WS.onmessage = function(msg){
+      ws.onmessage = function(msg){
         let apiMsg = JSON.parse(msg.data);
         switch(apiMsg.type){
             case "chatMessage": {
