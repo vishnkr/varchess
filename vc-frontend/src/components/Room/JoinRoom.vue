@@ -12,7 +12,7 @@
               rounded
               color="primary"
               dark 
-              @click="checkRoom"
+              @click="checkJoinRoom"
               >
               Enter Room
             </v-btn>
@@ -25,10 +25,9 @@ import { convertFENtoBoardState } from '../../utils/fen';
 import { mapActions } from 'vuex';
 import axios from 'axios';
 import Vue from 'vue';
-export default {
+export default Vue.extend({
     mounted: function() {
        this.getBoardFen();
-       this.connectToWebsocket()
       },
     methods:{
       ...mapActions('webSocket',['connect','joinRoom']),
@@ -40,38 +39,25 @@ export default {
           if(response.data.movePatterns){
             this.$store.commit('storeMovePatterns',{movePatterns:response.data.movePatterns})
           }
-
-          this.boardState = convertFENtoBoardState(response.data.Fen)
-          this.boardState.rows  = this.boardState.tiles.length
-          this.boardState.cols = this.boardState.tiles[0].length
-          var id =0;
-          for(var row=0;row<this.boardState.rows;row++){
-            for(var col=0;col<this.boardState.cols;col++){
-              this.boardState.tiles[row][col].tileId = id;
-              id+=1;
-            }
-          }
+          this.$store.commit('updateBoardState',{roomId:this.roomId,boardState:convertFENtoBoardState(response.data.Fen)});
           }
         });
       },
 
-      checkRoom(){
+      checkJoinRoom(){
           this.connect();
-          this.joinRoom(this.roomId,this.username);
-          this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: this.boardState, ws:this.ws ?? WS}})
-          //this.$router.push({path:`/game/${this.username}/${this.roomId}`})
+          this.joinRoom({roomId:this.roomId,username:this.username});
+          this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId}})
         },
     },
     data(){
         return {
-            boardState: null,
             username: null,
             roomId: this.$route.params.roomId,
-            ws:null,
             server_host: process.env.VUE_APP_SERVER_HOST,
         }
     }
-}
+});
 </script>
 
 <style>

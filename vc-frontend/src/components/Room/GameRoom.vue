@@ -15,11 +15,11 @@
                 <text x="35%" y="55%"  
                       font-family="Arial, Helvetica, sans-serif"
                       dominant-baseline="central" text-anchor="middle" :fill="result">
-                    {{result.toUpperCase()}} WINS!
+                    {{result?.toUpperCase()}} WINS!
                 </text>
           </svg>
           
-          <board :board="boardState" 
+          <Board :board="boardState" 
             ref="gameBoard" 
             :isflipped="isFlipped" 
             :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
@@ -79,9 +79,9 @@ import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
 import { BoardState, GameInfo, MoveInfoPayload, MovePatterns } from '../../types';
-import { Component, Vue, Prop } from 'vue-property-decorator'
-import { mapActions, Action } from 'vuex';
-import {namespace} from 'vuex-class';
+import RootState from '../../store';
+import { mapActions} from 'vuex';
+import Vue from 'vue';
 
 type Button = {
   text: string;
@@ -90,115 +90,162 @@ type Button = {
   onclick: () => void;
 };
 
-const webSocketModule = namespace('webSocket');
+interface GameRoomData {
+  playerList: string[];
+  player1: string;
+  player2: string | null;
+  moveSrc: number | null;
+  moveDest: number | null;
+  isFlipped: boolean;
+  movePatterns: MovePatterns;
+  turn: string | null;
+  gameInfo: GameInfo;
+  result: string | null;
+  buttons: Button[];
+  membersList: string[];
+  boardState: BoardState | null;
+}
 
-@Component({
-  components:{
-    Chat, 
+  
+export default Vue.extend({
+  components: {
+    Chat,
     Board,
-    Members, 
+    Members,
     MovePatternTab,
   },
-  methods: {
-    ...mapActions('webSocket', ['sendResign', 'sendDrawOffer', 'sendMoveInfo']),
+  props: {
+    username: { type: String, required: true },
+    roomId: { type: String, required: true },
   },
-})
-export default class GameRoom extends Vue{
-  @Prop() username!: string;
-  @Prop() roomId!: string;
-
-  @webSocketModule.Action('sendMoveInfo') private sendMoveInfo!: (payload: any) => Promise<void>;
-  @webSocketModule.Action('sendDrawOffer') private sendDrawOffer!: (payload: any) => Promise<void>;
-  @webSocketModule.Action('sendResign') private sendResign!: (payload: any) => Promise<void>;
-
-  private gameBoard!: Vue & { updateBoardState1D(isFlipped: boolean): void };
-  shareLink: string =  this.getShareUrl();
-
-  playerList:string[] = [];
-  player1: string  = ""; 
-  player2: string |null = null;
-  moveSrc: number |null = null;
-  moveDest: number |null = null;
-  isFlipped: boolean = this.isFlippedCheck();
-  movePatterns: MovePatterns = this.$store.state.movePatterns;
-  turn: string | null = null;
-  gameInfo: GameInfo = this.$store.state.gameInfo;
-  result:string | null = null;
-  buttons:Button[] = [
-    {text:'Flip',icon:'fa-retweet',color:'black',onclick: this.flip},
-    {text:'Resign',icon:'fa-flag',color:'red darken-1',onclick:this.resign},
-    {text:'Offer Draw',icon:'fa-handshake',color:'blue darken-2',onclick:this.offerDraw}
-  ];
-  membersList: string[] = [];
-  boardState:BoardState | null=  null;
-
+  data():GameRoomData {
+    return {
+      playerList: [],
+      player1: '',
+      player2: null,
+      moveSrc: null,
+      moveDest: null,
+      isFlipped: false,
+      movePatterns: this.$store.state.movePatterns,
+      turn: null,
+      gameInfo: this.$store.state.gameInfo,
+      result: null,
+      buttons: [],
+      membersList: [],
+      boardState: null,
+    };
+  },
   created() {
     this.player1 = this.$store.state.gameInfo[this.roomId];
     this.boardState = this.$store.state.boards[this.roomId];
-  }
-
-  getShareUrl(){ return `${window.location.origin}/join/${this.roomId}`}
-
-  updatePlayerList(){
-    var roomInfo = this.$store.state.gameInfo[this.roomId]
-    this.player1 = roomInfo.p1;
-    this.player2 = roomInfo && roomInfo.p2 ? roomInfo.p2 : null;
-    this.playerList = this.player1? this.player2? [this.player1,this.player2] : [this.player1] :[];
-    this.membersList = roomInfo && roomInfo.members.filter((value:string)=>{
-      return value!=this.player1 && value!=this.player2
+    this.buttons = [
+        { text: 'Flip', icon: 'fa-retweet', color: 'black', onclick: this.flip },
+        { text: 'Resign', icon: 'fa-flag', color: 'red darken-1', onclick: this.resign },
+        { text: 'Offer Draw', icon: 'fa-handshake', color: 'blue darken-2', onclick: this.offerDraw },
+      ] as Button[];
+    
+  },
+  
+  computed: {
+    shareLink(): string {
+      return `${window.location.origin}/join/${this.roomId}`;
+    },
+  },
+  mounted() {
+    this.updatePlayerList();
+    this.$store.commit("setClientInfo",{
+      username:this.username,
+      isPlayer: this.username==this.player1 || this.username==this.player2,
+      color: this.username==this.player1 ? 'w' : this.username==this.player2 ? 'b' : null,
+      ws: this.ws
+      })
+    this.$store.subscribe((mutation,state) => {
+      
+      if (mutation.type === "updateGameInfo") {
+        this.player1 = state.gameInfo[this.roomId]?.p1 ??  this.username;
+        this.player2 = state.gameInfo[this.roomId]?.p2 ? state.gameInfo[this.roomId].p2 : null;
+        this.updatePlayerList()
+        this.isFlippedCheck()
+        
+      }
+      else if(mutation.type === "performMove"){
+        this.$refs.gameBoard.performMove(this.$store.state.currentMove)
+      }
+      else if(mutation.type==="setServerStatus"){
+        this.error = state.errorMessage;
+      }
+      else if(mutation.type ==="setResult"){
+        this.result = state.gameInfo.result;
+      }
     })
-  }
+  },
+  methods:{
+    ...mapActions('webSocket', ['sendResign', 'sendDrawOffer', 'sendMoveInfo']),
 
-  validateMove(destInfo:{row:number, col:number}){
-    let srcInfo = this.$store.state.curStartPos;
-    let piece = this.getPlayerColor()=='white' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='black' ? srcInfo.piece.toLowerCase() : srcInfo.piece
-    let info:MoveInfoPayload = {roomId: this.roomId,
-        piece: piece,
-        srcRow: srcInfo.row,
-        srcCol: srcInfo.col,
-        destRow: destInfo.row,
-        destCol: destInfo.col,
-        color:this.getPlayerColor()![0],
+    getShareUrl(){ return `${window.location.origin}/join/${this.roomId}`},
+    updatePlayerList(){
+      console.log(this.$store)
+      var roomInfo = this.$store.state.gameInfo[this.roomId]
+      this.player1 = roomInfo?.p1 ?? this.username;
+      this.player2 = roomInfo?.p2 ?? null;
+      this.playerList = this.player1? this.player2? [this.player1,this.player2] : [this.player1] :[];
+      this.membersList = roomInfo && roomInfo.members.filter((value:string)=>{
+        return value!=this.player1 && value!=this.player2
+      })
+    },
+
+    validateMove(destInfo:{row:number, col:number}){
+      let srcInfo = this.$store.state.curStartPos;
+      let piece = this.getPlayerColor()=='white' ? srcInfo.piece.toUpperCase() : this.getPlayerColor()=='black' ? srcInfo.piece.toLowerCase() : srcInfo.piece
+      let info:MoveInfoPayload = {roomId: this.roomId,
+          piece: piece,
+          srcRow: srcInfo.row,
+          srcCol: srcInfo.col,
+          destRow: destInfo.row,
+          destCol: destInfo.col,
+          color:this.getPlayerColor()![0],
+        } 
+      if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){     
+        info.castle=true
       } 
-    if((info.piece=='k'||info.piece=='K') && info.srcRow==info.destRow && Math.abs(info.srcCol-info.destCol)==2){     
-      info.castle=true
-    } 
-    this.sendMoveInfo(info)
-  }
+      this.sendMoveInfo(info)
+    },
 
-  getPlayerColor(){
-    return this.player1 == this.username ? 'white' : this.player2 == this.username ? 'black' : null;
-  }
+    getPlayerColor(){
+      return this.player1 == this.username ? 'white' : this.player2 == this.username ? 'black' : null;
+    },
 
-  getOpponentColor(){
-    var plColor = this.getPlayerColor();
-    return plColor == 'white' ? "black" : plColor!=null ? "white": null;
-  }
+    getOpponentColor(){
+      var plColor = this.getPlayerColor();
+      return plColor == 'white' ? "black" : plColor!=null ? "white": null;
+    },
 
-  flip(){
-    this.isFlipped=!this.isFlipped
-    this.gameBoard.updateBoardState1D(this.isFlipped);
-  }
+    flip(){
+      this.isFlipped=!this.isFlipped
+      this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
+    },
 
-  resign(){
-    this.sendResign({roomId:this.roomId,color: this.getPlayerColor()![0]})
-  }
+    resign(){
+      this.sendResign({roomId:this.roomId,color: this.getPlayerColor()![0]})
+    },
 
-  offerDraw(){
-    this.sendDrawOffer({roomId:this.roomId,color: this.getPlayerColor()![0]})
-  }
+    offerDraw(){
+      this.sendDrawOffer({roomId:this.roomId,color: this.getPlayerColor()![0]})
+    },
 
-  isFlippedCheck(){
-    this.isFlipped = this.player2 ? this.username === this.player2 : false;
-    return this.isFlipped;
-  }
+    isFlippedCheck(){
+      this.isFlipped = this.player2 ? this.username === this.player2 : false;
+      return this.isFlipped;
+    },
 
-  copyText(){
-    let input:HTMLInputElement =document.getElementById("tocopy") as HTMLInputElement;
-    input.select();
-    navigator.clipboard.writeText(input.value);
-  }
-}
+    copyText(){
+      let input:HTMLInputElement =document.getElementById("tocopy") as HTMLInputElement;
+      input.select();
+      navigator.clipboard.writeText(input.value);
+    }
+  },
+
+});
 </script>
 
 <style scoped>

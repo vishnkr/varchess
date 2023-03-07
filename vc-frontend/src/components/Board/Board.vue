@@ -26,8 +26,8 @@
 
 <script>
 import Square from './Square.vue';
-
-export default {
+import Vue from 'vue';
+export default Vue.extend({
   components: { Square },
   props:['board','isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
   watch: { 
@@ -35,7 +35,7 @@ export default {
           this.updateBoardState1D(this.isflipped)
         }
   },
-  mounted(){
+  mounted(){ 
       this.boardState = this.board;
       this.rows = this.board.rows
       this.cols = this.board.cols
@@ -179,7 +179,7 @@ export default {
         }
       }
     },
-}
+});
 </script>
 
 <style >

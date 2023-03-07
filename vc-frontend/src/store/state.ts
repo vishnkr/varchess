@@ -14,10 +14,6 @@ export interface RootState{
     movePatterns: MovePatterns,
 
 }
-export interface WebSocketState {
-    ws: WebSocket | null;
-    userId: string | null;
-}
 
 const state: RootState = {
     boards: {},

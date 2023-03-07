@@ -6,7 +6,7 @@ interface PossibleSquaresResponse {
   moves: number[];
 }
 
-const BASE_URL = process.env.VUE_APP_SERVER_HOST;
+const BASE_URI = process.env.VUE_APP_SERVER_HOST;
 
 const actions = {
   async getPossibleToSquares(
@@ -14,14 +14,14 @@ const actions = {
     payload: { roomId: string; color: string; srcRow: number; srcCol: number; piece: string }
   ): Promise<PossibleSquaresResponse> {
     const { roomId, color, srcRow, srcCol, piece } = payload;
-    const url = `${BASE_URL}/possible-squares?roomid=${roomId}&color=${color}&piece=${piece}&src_row=${srcRow}&src_col=${srcCol}`;
+    const url = `${BASE_URI}/possible-squares?roomid=${roomId}&color=${color}&piece=${piece}&src_row=${srcRow}&src_col=${srcCol}`;
     const possibleMoves = await axios.get(url);
     return possibleMoves.data;
   },
 
   async checkServerStatus({commit}:ActionContext<RootState,RootState>):Promise<void>{
     try{
-      const response = await axios.get(`${BASE_URL}/server-status`);
+      const response = await axios.get(`${BASE_URI}/server-status`);
       if (response.status==200){
         commit('setServerStatus',{isOnline:true,errorMessage:null})
       } else {

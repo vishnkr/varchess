@@ -1,12 +1,18 @@
 import { Module } from 'vuex';
-import { RootState, WebSocketState } from '../state';
+import { RootState } from '../state';
 import { ActionContext } from 'vuex';
 import { MoveInfo, MoveInfoPayload } from '@/types';
+import store from '..';
 
 const server_host = process.env.VUE_APP_SERVER_WS;
 
 function isOpen(ws: WebSocket) {
   return ws.readyState === WebSocket.OPEN;
+}
+
+export interface WebSocketState {
+  ws: WebSocket | null;
+  userId: string | null;
 }
 
 const webSocketModule: Module<WebSocketState, RootState> = {
@@ -44,15 +50,15 @@ const webSocketModule: Module<WebSocketState, RootState> = {
                } else {
                   msgData.id = (rootState.chatMessages[msgData.roomId]).length+1;
               }
-              commit('addMessage',msgData)
+             store.commit('addMessage',msgData)
               break;
             }
             case "error":{
-              commit('websocketError',apiMsg.data)
+              store.commit('setServerStatus',apiMsg.data)
               break;
             }
             case "gameInfo":{
-              commit('updateGameInfo',apiMsg)
+              store.commit('updateGameInfo',apiMsg)
                 if(apiMsg.result){
                   commit("setResult",apiMsg.result)
                 }
@@ -61,16 +67,16 @@ const webSocketModule: Module<WebSocketState, RootState> = {
 
             case "performMove":{
               if(apiMsg.isValid){ //only if move is valid you perform commit
-                commit('performMove',apiMsg)
+                store.commit('performMove',apiMsg)
               }
               if(apiMsg.result){
-                commit('setResult',apiMsg.result)
+                store.commit('setResult',apiMsg.result)
               }
                 break;
               }
             case "result":{
               if(apiMsg.result){
-                commit('setResult',apiMsg.result)
+                store.commit('setResult',apiMsg.result)
               }
               break;
             }
