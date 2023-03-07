@@ -18,9 +18,7 @@ type MessageStruct struct {
 	Data json.RawMessage`json:"data,omitempty"`
 }
 
-type UserRoomInfo struct {
-	Username           string              `json:"username"`
-	RoomId             string              `json:"roomId"`
+type CreateRoomInfo struct {
 	StartFEN           string              `json:"fen,omitempty"`
 	CustomMovePatterns []game.MovePatterns `json:"movePatterns,omitempty"`
 }
@@ -66,12 +64,16 @@ type Client struct {
 	disconnected sync.Once
 }
 
-func newClient(conn *websocket.Conn, wsServer *WsServer) *Client {
-	return &Client{
+func newClient(conn *websocket.Conn, wsServer *WsServer, roomId ,username string) *Client {
+	client:= &Client{
 		conn:     conn,
 		wsServer: wsServer,
 		send:     make(chan []byte, 256),
+		roomId: roomId,
+		username: username,
 	}
+	client.joinRoom(roomId,username)
+	return client
 }
 
 func (c *Client) disconnect(Type string) {
@@ -91,8 +93,6 @@ func (c *Client) Read() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	messageHandlers := map[string]func(*MessageStruct){
-        "createRoom": c.handleCreateRoom,
-        "joinRoom": c.handleJoinRoom,
         "chatMessage": c.handleChatMessage,
         "resign": c.handleResultOffer,
         "draw": c.handleResultOffer,
@@ -107,7 +107,7 @@ func (c *Client) Read() {
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		reqData := MessageStruct{}
 		json.Unmarshal([]byte(msg), &reqData)
-		log.Println("received data:", reqData)
+		log.Printf("received data: {} - \n", reqData.Type,string(reqData.Data))
 		if handler, ok := messageHandlers[reqData.Type]; ok {
             handler(&reqData)
         }
@@ -266,60 +266,33 @@ func (c *Client) handlePerformMove(data *MessageStruct) {
 	}
 }
 
-
-func (c *Client) handleCreateRoom(data *MessageStruct){
+func (c *Client) joinRoom(roomId, username string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	userInfo := &UserRoomInfo{}
-	err := json.Unmarshal([]byte(data.Data), &userInfo)
-    if err != nil {
-        log.Println("error unmarshalling createRoom data:", err)
-        return
-    }
-	c.username = userInfo.Username
-	c.roomId = userInfo.RoomId
-	RoomsMap[userInfo.RoomId] = &Room{
-		Game: &game.Game{
-			Board: game.ConvertFENtoBoard(userInfo.StartFEN),
-			Turn:  game.White,
-		},
-		Clients: make(map[*Client]bool),
-		Id:      c.roomId,
-		P1:      c,
-		DrawOffer: DrawOffer{IsOffered: false},
-	}
-	game.DisplayBoardState(RoomsMap[userInfo.RoomId].Game.Board)
-	RoomsMap[userInfo.RoomId].Clients[c] = true
-	gameInfo := GameInfo{Type: "gameInfo", P1: c.username, Turn: "w", RoomId: userInfo.RoomId, Members: []string{}}
-	gameInfo.Members = append(gameInfo.Members, c.username)
-	marshalledInfo, _ := json.Marshal(gameInfo)
-	RoomsMap[userInfo.RoomId].BroadcastToMembers(marshalledInfo)
-	if len(userInfo.CustomMovePatterns) != 0 {
-		RoomsMap[userInfo.RoomId].Game.Board.CustomMovePatterns = userInfo.CustomMovePatterns
-	}
-	return
-}
-
-func (c *Client) handleJoinRoom(data *MessageStruct) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	userInfo := &UserRoomInfo{}
-	json.Unmarshal([]byte(data.Data), &userInfo)
-	roomId:= userInfo.RoomId
+	fmt.Println(roomId,username)
 	curRoom, ok := RoomsMap[roomId]
+	curRoom.Clients[c] = true
+	userInfo:= map[string]string{"roomId":roomId,"username":username}
+	userInfoMsg,err:=getMessageRawByteSlice(userInfo,"join")
+	if err != nil {
+		// handle error
+	}
 	if ok {
-		var gameInfo GameInfo
-		if len(curRoom.Clients) == 1 {
-			RoomsMap[roomId].P2 = c
-			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: c.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
-		} else {
-			gameInfo = GameInfo{Type: "gameInfo", P1: curRoom.P1.username, P2: curRoom.P2.username, Turn: curRoom.Game.Turn.String(), RoomId: roomId, Members: RoomsMap[roomId].getClientUsernames()}
+		response := RoomState{
+			Fen:    game.ConvertBoardtoFEN(curRoom.Game.Board),
+			RoomId: roomId,
+			Members: curRoom.getClientUsernames(),
 		}
-		gameInfo.Members = append(gameInfo.Members, c.username)
-		RoomsMap[roomId].Clients[c] = true
-		c.roomId = roomId
-		marshalledInfo, _ := json.Marshal(gameInfo)
-		RoomsMap[roomId].BroadcastToMembers(marshalledInfo)
+		if curRoom.P1 != nil {
+			response.P1 = curRoom.P1.username
+		}
+		if curRoom.P2 != nil {
+			response.P2 = curRoom.P2.username
+		}
+		if curRoom.Game.Board.CustomMovePatterns != nil {
+			response.MovePatterns = curRoom.Game.Board.CustomMovePatterns
+		}
+		curRoom.BroadcastToMembersExceptSender(userInfoMsg,c)
 	} else {
 		log.Println("Room close")
 		errorMsg := "Room does not exist, connection expired"
@@ -329,4 +302,21 @@ func (c *Client) handleJoinRoom(data *MessageStruct) {
 			c.send <- errMessage
 		}
 	}
+	return
+}
+
+func getMessageRawByteSlice(m interface{},mType string) ([]byte, error){
+	data, err := json.Marshal(m)
+	if err!=nil{
+		return nil,err
+	}
+	message:= MessageStruct{
+		Type: mType,
+		Data: data,
+	}
+	var rawMessage json.RawMessage
+	if rawMessage,err = json.Marshal(message); err == nil{
+		return nil,err
+	}
+	return rawMessage,nil
 }

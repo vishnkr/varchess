@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 	"varchess/pkg/game"
-
-	"github.com/gorilla/mux"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,43 +19,76 @@ func (s *Server) ServerStatusHandler(w http.ResponseWriter, r *http.Request) err
     return nil
 }
 
-func (s *Server) RoomHandler(w http.ResponseWriter, r *http.Request) error {
-
+func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
 	uniqueRoomId := genRandSeq(6)
 	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
 		uniqueRoomId = genRandSeq(6)
 	}
-	dataBytes,err:=json.Marshal(uniqueRoomId)
+	data:= map[string]string{"roomId": uniqueRoomId}
+	dataBytes,err:=json.Marshal(data)
 	if err!=nil{
-		fmt.Println(err)
+		return WriteJSON(w,http.StatusInternalServerError,ApiError{Error: err.Error()})
 	}
 	response := MessageStruct{
-		Type: "getRoomId",
+		Type: "createRoom",
 		Data: json.RawMessage(dataBytes),
 	}
-	WriteJSON(w,http.StatusOK,response)
-	return nil
+
+	roomInfo := &CreateRoomInfo{}
+	err = json.NewDecoder(r.Body).Decode(roomInfo)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
+	}
+
+	RoomsMap[uniqueRoomId] = &Room{
+		Game: &game.Game{
+			Board: game.ConvertFENtoBoard(roomInfo.StartFEN),
+			Turn:  game.White,
+		},
+		Clients: make(map[*Client]bool),
+		Id:      uniqueRoomId,
+		DrawOffer: DrawOffer{IsOffered: false},
+	}
+
+	game.DisplayBoardState(RoomsMap[uniqueRoomId].Game.Board)
+
+	if len(roomInfo.CustomMovePatterns) != 0 {
+		RoomsMap[uniqueRoomId].Game.Board.CustomMovePatterns = roomInfo.CustomMovePatterns
+	}
+	// delete room if no one joins for 20s
+	go func(roomId string) {
+        time.Sleep(20 * time.Second)
+        room, ok := RoomsMap[roomId]
+        if ok && len(room.Clients) == 0 {
+			fmt.Println("closing room due to inactivity")
+            delete(RoomsMap, roomId)
+        }
+    }(uniqueRoomId)
+
+	return WriteJSON(w,http.StatusOK,response)
 }
 
-func (s *Server) BoardStateHandler(w http.ResponseWriter, r *http.Request) error {
-	params := mux.Vars(r)
-	id := params["roomId"]
-	room, ok := RoomsMap[id]
-	if ok {
-		response := BoardState{
-			Fen:    game.ConvertBoardtoFEN(room.Game.Board),
-			RoomId: id,
+func (s *Server) RoomStateHandler(w http.ResponseWriter, r *http.Request) error{
+	query := r.URL.Query()
+    roomId := query.Get("roomid")
+	curRoom,ok:= RoomsMap[roomId]
+	var response RoomState
+	if ok{
+		response = RoomState{
+			Fen:    game.ConvertBoardtoFEN(curRoom.Game.Board),
+			RoomId: roomId,
+			P1: curRoom.P1.username,
+			P2: curRoom.P2.username,
+			Members: curRoom.getClientUsernames(),
 		}
-		if room.Game.Board.CustomMovePatterns != nil {
-			response.MovePatterns = room.Game.Board.CustomMovePatterns
+		if curRoom.Game.Board.CustomMovePatterns != nil {
+			response.MovePatterns = curRoom.Game.Board.CustomMovePatterns
 		}
-		return WriteJSON(w, http.StatusOK, response)
 	} else {
-		errorMsg := "Room does not exist, connection expired"
-		errorMsgBytes, _ := json.Marshal(errorMsg)
-		errResponse := MessageStruct{Type: "error", Data: json.RawMessage(errorMsgBytes)}
-		return WriteJSON(w, http.StatusOK, errResponse)
+		return WriteJSON(w, http.StatusBadRequest,ApiError{Error: "Invalid Room ID"})
 	}
+	
+	return WriteJSON(w,http.StatusOK,response)
 }
 
 func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) error {

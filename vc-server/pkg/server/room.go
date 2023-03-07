@@ -24,6 +24,15 @@ type PossibleMoves struct {
 	Moves [][]int `json:"moves"`
 }
 
+type RoomState struct {
+	Fen          string `json:"fen"`
+	RoomId       string `json:"roomId"`
+	Members      []string `json:"members"`
+	P1 string `json:"p1,omitempty"`
+	P2 string `json:"p2,omitempty"`
+	MovePatterns []game.MovePatterns `json:"movePatterns"`
+}
+
 var RoomsMap = make(map[string]*Room)
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -69,10 +78,4 @@ func (room *Room) getClientUsernames() []string {
 		clientList = append(clientList, client.username)
 	}
 	return clientList
-}
-
-type BoardState struct {
-	Fen          string
-	RoomId       string
-	MovePatterns []game.MovePatterns `json:"movePatterns"`
 }

@@ -27,7 +27,6 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
 	CheckOrigin: func(r *http.Request) bool {
-		//return origin == "http://localhost:8080"
 		return true
 	},
 }
@@ -75,11 +74,13 @@ func (server *WsServer) deleteEmptyRooms(client *Client) {
 
 func ServeWsHandler(wsServer *WsServer, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
+	roomId := r.URL.Query().Get("roomId")
+    username := r.URL.Query().Get("username")
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := newClient(conn, wsServer)
+	client := newClient(conn, wsServer,roomId,username)
 	go client.Write()
 	go client.Read()
 	wsServer.register <- client

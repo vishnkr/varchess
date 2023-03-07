@@ -42,8 +42,8 @@ func NewServer(listenAddr string, store store.Storage) *Server {
 func (s *Server) Start(allowedOrigins string) error {
 	router := mux.NewRouter()
 	router.Use(setHeadersMiddleware(allowedOrigins))
-	router.HandleFunc("/room-id", makeHTTPHandleFunc(s.RoomHandler)).Methods("POST")
-	router.HandleFunc("/board-fen/{roomId}", makeHTTPHandleFunc(s.BoardStateHandler)).Methods("GET", "OPTIONS")
+	router.HandleFunc("/room-state", makeHTTPHandleFunc(s.RoomStateHandler)).Methods("GET")
+	router.HandleFunc("/create-room", makeHTTPHandleFunc(s.CreateRoomHandler)).Methods("POST")
 	router.HandleFunc("/", rootHandler)
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.AuthenticateUserHandler)).Methods("GET")
 	router.HandleFunc("/signup", makeHTTPHandleFunc(s.CreateAccountHandler)).Methods("POST")
@@ -52,7 +52,7 @@ func (s *Server) Start(allowedOrigins string) error {
 		w.WriteHeader(http.StatusOK)
 		return nil
 	})).Methods("GET")
-	
+
 	wsServer := NewWebsocketServer()
 	go wsServer.Run()
 	router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
