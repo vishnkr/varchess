@@ -84,5 +84,5 @@ func ServeWsHandler(wsServer *WsServer, w http.ResponseWriter, r *http.Request) 
 	go client.Write()
 	go client.Read()
 	wsServer.register <- client
-	log.Println("New Client!")
+	log.Println("New Client!",username)
 }

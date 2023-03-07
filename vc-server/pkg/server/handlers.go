@@ -19,28 +19,21 @@ func (s *Server) ServerStatusHandler(w http.ResponseWriter, r *http.Request) err
     return nil
 }
 
+type CreateRoomResponse struct {
+	RoomId string `json:"roomId"`
+}
+
 func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
 	uniqueRoomId := genRandSeq(6)
 	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
 		uniqueRoomId = genRandSeq(6)
 	}
-	data:= map[string]string{"roomId": uniqueRoomId}
-	dataBytes,err:=json.Marshal(data)
-	if err!=nil{
-		return WriteJSON(w,http.StatusInternalServerError,ApiError{Error: err.Error()})
-	}
-	response := MessageStruct{
-		Type: "createRoom",
-		Data: json.RawMessage(dataBytes),
-	}
-
 	roomInfo := &CreateRoomInfo{}
-	err = json.NewDecoder(r.Body).Decode(roomInfo)
+	err := json.NewDecoder(r.Body).Decode(roomInfo)
 	if err != nil {
-		WriteJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
+		return WriteJSON(w, http.StatusBadRequest, ApiError{Error: err.Error()})
 	}
-
-	RoomsMap[uniqueRoomId] = &Room{
+	curRoom := &Room{
 		Game: &game.Game{
 			Board: game.ConvertFENtoBoard(roomInfo.StartFEN),
 			Turn:  game.White,
@@ -49,12 +42,13 @@ func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
 		Id:      uniqueRoomId,
 		DrawOffer: DrawOffer{IsOffered: false},
 	}
-
-	game.DisplayBoardState(RoomsMap[uniqueRoomId].Game.Board)
+	RoomsMap[uniqueRoomId] = curRoom
+	game.DisplayBoardState(curRoom.Game.Board)
 
 	if len(roomInfo.CustomMovePatterns) != 0 {
 		RoomsMap[uniqueRoomId].Game.Board.CustomMovePatterns = roomInfo.CustomMovePatterns
 	}
+	response:= &CreateRoomResponse{RoomId: uniqueRoomId}
 	// delete room if no one joins for 20s
 	go func(roomId string) {
         time.Sleep(20 * time.Second)
@@ -64,7 +58,7 @@ func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
             delete(RoomsMap, roomId)
         }
     }(uniqueRoomId)
-
+	
 	return WriteJSON(w,http.StatusOK,response)
 }
 

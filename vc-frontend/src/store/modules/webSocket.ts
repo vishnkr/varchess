@@ -30,8 +30,8 @@ const webSocketModule: Module<WebSocketState, RootState> = {
     }
   },
   actions: {
-    connect({ commit, rootState }) {
-      const ws = new WebSocket(`${server_host}/ws`);
+    connect({ commit, rootState },{roomId,username}) {
+      const ws = new WebSocket(`${server_host}/ws?roomId=${roomId}&username=${username}`);
       ws.onopen = function(){
         console.log("Socket opened");
       }
@@ -115,14 +115,6 @@ const webSocketModule: Module<WebSocketState, RootState> = {
       console.log('sending jsonreq',JSON.stringify(payload))
       context.state.ws.send(JSON.stringify(payload));
       
-    },
-
-    createRoom(context: ActionContext<WebSocketState, RootState>, payload: { roomId: string; username: string; fen: string; customMovePatterns?: any }) {
-      context.dispatch('sendJSONReq', { type: 'createRoom', data: payload });
-    },
-  
-    joinRoom(context: ActionContext<WebSocketState, RootState>, payload: { roomId: string; username: string }) {
-      context.dispatch('sendJSONReq', { type: 'joinRoom', data: payload });
     },
   
     sendMessage(context: ActionContext<WebSocketState, RootState>, payload: { message: string; username: string; roomId: string }) {

@@ -19,7 +19,7 @@ type MessageStruct struct {
 }
 
 type CreateRoomInfo struct {
-	StartFEN           string              `json:"fen,omitempty"`
+	StartFEN           string              `json:"fen"`
 	CustomMovePatterns []game.MovePatterns `json:"movePatterns,omitempty"`
 }
 

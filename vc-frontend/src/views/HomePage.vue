@@ -112,6 +112,7 @@ import {EditorRouteParams} from '../types';
 import Vue from 'vue';
 import { mapActions } from 'vuex'
 import { convertFENtoBoardState } from '../utils/fen';
+import { Route } from 'vue-router';
 
 interface Data {
   createClicked: boolean;
@@ -140,7 +141,8 @@ export default Vue.extend({
   },
   
   methods:{
-    ...mapActions('webSocket',['connect','close','createRoom']),
+    ...mapActions('webSocket',['connect','close']),
+    ...mapActions(['createRoom']),
     closeWebSocket() {
       this.close()
     },
@@ -162,42 +164,34 @@ export default Vue.extend({
         return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))
     },
 
-    async enterRoom(){
-      if(this.username){
-        await axios.post(`${this.server_host}/room-id`)
-        .then((response) => {
-          this.roomId = response.data.data;
-          this.connect();
-          if (this.username != null && this.roomId != null){
-            if(this.mode=='custom'){
-              this.$router.push({
-                name:'Editor',
+    async enterRoom() {
+      if (this.username) {
+        let nextComponentName = this.mode ==='custom' ? 'Editor' : 'Game';
+        if (this.mode!=='custom'){
+          try{
+            this.roomId = await this.createRoom({fen:this.standardFen});
+            if (this.username != null && this.roomId != null) {
+              if (this.mode !== 'custom') {
+                this.connect({ roomId: this.roomId, username: this.username });
+                this.$store.commit('updateBoardState', { roomId: this.roomId, boardState: convertFENtoBoardState(this.standardFen) });
+              }
+              const nextComponent = {
+                name: nextComponentName,
                 params: {
                   username: this.username,
-                  roomId: this.roomId, 
-              } as EditorRouteParams
-              });
-            }else{
-              this.createRoom({roomId:this.roomId,username:this.username, fen:this.standardFen});
-              this.$store.commit('updateBoardState',{roomId:this.roomId,boardState:convertFENtoBoardState(this.standardFen)});
-              this.$router.push({
-                name:'Game', 
-                params: {
-                  username: this.username,
-                  roomId: this.roomId, 
+                  roomId: this.roomId,
                 },
-              });
+              };
+              this.$router.push(nextComponent);
             }
+          } catch(error){
+              this.errorText = 'Server Not Responding'
+              this.dialog = false
+              console.log(error);
           }
-          
-        }, (error) => {
-          this.errorText = 'Server Not Responding'
-          this.dialog=false
-          console.log(error);
-        });
-      }
+        }
+      } 
     },
-
   },
   data():Data{
     return {
