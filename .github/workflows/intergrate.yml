@@ -1,10 +1,10 @@
-name: Makefile CI
+name: Go CI
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    paths: 
+      - "vc-server/**"
 
 jobs:
   build_server:
