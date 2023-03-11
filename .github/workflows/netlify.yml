@@ -1,0 +1,43 @@
+name: Build and Deploy to Netlify 
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ./vc-frontend/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ./vc-frontend/**
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: |
+        cd vc-frontend
+        npm install
+
+    - name: Build
+      run: |
+        cd vc-frontend
+        npm run build
+
+    - name: Deploy to Netlify
+      uses: nwtgck/actions-netlify@v1
+      
+      with:
+        production-branch: main
+        deploy-message: "Deploy from GitHub Actions"
+        publish-dir: './vc-frontend/dist'
+
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_ACCESS_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      timeout-minutes: 1
