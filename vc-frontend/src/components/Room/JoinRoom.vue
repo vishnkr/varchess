@@ -40,7 +40,6 @@ export default Vue.extend({
     mounted(){
       this.$store.subscribe((mutation,state)=>{
         if(mutation.type === SET_PLAYERS){
-          console.log('we hewe',state.gameInfo)
           if (state.gameInfo.players.p2 && this.roomId && this.username){
             this.enterRoom(this.roomId,this.username)
           }

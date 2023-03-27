@@ -121,7 +121,6 @@ export default {
         },
     },
     data(){
-        console.log('edi',this.editorState)
         return {
             modifiedEditorState: this.editorState,
             colorSelect: 'white',

@@ -6,17 +6,13 @@
 </template>
 
 <script>
+
 export default {
-    data(){
-        return {
-            
-        }
-    },
     props:{
-        pieceType: String,
-        color: String,
-        row: Number,
-        col: Number,
+        pieceType: {type: String,required: true},
+        color: {type: String,required: true},
+        row: {type: Number,required: true},
+        col: {type: Number,required: true},
     },
     computed:{
         getPieceURL(){ return require(`../../assets/images/pieces/${this.color}/${this.pieceType}.svg`)},

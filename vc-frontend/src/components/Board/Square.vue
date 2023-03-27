@@ -1,5 +1,5 @@
 <template>
-  <div class="square" :id="tileId" :style="cssVar" 
+  <div class="square" :id="tileId" :style="{'--x':x,'--y':y}" 
         :class="[disabled || tileType=='disabled' ? 'disabled' : tileType=='d'? 'dark':'light', 
         mpTabData? mpTabData[[this.row,this.col]]:null , 
         !mpTabData && highlight? this.getHighlightType():null,
@@ -12,15 +12,24 @@
   </div>
 </template>
 
-<script>
-import Piece from './Piece'
+<script setup lang="ts">
+import { mapMutations } from 'vuex';
+import { PiecePosition } from '../../types';
+import { UNDO_SRC_SELECTION } from '../../utils/mutation_types';
+import Piece from './Piece.vue';
+
+/*const emit = defineEmits<{
+  (e: 'setEditorBoardState', id: number): void
+  (e: 'sendSelectedPiece', value: string): void
+}>();*/
 
 export default {
     components:{Piece},
+    emits: ['setEditorBoardState','sendSelectedPiece'],
     methods:{
+      ...mapMutations([UNDO_SRC_SELECTION]),
       getHighlightType(){
         if (this.selectedSrc){
-
           if (this.highlight.from==this.tileId){
             return 'highlight-from'
           } else{
@@ -40,7 +49,7 @@ export default {
         this.addColor= this.addColor==='jump'? 'jump' : null;
         },
       clickSquare(){
-        let pieceInfo = {id:this.tileId,row:this.row,col:this.col}
+        let pieceInfo:PiecePosition = {id:this.tileId,row:this.row,col:this.col}
         if(this.editorMode){
           if (this.editorState.isDisableTileOn){
             this.disabled = !this.disabled
@@ -52,13 +61,13 @@ export default {
           this.$emit("setEditorBoardState",clickType,this.row,this.col)
         } else {
           if(this.isPiecePresent & (!this.selectedSrc || this.selectedSrc && this.selectedSrc.pieceColor == (this.pieceColor=='white' ? 'w':'b') && this.selectedSrc.id!=this.tileId)){ // start pos is selected
-              pieceInfo.pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase();
-              this.$emit("sendSelectedPiece",{...pieceInfo,pieceColor:this.pieceColor})
+              let pieceType = this.pieceColor=='w' ? this.pieceType.toUpperCase() : this.pieceType.toLowerCase();
+              this.$emit("sendSelectedPiece",{...pieceInfo,pieceColor:this.pieceColor,pieceType:pieceType})
               // get possible move squares and highlight them
           } else { // dest pos is selected
             //stop displaying possible squares here
-          if(this.$store.state.curStartPos.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
-              this.$store.commit('undoSelection')
+          if(this.$store.state.curStartPos?.row == this.row && this.$store.state.curStartPos.col == this.col){ //clicking same piece as destination
+              this.UNDO_SRC_SELECTION()
               this.$emit("sendSelectedPiece",null)
             } else{
               if(this.isPiecePresent){
@@ -79,8 +88,9 @@ export default {
       }
     },
     props:['tileType','editorMode','editorState','mpTabData','row','col','isPiecePresent','pieceType','pieceColor','x','y','tileId','highlight','selectedSrc'],
-    computed:{
+    /*computed:{
         cssVar(){
+          console.log('whats this',this)
         return {
         '--x': this.x,
         '--y': this.y,
@@ -88,7 +98,7 @@ export default {
         }
       },
       
-    }
+    }*/
 }
 </script>
 

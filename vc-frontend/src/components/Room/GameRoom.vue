@@ -19,7 +19,7 @@
                 </text>
           </svg>
           
-          <Board :board="boardState"  
+          <Board
             :isflipped="isFlipped" 
             :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
             :editorMode="false"
@@ -101,7 +101,6 @@ interface GameRoomData {
   gameInfo: GameInfo;
   result: string | null;
   buttons: Button[];
-  boardState: BoardState | null;
   errorText: string | null,
 }
 
@@ -130,13 +129,12 @@ export default Vue.extend({
       gameInfo: this.$store.state.gameInfo,
       result: null,
       buttons: [],
-      boardState: null,
       errorText: null,
     };
   },
   created() {
-    this.player1 = this.$store.state.gameInfo[this.roomId];
-    this.boardState = this.$store.state.board;
+    this.player1 = this.$store.state.gameInfo.players.p1;
+    this.$data.boardState = this.$store.state.board;
     this.buttons = [
         { text: 'Flip', icon: 'fa-retweet', color: 'black', onclick: this.flip },
         { text: 'Resign', icon: 'fa-flag', color: 'red darken-1', onclick: this.resign },

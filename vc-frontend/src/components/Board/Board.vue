@@ -24,41 +24,53 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Square from './Square.vue';
 import Vue from 'vue';
+import { BoardState,PiecePosition,Tile } from '../../types';
+import { PERFORM_MOVE, SET_SRC_SELECTION } from '../../utils/mutation_types';
+import { mapMutations } from 'vuex';
+
+interface BoardData{
+  board: BoardState,
+  boardState1D: Tile[],
+  rows: number,
+  cols: number,
+  highlightData:PiecePosition | null,
+}
+
 export default Vue.extend({
   components: { Square },
-  props:['board','isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
-  expose: [ 'updateBoardState1D'],
+  props:['isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
+  created(){
+      console.log(this.$data);
+  },
   watch: { 
     isflipped() { 
       this.updateBoardState1D(this.isflipped)
     }
   },
   mounted(){ 
-      this.boardState = this.board;
       this.rows = this.board.rows
       this.cols = this.board.cols
       this.updateBoardState1D(this.isflipped)
       this.$store.subscribe((mutation,state)=>{
-        if(mutation.type === "performMove"){
+        if(mutation.type === PERFORM_MOVE && this.$store.state.currentMove){
           this.performMove(this.$store.state.currentMove)
         }
       })
   },
-  data(){
+  data():BoardData{
         return {
-            boardState: [],
+            board: this.$store.state.board,
             boardState1D: [],
             rows: 0,
             cols:0,
-            selectedSrc: null,
-            highlightData:null, 
-            roomId: this.$route.params.roomId,
+            highlightData: null,
         }
     },
     methods:{
+      ...mapMutations([SET_SRC_SELECTION]),
       handleEditorSquareClick(type,row,col){
         if (type=="regular"){
           if (this.editorState.isDisableTileOn){
@@ -72,7 +84,7 @@ export default Vue.extend({
         }
       },
       setSlidePattern(slideDirections){
-        let tileIDs = []
+        let tileIDs:number[] = [];
         for(var i = 0;i<this.boardState1D.length;i++){
           this.$refs.squares[i].removeColorFromSquare()
         }
@@ -90,8 +102,8 @@ export default Vue.extend({
         }
       },
       editorModeSquareClicked(row,col){
-        if(this.boardState.tiles[row-1][col-1].isPiecePresent){
-          this.boardState.tiles[row-1][col-1].isPiecePresent = false;
+        if(this.board.tiles[row-1][col-1].isPiecePresent){
+          this.board.tiles[row-1][col-1].isPiecePresent = false;
         }
         else{
           this.boardState.tiles[row-1][col-1].isPiecePresent = true;
@@ -129,7 +141,7 @@ export default Vue.extend({
           if(pieceInfo && this.playerColor == pieceInfo.pieceColor[0]){
             let tomoves = await this.$store.dispatch('getPossibleToSquares',{roomId:this.roomId,color:pieceInfo.pieceColor,srcRow:pieceInfo.row-1,srcCol:pieceInfo.col-1,piece:pieceInfo.pieceType});
             this.selectedSrc = {id:pieceInfo.id,pieceColor:pieceInfo.pieceColor[0],pieceType:pieceInfo.pieceType}
-            this.$store.commit('setSelection',{row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
+            this.SET_SRC_SELECTION({row:pieceInfo.row,col:pieceInfo.col,piece:pieceInfo.pieceType})
             this.highlightData = {from:pieceInfo.id,to:tomoves.moves};
           }
           else{ 
@@ -143,23 +155,20 @@ export default Vue.extend({
           this.boardState1D=[]
           let row,tile,x=1,y=1,flipX = this.rows,flipY = this.cols ;
           let tileId = flipped ? this.rows*this.cols - 1 : 0;
-          for(row of this.boardState.tiles){
+          for(row of this.$store.state.board.tiles){
               for(tile of row){
-                tile.tileId = tileId;
-                tileId+= flipped? -1 : 1;     
-                tile.x= flipped? flipX : x;
-                tile.row = x;
-                tile.col = y;
-                tile.tileType = tile.disabled ? 'disabled' : this.isLight(y,x)? 'l' : 'd';
-                tile.y= flipped? flipY : y;
-                y+=1
-                flipY-=1
-                if(flipped){
-                  stack.push(tile)
-                }
-                else{
-                this.boardState1D.push(tile);
-                }
+                let newTile: Tile = {
+                  tileId: tile.tileId + (flipped ? -1 : 1),
+                  x: flipped? flipX : x,
+                  row: x,
+                  col: y,
+                  tileType : tile.disabled ? 'disabled' : this.isLight(y,x)? 'l' : 'd',
+                  y: flipped? flipY : y,
+                  ...tile
+                };
+                y+=1;
+                flipY-=1;
+                this.boardState1D.push(newTile);
               }
               x+=1
               flipX-=1
@@ -167,10 +176,7 @@ export default Vue.extend({
               y=1;
           }
           if(flipped){
-            var squares = stack.length
-            for(var i=0;i<squares;i++){
-              this.boardState1D.push(stack.pop())
-            }
+            this.boardState1D.reverse();
           }
       },
         isEven(val){return val%2==0},
@@ -178,6 +184,9 @@ export default Vue.extend({
             return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
     },
     computed:{
+      selectedSrc(){
+        return this.$store.state.curStartPos
+      },
       cssVar(){
         return {
         '--container_size': this.boardSize ? `${this.boardSize}px` : `${700}px`,
