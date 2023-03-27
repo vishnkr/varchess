@@ -1,29 +1,25 @@
-import { ClientInfo, ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus } from "@/types"
+import {ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus } from "@/types"
 
 
 export interface RootState{
-    boards : Record<string,BoardState>,
+    board : BoardState | null,
     chatMessages : Record<string,ChatMessage[]>,
     gameInfo : GameInfo | null,
     curStartPos : PiecePosition | null,
     curDestPos : PiecePosition | null,
     currentMove: MoveInfo | null,
-    clientInfo: ClientInfo | null,
-    turn: 'w' | 'b',
     serverStatus: ServerStatus,
     movePatterns: MovePatterns,
 
 }
 
 const state: RootState = {
-    boards: {},
+    board: null,
     chatMessages: {},
     gameInfo: null,
     curStartPos: null, 
     curDestPos: null,
     currentMove: null,
-    clientInfo: null,
-    turn: 'w',
     serverStatus: {isOnline:null,errorMessage:null},
     movePatterns:null,
 }

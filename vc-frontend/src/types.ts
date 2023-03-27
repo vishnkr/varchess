@@ -30,10 +30,18 @@ export interface ChatMessage{
 
 export interface GameInfo{
     result?: string,
+    players: Players
+    members: string[],
+}
+
+export interface Players{
     p1: string,
-    p2?: string,
-    members?: string[],
-    turn: string,
+    p2?: string
+}
+
+export interface WsMessage{
+    type:string,
+    data:string,
 }
 
 export interface PiecePosition{
@@ -63,12 +71,6 @@ export interface MoveInfoPayload extends MoveInfo{
     color: string;
 }
 
-export interface ClientInfo{
-    username: string,
-    isPlayer: boolean,
-    color?: string,
-}
-
 export interface MovePattern{
     piece: string,
 }
@@ -83,3 +85,22 @@ export interface ServerStatus{
     isOnline: boolean | null,
     errorMessage: string | null
 }
+
+export interface PossibleSquaresResponse {
+    moves: number[];
+  }
+  
+  export interface RoomState{
+    fen:string,
+    movePatterns:MovePattern[],
+    roomId:string,
+    p1:string | undefined,
+    p2: string | undefined,
+    members : string[],
+    turn: string,
+  }
+  
+  export interface CreateRoomResponse{
+    roomId:string
+  }
+  

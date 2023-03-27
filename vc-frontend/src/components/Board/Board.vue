@@ -30,16 +30,22 @@ import Vue from 'vue';
 export default Vue.extend({
   components: { Square },
   props:['board','isflipped','playerColor',"editorMode","editorState","boardSize","mpTabData"],
+  expose: [ 'updateBoardState1D'],
   watch: { 
     isflipped() { 
-          this.updateBoardState1D(this.isflipped)
-        }
+      this.updateBoardState1D(this.isflipped)
+    }
   },
   mounted(){ 
       this.boardState = this.board;
       this.rows = this.board.rows
       this.cols = this.board.cols
       this.updateBoardState1D(this.isflipped)
+      this.$store.subscribe((mutation,state)=>{
+        if(mutation.type === "performMove"){
+          this.performMove(this.$store.state.currentMove)
+        }
+      })
   },
   data(){
         return {

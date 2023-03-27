@@ -1,8 +1,8 @@
-import { Module } from 'vuex';
+import { Module,ActionContext } from 'vuex';
 import { RootState } from '../state';
-import { ActionContext } from 'vuex';
-import { MoveInfo, MoveInfoPayload } from '@/types';
+import { MoveInfo, MoveInfoPayload, WsMessage } from '@/types';
 import store from '..';
+import * as MutationTypes from '@/utils/mutation_types';
 
 const server_host = process.env.VUE_APP_SERVER_WS;
 
@@ -14,7 +14,10 @@ export interface WebSocketState {
   ws: WebSocket | null;
   userId: string | null;
 }
-
+interface ConnectParams {
+  roomId: string;
+  username: string;
+}
 const webSocketModule: Module<WebSocketState, RootState> = {
   namespaced: true,
   state: {
@@ -30,7 +33,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
     }
   },
   actions: {
-    connect({ commit, rootState },{roomId,username}) {
+    connect({ commit, rootState }: ActionContext<WebSocketState, RootState>,{roomId,username}:ConnectParams) {
       const ws = new WebSocket(`${server_host}/ws?roomId=${roomId}&username=${username}`);
       ws.onopen = function(){
         console.log("Socket opened");
@@ -40,7 +43,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
         commit('websocketError','Connection to server could not be established! Try again soon!')
       }
 
-      ws.onmessage = function(msg){
+      ws.onmessage = function(msg){ 
         let apiMsg = JSON.parse(msg.data);
         switch(apiMsg.type){
             case "chatMessage": {
@@ -50,33 +53,34 @@ const webSocketModule: Module<WebSocketState, RootState> = {
                } else {
                   msgData.id = (rootState.chatMessages[msgData.roomId]).length+1;
               }
-             store.commit('addMessage',msgData)
+             store.commit(MutationTypes.ADD_CHAT_MESSAGE,msgData)
               break;
             }
             case "error":{
-              store.commit('setServerStatus',apiMsg.data)
+              store.commit(MutationTypes.SET_SERVER_STATUS,apiMsg.data)
               break;
             }
-            case "gameInfo":{
-              store.commit('updateGameInfo',apiMsg)
-                if(apiMsg.result){
-                  commit("setResult",apiMsg.result)
-                }
-                break;
-            }
 
+            case "memberList":{
+              let msgData = apiMsg.data;
+              store.commit(MutationTypes.SET_PLAYERS,{
+                p1: msgData.p1,
+                p2: msgData.p2 ?? null
+              });
+              store.commit(MutationTypes.UPDATE_MEMBERS,{members:msgData.members})
+            }
             case "performMove":{
               if(apiMsg.isValid){ //only if move is valid you perform commit
-                store.commit('performMove',apiMsg)
+                store.commit(MutationTypes.PERFORM_MOVE,apiMsg)
               }
               if(apiMsg.result){
-                store.commit('setResult',apiMsg.result)
+                store.commit(MutationTypes.SET_RESULT,apiMsg.result)
               }
                 break;
               }
             case "result":{
               if(apiMsg.result){
-                store.commit('setResult',apiMsg.result)
+                store.commit(MutationTypes.SET_RESULT,apiMsg.result)
               }
               break;
             }
@@ -95,8 +99,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
       }
     },
 
-    async sendJSONReq(context: ActionContext<WebSocketState, RootState>,payload:{type:string,msg:any}){
-      console.log('in send json',context.state.ws,isOpen(context.state.ws!))
+    async sendJSONReq(context: ActionContext<WebSocketState, RootState>,payload:{type:string,msg:any}){                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
       await new Promise<void>((resolve, reject) => {
         if (!context.state.ws) {
           reject(new Error('WebSocket not available'));
@@ -119,10 +122,6 @@ const webSocketModule: Module<WebSocketState, RootState> = {
   
     sendMessage(context: ActionContext<WebSocketState, RootState>, payload: { message: string; username: string; roomId: string }) {
       context.dispatch('sendJSONReq', { type: 'chatMessage', data: payload });
-    },
-  
-    requestGameinfo(context: ActionContext<WebSocketState, RootState>, payload: { roomId: string }) {
-      context.dispatch('sendJSONReq', { type: 'reqGameInfo', data:payload });
     },
   
     sendResign(context: ActionContext<WebSocketState, RootState>, payload: { roomId: string; color: string }) {

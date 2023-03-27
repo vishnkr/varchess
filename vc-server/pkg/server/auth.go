@@ -36,7 +36,7 @@ func CreateJwtToken(userid int) (string, error) {
 	return token, nil
 }
 
-func (s *Server) CreateAccountHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) createAccountHandler(w http.ResponseWriter, r *http.Request) error {
 	user := &store.User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *Server) CreateAccountHandler(w http.ResponseWriter, r *http.Request) er
 
 }
 
-func (s *Server) AuthenticateUserHandler(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) authenticateUserHandler(w http.ResponseWriter, r *http.Request) error {
 	user := &store.User{}
 	err := json.NewDecoder(r.Body).Decode(user)
 	if err != nil {

@@ -69,9 +69,10 @@
             <v-toolbar
               color="primary"
               dark
-            ><h3>Choose Game Setup</h3></v-toolbar>
+            ><h3>{{loading ? 'Waiting for another player to join..' : 'Choose Game Setup'}}                                                                                                                                                        </h3></v-toolbar>
             <v-card-actions class="justify-start">
-              <v-radio-group
+              <div v-if = "!loading">
+                <v-radio-group
                     v-model="mode"
                     row
                     dense
@@ -81,15 +82,26 @@
                         <font-awesome-icon icon="info-circle" />
                       </template>
                     </v-radio>
-                  </v-radio-group>
-                <v-spacer></v-spacer>
-              <v-btn
+                 </v-radio-group>
+              </div>  
+              <div v-if="loading" class="text-center">
+                <h3>Share the link below to invite friends to join the room</h3>
+                <v-progress-circular :size="60" indeterminate color="primary" />
+                <v-spacer />
+                <v-row row d-flex nowrap align="center" justify="center" class="px-2">
+                  <v-text-field width="10px" class="centered-input" v-model="shareLink" id="tocopy" readonly></v-text-field>
+                  <v-btn width="6.5rem" class="ma-2" rounded dark color="blue" @click="copyText">Copy<v-icon>fas fa-link</v-icon></v-btn>
+                  <v-btn color="error" @click="handleCancel">Cancel</v-btn>
+                </v-row>
+              </div>
+              <v-spacer v-if="!loading" />
+              <v-btn v-if="!loading"
                 color="error"
-                @click="dialog=false"
+                @click="handleCancel"
               >Cancel</v-btn>
-              <v-btn
+              <v-btn v-if = "!loading"
                 color="success"
-                @click="enterRoom"
+                @click="enterRoomWithLoading"
               >Enter Room</v-btn>
             </v-card-actions>
           </v-card>
@@ -104,15 +116,14 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios';
 import { GAME_MODES, GameMode } from '../utils/constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {EditorRouteParams} from '../types';
 import Vue from 'vue';
-import { mapActions } from 'vuex'
+import { mapActions, mapMutations } from 'vuex'
 import { convertFENtoBoardState } from '../utils/fen';
-import { Route } from 'vue-router';
+import LoadingScreen from '../components/Other/LoadingScreen.vue';
+import { SET_PLAYERS, SET_SERVER_STATUS, UPDATE_BOARD_STATE } from '../utils/mutation_types';
 
 interface Data {
   createClicked: boolean;
@@ -124,18 +135,31 @@ interface Data {
   roomId: string | null;
   server_host: string | undefined;
   game_modes: GameMode[];
+  loading: boolean;
 }
 
 export default Vue.extend({
-  components:{},
-  props:['shared'],
+  components:{LoadingScreen},
+  computed:{
+    didPlayerJoin(){
+      return false
+    },
+    shareLink(): string {
+      return `${window.location.origin}/join/${this.roomId}`;
+    },
+  },
   mounted: function() {
     this.$store.commit('resetState');
     this.$store.subscribe((mutation, state) => {
-       if(mutation.type==="setServerStatus"){
+       if(mutation.type=== SET_SERVER_STATUS){
         if (state.serverStatus.errorMessage) {
           this.errorText = state.serverStatus.errorMessage;
         };
+      } else if(mutation.type === SET_PLAYERS){
+          if (state.gameInfo.players.p2 && this.username && this.roomId){
+            this.enterRoom()
+          }
+          
       }
      })
   },
@@ -143,8 +167,22 @@ export default Vue.extend({
   methods:{
     ...mapActions('webSocket',['connect','close']),
     ...mapActions(['createRoom']),
+    ...mapMutations([UPDATE_BOARD_STATE]),
     closeWebSocket() {
       this.close()
+    },
+    handleCancel(){
+      if (!this.loading){
+        this.dialog = false;
+      } else { 
+        this.loading = false;
+        this.close(); 
+      }
+    },
+    copyText(){
+      let input:HTMLInputElement =document.getElementById("tocopy") as HTMLInputElement;
+      input.select();
+      navigator.clipboard.writeText(input.value);
     },
     checkUsername(){
       if(!this.username || this.username==''){
@@ -164,34 +202,46 @@ export default Vue.extend({
         return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))
     },
 
-    async enterRoom() {
+    enterRoom() {
+      this.loading = false;
+      if(this.username && this.roomId){
+        this.$router.push({
+          name: 'Game',
+          params: {
+            username: this.username,
+              roomId: this.roomId,
+          },
+        });
+      }
+      
+    },
+
+    async enterRoomWithLoading(){
       if (this.username) {
-        let nextComponentName = this.mode ==='custom' ? 'Editor' : 'Game';
         if (this.mode!=='custom'){
           try{
+            this.loading = true;
             this.roomId = await this.createRoom({fen:this.standardFen});
-            if (this.username != null && this.roomId != null) {
-              if (this.mode !== 'custom') {
-                this.connect({ roomId: this.roomId, username: this.username });
-                this.$store.commit('updateBoardState', { roomId: this.roomId, boardState: convertFENtoBoardState(this.standardFen) });
-              }
-              const nextComponent = {
-                name: nextComponentName,
-                params: {
-                  username: this.username,
-                  roomId: this.roomId,
-                },
-              };
-              this.$router.push(nextComponent);
+            if (this.username && this.roomId) {
+              this.connect({ roomId: this.roomId, username: this.username });
+              this.UPDATE_BOARD_STATE({ roomId: this.roomId, boardState: convertFENtoBoardState(this.standardFen) });
+              return
             }
           } catch(error){
               this.errorText = 'Server Not Responding'
               this.dialog = false
               console.log(error);
+              return
           }
         }
+        this.$router.push({
+          name:'Editor',
+          params: {
+            username: this.username,
+          },
+        });
       } 
-    },
+    }
   },
   data():Data{
     return {
@@ -203,7 +253,8 @@ export default Vue.extend({
       standardFen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
       roomId: null,
       server_host: process.env.VUE_APP_SERVER_HOST,
-      game_modes: GAME_MODES
+      game_modes: GAME_MODES,
+      loading: false,
     };
   }
 });

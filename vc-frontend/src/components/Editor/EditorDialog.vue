@@ -59,8 +59,9 @@ import {validateStartSetup} from '../../utils/validator';
 import Board from '../Board/Board.vue';
 import BoardEditor from './BoardEditor.vue';
 import PieceEditor from './PieceEditor.vue';
-import { mapActions } from 'vuex';
+import { mapActions, mapMutations } from 'vuex';
 import Vue from 'vue';
+import { UPDATE_BOARD_STATE } from '../../utils/mutation_types';
 
 export default Vue.extend({
   components:{BoardEditor,PieceEditor,Board},
@@ -68,7 +69,9 @@ export default Vue.extend({
     this.setupDefaultBoardMaxSize()
   },
   methods:{
-    ...mapActions('webSocket',['createRoomWithCustomPatterns']),
+    ...mapActions('webSocket',['connect']),
+    ...mapActions(['createRoom']),
+    ...mapMutations([UPDATE_BOARD_STATE]),
     customPieceAdd(piece){
       this.editorState.added[piece]=true
     },
@@ -84,19 +87,34 @@ export default Vue.extend({
       }
       
     },
-    enterRoom(){
+    async enterRoom(){
       var finalboardState = this.boardState
       var fenString = convertBoardStateToFEN(finalboardState,'w','KQkq','-');
-      createRoomWithCustomPatterns(this.ws,this.roomId,this.username, fenString,this.customMovePatterns);
-      if(this.customMovePatterns!=[]){
-        this.$store.commit('storeMovePatterns',{movePatterns: this.customMovePatterns})
+      try {
+        this.roomId = await this.createRoom({fen:fenString,movePatterns:this.customMovePatterns});
+          if(this.roomId){
+            if(validateStartSetup(fenString)){
+              if(this.customMovePatterns!=[]){
+                this.SET_MOVE_PATTERNS({movePatterns: this.customMovePatterns})
+              }
+              this.connect({ roomId: this.roomId, username: this.username });
+              this.SET_SERVER_STATUS({isOnline:true,errorMessage:null})
+              this.$router.push({
+                    name: 'Game',
+                    params: {
+                      username: this.username,
+                      roomId: this.roomId,
+                    },
+                  });
+          } else {
+            this.SET_SERVER_STATUS({errorMessage:'Board state not valid: must contain 1 king for each color & not under check'})
+          }
+        }
+        
+      } catch (error){
+        console.error(error)
       }
-      if(validateStartSetup(fenString)){
-        this.$store.commit('websocketError',null)
-        this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId, boardState: finalboardState, ws:this.ws}})
-      } else {
-        this.$store.commit('websocketError','Board state not valid: must contain 1 king for each color & not under check')
-      }
+      
    },
 
     setMovePattern(piece,jumpPattern,slidePattern){
@@ -202,8 +220,7 @@ export default Vue.extend({
       boardState:{tiles:[]},
       maxBoardState:{tiles:[],rows:16,cols:16},
       username: this.$route.params.username,
-      roomId: this.$route.params.roomId,
-      ws: this.$route.params.ws,
+      roomId:null,
     }
   }
 

@@ -8,7 +8,7 @@ const routes = [
       component: () => import('@/views/HomePage.vue')
     },
     {
-      path: '/editor/:username/:roomId',
+      path: '/editor/:username',
       name: 'Editor',
       props: true,
       component: () => import('@/components/Editor/EditorDialog.vue'),

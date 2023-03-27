@@ -31,6 +31,7 @@ type RoomState struct {
 	P1 string `json:"p1,omitempty"`
 	P2 string `json:"p2,omitempty"`
 	MovePatterns []game.MovePatterns `json:"movePatterns"`
+	Turn string `json:"turn"`
 }
 
 var RoomsMap = make(map[string]*Room)
@@ -51,10 +52,10 @@ type GameInfo struct {
 	Type    string   `json:"type"`
 	P1      string   `json:"p1"`
 	P2      string   `json:"p2"`
-	Turn    string   `json:"turn"`
+	Turn    string   `json:"turn,omitempty"`
 	RoomId  string   `json:"roomId"`
-	Members []string `json:"members"`
-	Result  string   `json:"result"`
+	Members []string `json:"members,omitempty"`
+	Result  string   `json:"result,omitempty"`
 }
 
 
@@ -76,6 +77,17 @@ func (room *Room) getClientUsernames() []string {
 	var clientList = []string{}
 	for client := range room.Clients {
 		clientList = append(clientList, client.username)
+	}
+	return clientList
+}
+
+func (room *Room) getViewerClients() []string{
+	var clientList = []string{}
+	for client := range room.Clients {
+		if ((room.P1!=nil && client.username != room.P1.username) && (room.P2!=nil && client.username!= room.P2.username)){
+			clientList = append(clientList, client.username)
+		}
+		
 	}
 	return clientList
 }

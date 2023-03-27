@@ -1,24 +1,10 @@
-import { MovePattern } from "@/types";
+import { CreateRoomResponse, MovePattern, PossibleSquaresResponse, RoomState } from "@/types";
+import { SET_SERVER_STATUS } from "@/utils/mutation_types";
 import axios from "axios";
 import { ActionContext } from "vuex";
 import { RootState } from "./state";
 
-interface PossibleSquaresResponse {
-  moves: number[];
-}
 
-interface RoomState{
-  fen:string,
-  movePatterns:MovePattern[],
-  roomId:string,
-  p1:string | undefined,
-  p2: string | undefined,
-  members : string[]
-}
-
-interface CreateRoomResponse{
-  roomId:string
-}
 export async function makeHttpRequest<T>(
   url: string,
   method: string = 'get',
@@ -62,12 +48,12 @@ const actions = {
     try{
       const response = await axios.get(`${BASE_URL}/server-status`);
       if (response.status==200){
-        commit('setServerStatus',{isOnline:true,errorMessage:null})
+        commit(SET_SERVER_STATUS,{isOnline:true,errorMessage:null})
       } else {
-        commit('setServerStatus',{isOnline:false,errorMessage:"Can't connect to server"})
+        commit(SET_SERVER_STATUS,{isOnline:false,errorMessage:"Can't connect to server"})
       }
     } catch(error) {
-      commit('setServerStatus',{isOnline:false,errorMessage:"Connection to the server cannot be established at the moment, Please try again later."})
+      commit(SET_SERVER_STATUS,{isOnline:false,errorMessage:"Connection to the server cannot be established at the moment, Please try again later."})
     }
   },
   async getRoomState(
@@ -94,8 +80,20 @@ const actions = {
         console.error(error);
         throw new Error('Error creating room');
       }
-    }
+    },
 
+    async deleteRoom(
+      { state }: ActionContext<RootState,RootState>,
+      payload:{ roomId: string}
+      ):Promise<void>{
+        try{
+          const response = await makeHttpRequest<CreateRoomResponse>(`${BASE_URL}/delete-room`,'post',JSON.stringify(payload));
+          return;
+        } catch (error) {
+          console.error(error);
+          throw new Error('Error creating room');
+        }
+      }
 };
 
 export default actions;

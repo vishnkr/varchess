@@ -19,8 +19,7 @@
                 </text>
           </svg>
           
-          <Board :board="boardState" 
-            ref="gameBoard" 
+          <Board :board="boardState"  
             :isflipped="isFlipped" 
             :playerColor="player1 == username ? 'w' : player2 == username ? 'b' : null"
             :editorMode="false"
@@ -61,7 +60,7 @@
             <v-tab>
               Members
             </v-tab>
-            <v-tab-item><members :username="username" :members="membersList" :players="playerList"/></v-tab-item>
+            <v-tab-item><members :username="username"/></v-tab-item>
             <v-tab v-if="movePatterns && movePatterns.length!=0">
               Move Pattern
             </v-tab>
@@ -79,9 +78,9 @@ import Chat from '../Chat/Chat.vue'
 import Members from './Members.vue'
 import MovePatternTab from './MovePatternTab.vue'
 import { BoardState, GameInfo, MoveInfoPayload, MovePatterns } from '../../types';
-import RootState from '../../store';
 import { mapActions} from 'vuex';
 import Vue from 'vue';
+import { SET_RESULT, SET_SERVER_STATUS } from '../../utils/mutation_types';
 
 type Button = {
   text: string;
@@ -102,8 +101,8 @@ interface GameRoomData {
   gameInfo: GameInfo;
   result: string | null;
   buttons: Button[];
-  membersList: string[];
   boardState: BoardState | null;
+  errorText: string | null,
 }
 
   
@@ -131,13 +130,13 @@ export default Vue.extend({
       gameInfo: this.$store.state.gameInfo,
       result: null,
       buttons: [],
-      membersList: [],
       boardState: null,
+      errorText: null,
     };
   },
   created() {
     this.player1 = this.$store.state.gameInfo[this.roomId];
-    this.boardState = this.$store.state.boards[this.roomId];
+    this.boardState = this.$store.state.board;
     this.buttons = [
         { text: 'Flip', icon: 'fa-retweet', color: 'black', onclick: this.flip },
         { text: 'Resign', icon: 'fa-flag', color: 'red darken-1', onclick: this.resign },
@@ -152,29 +151,11 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.updatePlayerList();
-    this.$store.commit("setClientInfo",{
-      username:this.username,
-      isPlayer: this.username==this.player1 || this.username==this.player2,
-      color: this.username==this.player1 ? 'w' : this.username==this.player2 ? 'b' : null,
-      ws: this.ws
-      })
     this.$store.subscribe((mutation,state) => {
-      
-      if (mutation.type === "updateGameInfo") {
-        this.player1 = state.gameInfo[this.roomId]?.p1 ??  this.username;
-        this.player2 = state.gameInfo[this.roomId]?.p2 ? state.gameInfo[this.roomId].p2 : null;
-        this.updatePlayerList()
-        this.isFlippedCheck()
-        
+      if(mutation.type=== SET_SERVER_STATUS){
+        this.errorText = state.errorMessage;
       }
-      else if(mutation.type === "performMove"){
-        this.$refs.gameBoard.performMove(this.$store.state.currentMove)
-      }
-      else if(mutation.type==="setServerStatus"){
-        this.error = state.errorMessage;
-      }
-      else if(mutation.type ==="setResult"){
+      else if(mutation.type === SET_RESULT){
         this.result = state.gameInfo.result;
       }
     })
@@ -183,16 +164,6 @@ export default Vue.extend({
     ...mapActions('webSocket', ['sendResign', 'sendDrawOffer', 'sendMoveInfo']),
 
     getShareUrl(){ return `${window.location.origin}/join/${this.roomId}`},
-    updatePlayerList(){
-      console.log(this.$store)
-      var roomInfo = this.$store.state.gameInfo[this.roomId]
-      this.player1 = roomInfo?.p1 ?? this.username;
-      this.player2 = roomInfo?.p2 ?? null;
-      this.playerList = this.player1? this.player2? [this.player1,this.player2] : [this.player1] :[];
-      this.membersList = roomInfo && roomInfo.members.filter((value:string)=>{
-        return value!=this.player1 && value!=this.player2
-      })
-    },
 
     validateMove(destInfo:{row:number, col:number}){
       let srcInfo = this.$store.state.curStartPos;
@@ -222,7 +193,7 @@ export default Vue.extend({
 
     flip(){
       this.isFlipped=!this.isFlipped
-      this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
+      //this.$refs.gameBoard.updateBoardState1D(this.isFlipped);
     },
 
     resign(){

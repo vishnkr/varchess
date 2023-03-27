@@ -54,6 +54,12 @@ type ResultMessage struct {
 	Result string `json:"result,omitempty"`
 }
 
+type MembersList struct{
+	P1 string `json:"p1"`
+	P2 string `json:"p2"`
+	Members []string `json:"members"`
+}
+
 type Client struct {
 	conn     *websocket.Conn
 	mu       sync.Mutex
@@ -107,7 +113,7 @@ func (c *Client) Read() {
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		reqData := MessageStruct{}
 		json.Unmarshal([]byte(msg), &reqData)
-		log.Printf("received data: {} - \n", reqData.Type,string(reqData.Data))
+		log.Println("received data: {} {}", reqData.Type,string(reqData.Data))
 		if handler, ok := messageHandlers[reqData.Type]; ok {
             handler(&reqData)
         }
@@ -271,17 +277,16 @@ func (c *Client) joinRoom(roomId, username string) {
 	defer c.mu.Unlock()
 	fmt.Println(roomId,username)
 	curRoom, ok := RoomsMap[roomId]
-	curRoom.Clients[c] = true
-	userInfo:= map[string]string{"roomId":roomId,"username":username}
-	userInfoMsg,err:=getMessageRawByteSlice(userInfo,"join")
-	if err != nil {
-		// handle error
-	}
 	if ok {
-		response := RoomState{
-			Fen:    game.ConvertBoardtoFEN(curRoom.Game.Board),
-			RoomId: roomId,
-			Members: curRoom.getClientUsernames(),
+		curRoom.Clients[c] = true
+		switch len(curRoom.Clients) {
+		case 1:
+			curRoom.P1 = c
+		case 2:
+			curRoom.P2 = c
+		}
+		response := MembersList{
+			Members: curRoom.getViewerClients(),
 		}
 		if curRoom.P1 != nil {
 			response.P1 = curRoom.P1.username
@@ -289,10 +294,14 @@ func (c *Client) joinRoom(roomId, username string) {
 		if curRoom.P2 != nil {
 			response.P2 = curRoom.P2.username
 		}
-		if curRoom.Game.Board.CustomMovePatterns != nil {
-			response.MovePatterns = curRoom.Game.Board.CustomMovePatterns
+		responseMsg,err:=json.Marshal(response)
+		if err!=nil{
+			fmt.Println(err.Error())
 		}
-		curRoom.BroadcastToMembersExceptSender(userInfoMsg,c)
+
+		finalResp,_:=json.Marshal(MessageStruct{Type:"memberList",Data:json.RawMessage(responseMsg)})
+
+		curRoom.BroadcastToMembers(finalResp)
 	} else {
 		log.Println("Room close")
 		errorMsg := "Room does not exist, connection expired"

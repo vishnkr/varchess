@@ -1,17 +1,13 @@
-import Vue from 'vue'
 import Vuex from 'vuex'
-//import VuexPersistence from 'vuex-persist'
-import state from './state'
+import state, { RootState } from './state'
 import mutations from './mutations'
 import actions from './actions'
 import webSocketModule from './modules/webSocket'
+import { Store } from 'vuex'
+import Vue from 'vue';
+
 Vue.use(Vuex)
-
-/*const vuexLocal = new VuexPersistence({
-    storage: window.localStorage
-})*/
-
-const store = new Vuex.Store({
+const store :Store<RootState>= new Vuex.Store({
     state,
     mutations,
     actions,

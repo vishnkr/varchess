@@ -55,6 +55,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapActions } from 'vuex';
+import { SET_SERVER_STATUS } from './utils/mutation_types';
 
 export default Vue.extend({
   
@@ -62,7 +63,7 @@ export default Vue.extend({
   mounted(){
     this.$store.dispatch('checkServerStatus');
     this.$store.subscribe((mutation, state) => {
-       if(mutation.type==="setServerStatus"){
+       if(mutation.type=== SET_SERVER_STATUS){
           this.errorText = state.serverStatus.errorMessage ? state.serverStatus.errorMessage : null;
       }
      })

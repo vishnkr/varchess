@@ -42,12 +42,12 @@ func NewServer(listenAddr string, store store.Storage) *Server {
 func (s *Server) Start(allowedOrigins string) error {
 	router := mux.NewRouter()
 	router.Use(setHeadersMiddleware(allowedOrigins))
-	router.HandleFunc("/room-state", makeHTTPHandleFunc(s.RoomStateHandler)).Methods("GET")
-	router.HandleFunc("/create-room", makeHTTPHandleFunc(s.CreateRoomHandler)).Methods("POST")
+	router.HandleFunc("/room-state", makeHTTPHandleFunc(s.roomStateHandler)).Methods("GET")
+	router.HandleFunc("/create-room", makeHTTPHandleFunc(s.createRoomHandler)).Methods("POST")
 	router.HandleFunc("/", rootHandler)
-	router.HandleFunc("/login", makeHTTPHandleFunc(s.AuthenticateUserHandler)).Methods("GET")
-	router.HandleFunc("/signup", makeHTTPHandleFunc(s.CreateAccountHandler)).Methods("POST")
-	router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.GetPossibleSquares)).Methods("GET")
+	router.HandleFunc("/login", makeHTTPHandleFunc(s.authenticateUserHandler)).Methods("GET")
+	router.HandleFunc("/signup", makeHTTPHandleFunc(s.createAccountHandler)).Methods("POST")
+	router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.getPossibleSquares)).Methods("GET")
 	router.HandleFunc("/server-status", makeHTTPHandleFunc(func(w http.ResponseWriter, r *http.Request) error{
 		w.WriteHeader(http.StatusOK)
 		return nil

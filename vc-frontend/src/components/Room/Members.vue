@@ -12,11 +12,11 @@
             color="primary"
         >
             <v-list-item
-            v-for="(player, i) in players"
+            v-for="(player, i) in getPlayersList"
             :key="i"
             >
             <v-list-item-content>
-                {{player}}
+                {{player}} 
             </v-list-item-content>
             <v-list-item-icon v-if="username==player">
                 <v-icon color="pink">
@@ -38,7 +38,7 @@
             <v-list-item-content>
                 {{member}}
             </v-list-item-content>
-            <v-list-item-icon v-if="username==member && !players.includes(username)">
+            <v-list-item-icon v-if="username==member">
                 <v-icon color="pink">
                     mdi-star
                 </v-icon>
@@ -53,13 +53,36 @@
   </div>
 </template>
 
-<script>
-export default {
-    props:['members','username','players'],
+<script lang="ts">
+import { stringify } from 'querystring';
+import Vue from 'vue';
+import { ComputedOptions } from 'vue/types/options';
+import { UPDATE_MEMBERS } from '../../utils/mutation_types';
+
+export default Vue.extend({
+    props:['username'],
+    mounted: function(){
+        this.p1 = this.$store.state.gameInfo?.players.p1
+        this.p2 = this.$store.state.gameInfo?.players.p2
+        this.members = this.$store.state.gameInfo?.members
+        this.$store.subscribe((mutation, state) => {
+        if(mutation.type=== UPDATE_MEMBERS){
+            this.members = this.$store.state.gameInfo?.members;
+        }
+     })
+    },
+    computed:{ 
+            getPlayersList(): string[]{
+                return (this.p1 && this.p2) ? [this.p1,this.p2] : [];
+            }
+    },
     data: () => ({
       selectedItem: null,
+      members: [],
+      p1: null,
+      p2: null,
     }),
-}
+})
 </script>
 
 <style scoped>

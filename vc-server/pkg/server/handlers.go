@@ -10,11 +10,12 @@ import (
 	"varchess/pkg/game"
 )
 
+
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "home")
 }
 
-func (s *Server) ServerStatusHandler(w http.ResponseWriter, r *http.Request) error{
+func (s *Server) serverStatusHandler(w http.ResponseWriter, r *http.Request) error{
     w.WriteHeader(http.StatusOK)
     return nil
 }
@@ -23,7 +24,7 @@ type CreateRoomResponse struct {
 	RoomId string `json:"roomId"`
 }
 
-func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
+func (s *Server) createRoomHandler(w http.ResponseWriter,r *http.Request) error{
 	uniqueRoomId := genRandSeq(6)
 	for ok := true; ok; _, ok = RoomsMap[uniqueRoomId] {
 		uniqueRoomId = genRandSeq(6)
@@ -62,7 +63,7 @@ func (s *Server) CreateRoomHandler(w http.ResponseWriter,r *http.Request) error{
 	return WriteJSON(w,http.StatusOK,response)
 }
 
-func (s *Server) RoomStateHandler(w http.ResponseWriter, r *http.Request) error{
+func (s *Server) roomStateHandler(w http.ResponseWriter, r *http.Request) error{
 	query := r.URL.Query()
     roomId := query.Get("roomid")
 	curRoom,ok:= RoomsMap[roomId]
@@ -70,10 +71,14 @@ func (s *Server) RoomStateHandler(w http.ResponseWriter, r *http.Request) error{
 	if ok{
 		response = RoomState{
 			Fen:    game.ConvertBoardtoFEN(curRoom.Game.Board),
-			RoomId: roomId,
-			P1: curRoom.P1.username,
-			P2: curRoom.P2.username,
-			Members: curRoom.getClientUsernames(),
+			Members: curRoom.getViewerClients(),
+			Turn: curRoom.Game.Turn.String(),
+		}
+		if curRoom.P1!=nil {
+			response.P1 = curRoom.P1.username
+		}
+		if curRoom.P2!=nil {
+			response.P1 = curRoom.P2.username
 		}
 		if curRoom.Game.Board.CustomMovePatterns != nil {
 			response.MovePatterns = curRoom.Game.Board.CustomMovePatterns
@@ -85,7 +90,7 @@ func (s *Server) RoomStateHandler(w http.ResponseWriter, r *http.Request) error{
 	return WriteJSON(w,http.StatusOK,response)
 }
 
-func (s *Server) GetPossibleSquares(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) getPossibleSquares(w http.ResponseWriter, r *http.Request) error {
 	//optimize this request to be done once before every move instead of once after every click, store result in client side
 	query := r.URL.Query()
     roomID := query.Get("roomid")

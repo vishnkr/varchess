@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
+    "strictFunctionTypes": false,
     "baseUrl": ".",
     "types": [
       "webpack-env",
@@ -27,6 +28,10 @@
       "dom",
       "dom.iterable",
       "scripthost"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/vuex.d.ts" 
     ]
   },
   "include": [

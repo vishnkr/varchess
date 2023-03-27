@@ -1,8 +1,9 @@
-import { BoardState, ChatMessage, ClientInfo, GameInfo, MoveInfo, MovePattern, PiecePosition } from "@/types";
+import { BoardState, ChatMessage, MoveInfo, MovePattern, PiecePosition, Players } from "@/types";
+import * as MutationTypes from "@/utils/mutation_types";
 import { RootState } from "./state";
 const getDefaultState = () => {
   return {
-    boards: {},  // roomId: {boardState} for that room
+    board: {},  // roomId: {boardState} for that room
     chatMessages: {},  // roomId: [messages for that room]
     gameInfo: {}, 
   }
@@ -14,11 +15,11 @@ const mutations ={
     resetState (state:RootState) {
       Object.assign(state, getDefaultState())
     },
-    updateBoardState (state:RootState,payload:{roomId:string,boardState:BoardState}) {
-        state.boards[payload.roomId] = payload.boardState;
+    [MutationTypes.UPDATE_BOARD_STATE](state:RootState,payload:{roomId:string,boardState:BoardState}) {
+        state.board = payload.boardState;
     },
 
-    addMessage (state:RootState,messageInfo:PayloadWithRoomId<ChatMessage>) {
+    [MutationTypes.ADD_CHAT_MESSAGE](state:RootState,messageInfo:PayloadWithRoomId<ChatMessage>) {
       if (state.chatMessages[messageInfo.roomId]){
         state.chatMessages[messageInfo.roomId].push(messageInfo);
       }
@@ -26,39 +27,43 @@ const mutations ={
         state.chatMessages[messageInfo.roomId]=[messageInfo];
       }
     },
-    updateGameInfo (state:RootState,payload:PayloadWithRoomId<GameInfo>){
-      if(!state.gameInfo){state.gameInfo={p1:payload.p1,turn:payload.turn}}
-      state.gameInfo.p1 = payload.p1;
-      state.gameInfo.p2 = payload.p2;
-      state.gameInfo.turn = payload.turn;
-      state.gameInfo.members  = payload.members;
+    [MutationTypes.SET_PLAYERS](state:RootState,payload:Players){
+      if (!state.gameInfo){
+        state.gameInfo = {players:payload, members: []}
+        return
+      }
+      state.gameInfo.players = payload
     },
 
-    setClientInfo(state:RootState,payload:ClientInfo){
-      state.clientInfo = payload;
+    [MutationTypes.UPDATE_MEMBERS](state:RootState,payload:{members:string[]}){
+      if (state.gameInfo){
+        state.gameInfo.members = payload.members;
+      }
     },
-    setSelection(state:RootState,payload:PiecePosition){
+
+    [MutationTypes.SET_SRC_SELECTION](state:RootState,payload:PiecePosition){
       state.curStartPos = {piece: payload.piece, row: payload.row, col: payload.col}
     },
-    undoSelection(state:RootState){
+    [MutationTypes.UNDO_SRC_SELECTION](state:RootState){
       state.curStartPos = null
     },
-    performMove(state:RootState,moveInfo: MoveInfo){
+    [MutationTypes.PERFORM_MOVE](state:RootState,moveInfo: MoveInfo){
       state.currentMove = moveInfo
       //after move
       state.curStartPos = null
-      if (state.gameInfo){
-        state.gameInfo.turn = state.gameInfo.turn == 'w' ? 'b' : 'w';
+      if (state.board){
+        state.board.turn = state.board.turn == 'w' ? 'b' : 'w';
       }
     },
-    setServerStatus(state:RootState,payload:{isOnline:boolean,errorMessage:string|null}){
+    [MutationTypes.SET_SERVER_STATUS](state:RootState,payload:{isOnline:boolean,errorMessage:string|null}){
       state.serverStatus = payload;
     },
 
-    storeMovePatterns(state:RootState,payload:{movePatterns: MovePattern[]}){
+    [MutationTypes.SET_MOVE_PATTERNS](state:RootState,payload:{movePatterns: MovePattern[]}){
       state.movePatterns = payload.movePatterns;
     },
-    setResult(state:RootState,result:string){
+
+    [MutationTypes.SET_RESULT](state:RootState,result:string){
       if (state.gameInfo){
         state.gameInfo.result = result
       }

@@ -20,40 +20,64 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { convertFENtoBoardState } from '../../utils/fen';
-import { mapActions } from 'vuex';
-import axios from 'axios';
+import {SET_MOVE_PATTERNS, SET_PLAYERS, UPDATE_BOARD_STATE, UPDATE_MEMBERS} from '../../utils/mutation_types'
+import { mapActions, mapMutations } from 'vuex';
 import Vue from 'vue';
+
+interface Data{
+  username: string | null,
+  roomId?: string,
+  server_host?: string
+}
+
+import { RoomState } from '../../types';
 export default Vue.extend({
-    mounted: function() {
-       this.getBoardFen();
-      },
+    created(){
+      this.roomId = this.$route.params.roomId;
+    },
+    mounted(){
+      this.$store.subscribe((mutation,state)=>{
+        if(mutation.type === SET_PLAYERS){
+          console.log('we hewe',state.gameInfo)
+          if (state.gameInfo.players.p2 && this.roomId && this.username){
+            this.enterRoom(this.roomId,this.username)
+          }
+      }
+      })
+    },
     methods:{
       ...mapActions('webSocket',['connect','joinRoom']),
-      async getBoardFen() {
-        await axios.get(`${this.server_host}/board-fen/${this.roomId}`).then((response)=>{
-          if(response.data.type && response.data.type=="error"){
-            this.$store.commit('websocketError',response.data.data)
-          } else {
-          if(response.data.movePatterns){
-            this.$store.commit('storeMovePatterns',{movePatterns:response.data.movePatterns})
-          }
-          this.$store.commit('updateBoardState',{roomId:this.roomId,boardState:convertFENtoBoardState(response.data.Fen)});
-          }
-        });
+      ...mapActions(['getRoomState']),
+      ...mapMutations([SET_MOVE_PATTERNS,UPDATE_BOARD_STATE,UPDATE_MEMBERS,SET_PLAYERS]),
+        
+      enterRoom(roomId:string,username:string){
+        this.$router.push({name:'Game', params:{username: username,roomId: roomId}})
       },
 
-      checkJoinRoom(){
-          this.connect();
-          this.joinRoom({roomId:this.roomId,username:this.username});
-          this.$router.push({name:'Game', params:{username: this.username,roomId: this.roomId}})
-        },
+      async checkJoinRoom(){
+        if (this.username){  
+          try{
+            
+            let roomState:RoomState = await this.getRoomState({roomId:this.roomId});
+            if (roomState.movePatterns){
+              this.SET_MOVE_PATTERNS(roomState.movePatterns)
+            }
+            this.SET_PLAYERS({p1:roomState.p1,p2:roomState.p2})
+      
+            this.UPDATE_BOARD_STATE({roomId:roomState.roomId,boardState:convertFENtoBoardState(roomState.fen)})
+            this.connect({roomId:this.roomId,username:this.username});
+          } catch(error){
+            console.error(error)
+          }
+        }
+      },
     },
-    data(){
+    data():Data{
         return {
             username: null,
-            roomId: this.$route.params.roomId,
+            roomId:undefined,
             server_host: process.env.VUE_APP_SERVER_HOST,
         }
     }
