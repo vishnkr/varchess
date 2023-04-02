@@ -12,7 +12,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
 import { mapMutations } from 'vuex';
 import { PiecePosition } from '../../types';
 import { UNDO_SRC_SELECTION } from '../../utils/mutation_types';

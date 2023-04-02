@@ -81,7 +81,7 @@ import { BoardState, GameInfo, MoveInfoPayload, MovePatterns } from '../../types
 import { mapActions} from 'vuex';
 import Vue from 'vue';
 import { SET_RESULT, SET_SERVER_STATUS } from '../../utils/mutation_types';
-
+import { DefineComponent } from 'vue';
 type Button = {
   text: string;
   icon: string;
@@ -105,7 +105,7 @@ interface GameRoomData {
 }
 
   
-export default Vue.extend({
+export default defineComponent({
   components: {
     Chat,
     Board,

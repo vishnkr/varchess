@@ -103,4 +103,3 @@ export interface PossibleSquaresResponse {
   export interface CreateRoomResponse{
     roomId:string
   }
-  

@@ -1,4 +1,4 @@
-import {ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus } from "@/types"
+import {ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus, EditorState } from "@/types"
 
 
 export interface RootState{
@@ -10,7 +10,6 @@ export interface RootState{
     currentMove: MoveInfo | null,
     serverStatus: ServerStatus,
     movePatterns: MovePatterns,
-
 }
 
 const state: RootState = {

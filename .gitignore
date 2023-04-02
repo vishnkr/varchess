@@ -1,10 +1,13 @@
 vc-frontend/node_modules/
+old-vc-frontend/node_modules
 .gitignore
 .DS_Store
-vc-frontend/.DS_store
+vc-frontend/.DS_Store
+old-vc-frontend/.DS_Store
 vc-server/vc-server
 .vscode
 vc-server/.env
 vc-server/cmd/cmd
 vc-server/playhelper.go
 vc-frontend/.env
+old-vc-frontend/.env

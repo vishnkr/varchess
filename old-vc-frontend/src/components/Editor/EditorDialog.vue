@@ -138,10 +138,7 @@ export default Vue.extend({
       this.editorState = editorState;
     },
 
-    isEven(val){return val%2==0},
-    isLight(row,col){
-      return this.isEven(row)&&this.isEven(col)|| (!this.isEven(row)&&!this.isEven(col))},
-
+    
     formatBoardState(boardState){
       this.boardState={tiles:[],rows:this.rows,cols:this.cols};
       for(var row=0;row<this.rows;row++){
