@@ -52,7 +52,7 @@
 
 <script lang="ts">
 import { createDefaultMaxBoardStateSquares, isLight } from '../utils';
-import { reactive, ref,Ref, defineComponent, computed } from 'vue';
+import { reactive, ref,Ref, defineComponent, computed, watch } from 'vue';
 import BoardEditor from '../components/Editor/BoardEditor.vue'
 import Board from '../components/Board/Board.vue'
 import PieceEditor from '../components/Editor/PieceEditor.vue'
@@ -79,7 +79,7 @@ export default defineComponent({
         const tab : Ref<EditorType> = ref('board-editor');
         const store = useStore<RootState>();
         const isLoading = ref(false);
-        const maxBoardStateSquares = reactive(createDefaultMaxBoardStateSquares());
+        const maxBoardState = reactive({squares:createDefaultMaxBoardStateSquares()});
         const boardState :BoardState = reactive(convertFENtoBoardState(STANDARD_FEN));
         const boardRef = ref();
         const router = useRouter();
@@ -93,6 +93,9 @@ export default defineComponent({
             editorType: 'Game'
         })
 
+        watch(maxBoardState,(newmaxBoardState)=>{
+            updateBoardStateFromMaxState()
+        })
 
         const enterRoomWithLoading = async ()=>{
             let fen = convertBoardStateToFEN(boardState);
@@ -127,38 +130,50 @@ export default defineComponent({
         }
 
         function shiftBoard(direction:string){
-            
+            let [lastCol,lastRow,afterLastCol,afterLastRow]  = [boardState.dimensions.cols-1,boardState.dimensions.rows-1,boardState.dimensions.cols,boardState.dimensions.rows];
+            let tempSquares:Square[][];
             switch (direction){
                 case 'right':
-                    boardState.squares= boardState.squares.map((row) => [...row.slice(-1),...row.slice(0,-1)]);
+                    maxBoardState.squares = maxBoardState.squares.map((row,i) => {
+                        if(i < boardState.dimensions.rows){
+                            return [...row.slice(lastCol,afterLastCol),...row.slice(0,lastCol),...row.slice(afterLastCol)]
+                        } 
+                        return row
+                    });
                     break;
                 case 'left':
-                    
-                    boardState.squares = boardState.squares.map((row,i) => {
+                    maxBoardState.squares = maxBoardState.squares.map((row:Square[],i) => {
                         let firstSquare = row[0];
-                        return [...row.slice(1)].concat(firstSquare)
+                        if(i<boardState.dimensions.rows){
+                            return [...row.slice(1,afterLastCol),...[firstSquare],...row.slice(afterLastCol)]
+                        } 
+                        return row
                     });
                     break;
                 case 'up':
-                    let firstRow= boardState.squares[0]
-                    boardState.squares = boardState.squares.slice(1).concat([firstRow])
+                    let firstRowSquares = maxBoardState.squares[0].slice(0,afterLastCol)
+                    tempSquares = maxBoardState.squares.slice(1,afterLastRow).map((row:Square[])=> row.slice(0,afterLastCol))
+                    maxBoardState.squares = [...tempSquares,...[firstRowSquares],...maxBoardState.squares.slice(afterLastRow)]
                     break;
                 case 'down':
-                    let lastRow = boardState.squares[boardState.squares.length-1];
-                    boardState.squares = [lastRow].concat(boardState.squares.slice(0,boardState.squares.length-1));
+                    let lastRowSquares = maxBoardState.squares[lastRow];
+                    tempSquares = maxBoardState.squares.slice(0,lastRow).map((row:Square[])=> row.slice(0,afterLastCol))
+                    maxBoardState.squares = [...[lastRowSquares],...tempSquares,...maxBoardState.squares.slice(afterLastRow)]
                     break;
             }
-            boardRef.value.updateBoardState1D(boardState)
         }
 
         function updateBoardDimensions(dimensions:{rows:number,cols:number}){
             boardState.dimensions = dimensions
-            let newSquares = []
+            updateBoardStateFromMaxState()
+        }
+
+        function updateBoardStateFromMaxState(){
+            let newSquares:Square[][] = [];
             for(let row=0;row<boardState.dimensions.rows;row++){
-                newSquares.push(maxBoardStateSquares[row].slice(0,boardState.dimensions.cols));
+                newSquares.push(maxBoardState.squares[row].slice(0,boardState.dimensions.cols));
             }
             boardState.squares = newSquares;
-            store.commit(UPDATE_BOARD_STATE,boardState)
             boardRef.value.updateBoardState1D(boardState)
         }
 
@@ -172,24 +187,22 @@ export default defineComponent({
         const togglePieceOnSquare = (squareInfo:{row:number,col:number})=>{
             let rowIndex = squareInfo.row-1;
             let colIndex = squareInfo.col-1; 
-            if (!boardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent){
-                boardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = true
-                boardState.squares[rowIndex][colIndex].squareInfo.pieceColor = editorState.curPieceColor
-                boardState.squares[rowIndex][colIndex].squareInfo.pieceType = editorState.curPiece
+            if (!maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent){
+                maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = true
+                maxBoardState.squares[rowIndex][colIndex].squareInfo.pieceColor = editorState.curPieceColor
+                maxBoardState.squares[rowIndex][colIndex].squareInfo.pieceType = editorState.curPiece
                 
             } else{
-                boardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = false
+                maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = false
             }
         }
         const setDisable = (squareInfo:{row:number,col:number})=>{
             let [rowIndex, colIndex] = [squareInfo.row-1, squareInfo.col-1];
-            console.log('setting disable')
             boardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = false
             boardState.squares[rowIndex][colIndex].disabled = !boardState.squares[rowIndex][colIndex].disabled;
         }
             
         const handleSquareClick = (payload:{clickType:string,squareInfo:{row:number,col:number}})=>{
-            console.log('asdasd',payload)
             switch (payload.clickType){
                 case 'toggle-piece':
                     togglePieceOnSquare(payload.squareInfo)
