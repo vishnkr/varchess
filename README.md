@@ -22,7 +22,7 @@ Future Plans :
 ## Running Locally
 
 ### Development branch
-Please note that active development is taking place on the `ts-migrate` and 'new-feats' branches which contain the most up-to-date source code for the project. 
+Please note that active development is taking place on the `ts-migrate` and `new-feats` branches which contain the most up-to-date source code for the project. 
 
 If you want to access the latest features and updates, please switch to the `ts-migrate` branch and pull the latest changes. 
 
