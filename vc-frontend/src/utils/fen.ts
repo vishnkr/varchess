@@ -4,7 +4,7 @@
 */
 
 import { BoardState } from "@/types";
-import { isLight } from ".";
+import { isLight, withId } from ".";
 function convertBoardStateToFEN(boardState:BoardState,turn?:string,castlingAvailability?:string,enPassant?:string){
     var cell,row,empty,fen = '';
     for (row of boardState.squares){
@@ -81,7 +81,7 @@ function convertFENtoBoardState(fen:string){
                             col:j,
                             squareColor:isLight(i,j) ? 'light' : 'dark'
                         },
-                        disabled: false
+                        disabled: false,
                     }
                     )
             }
@@ -89,7 +89,7 @@ function convertFENtoBoardState(fen:string){
     }
     boardState.dimensions.rows = rows.length;
     boardState.dimensions.cols = boardState.squares[0].length;
-    return boardState;
+    return withId(boardState);
 }
 
 export {convertBoardStateToFEN,convertFENtoBoardState};

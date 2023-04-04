@@ -41,7 +41,6 @@ import { Dimensions } from '@/types';
 import {ref,computed,defineComponent, reactive} from 'vue'
 import { useStore } from 'vuex';
 import DPad from './DPad.vue';
-import ArrowButton from '../Other/ArrowButton.vue';
 
 export default defineComponent({
     components:{DPad},

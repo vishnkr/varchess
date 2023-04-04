@@ -10,7 +10,7 @@
                         Game Editor
                     </div>
                     <div class="top-btns">
-                        <q-btn color="negative" style="margin-right:5px;" label="Clear Board"></q-btn>
+                        <q-btn color="negative" style="margin-right:5px;" label="Clear Board" @click="clearBoard"></q-btn>
                         <q-btn class="bg-green-9" label="Create Room" @click="enterRoomWithLoading"></q-btn>
                     </div>
                 </q-card-section>
@@ -34,14 +34,14 @@
                             />
                         </q-tab-panel>
                         <q-tab-panel name="piece-editor">
-                            <PieceEditor @update-piece-state="updatePieceState"/>
+                            <PieceEditor :editorState="editorState" @update-piece-state="updatePieceState"/>
                         </q-tab-panel>
                     </q-tab-panels>
                 </q-card-section>
             </q-card>
         </div>
         <Board 
-            :isFlipped="true" 
+            :isFlipped="false" 
             :boardState="boardState" 
             :editorState="editorState" 
             @handle-square-click="handleSquareClick"
@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts">
-import { createDefaultMaxBoardStateSquares, isLight } from '../utils';
+import { createDefaultMaxBoardStateSquares, setupEmptyMaxSizeBoard } from '../utils';
 import { reactive, ref,Ref, defineComponent, computed, watch } from 'vue';
 import BoardEditor from '../components/Editor/BoardEditor.vue'
 import Board from '../components/Board/Board.vue'
@@ -90,7 +90,8 @@ export default defineComponent({
             curPieceColor: 'white',
             isDisableTileOn: false,
             piecesInPlay:{},
-            editorType: 'Game'
+            editorType: 'Game',
+            curCustomPiece: null
         })
 
         watch(maxBoardState,(newmaxBoardState)=>{
@@ -151,13 +152,13 @@ export default defineComponent({
                     });
                     break;
                 case 'up':
-                    let firstRowSquares = maxBoardState.squares[0].slice(0,afterLastCol)
-                    tempSquares = maxBoardState.squares.slice(1,afterLastRow).map((row:Square[])=> row.slice(0,afterLastCol))
+                    let firstRowSquares = maxBoardState.squares[0]
+                    tempSquares = maxBoardState.squares.slice(1,afterLastRow)
                     maxBoardState.squares = [...tempSquares,...[firstRowSquares],...maxBoardState.squares.slice(afterLastRow)]
                     break;
                 case 'down':
                     let lastRowSquares = maxBoardState.squares[lastRow];
-                    tempSquares = maxBoardState.squares.slice(0,lastRow).map((row:Square[])=> row.slice(0,afterLastCol))
+                    tempSquares = maxBoardState.squares.slice(0,lastRow)
                     maxBoardState.squares = [...[lastRowSquares],...tempSquares,...maxBoardState.squares.slice(afterLastRow)]
                     break;
             }
@@ -177,38 +178,39 @@ export default defineComponent({
             boardRef.value.updateBoardState1D(boardState)
         }
 
-        const updatePieceState = ({curPiece,curPieceColor}:{curPiece:string,curPieceColor:PieceColor})=>{
-            editorState.curPiece = curPiece;
-            editorState.curPieceColor = curPieceColor;
+        const updatePieceState = (newEditorState:EditorState)=>{
+            editorState.curPiece = newEditorState.curPiece;
+            editorState.curPieceColor = newEditorState.curPieceColor;
+            editorState.curCustomPiece = newEditorState.curCustomPiece;
+            editorState.piecesInPlay = newEditorState.piecesInPlay;
         }
 
-        const setEditorDisable = (value:boolean)=>{ editorState.isDisableTileOn = value }
+        const setEditorDisable = (value:boolean)=>{ 
+            editorState.isDisableTileOn = value 
+        }
 
         const togglePieceOnSquare = (squareInfo:{row:number,col:number})=>{
-            let rowIndex = squareInfo.row-1;
-            let colIndex = squareInfo.col-1; 
-            if (!maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent){
-                maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = true
-                maxBoardState.squares[rowIndex][colIndex].squareInfo.pieceColor = editorState.curPieceColor
-                maxBoardState.squares[rowIndex][colIndex].squareInfo.pieceType = editorState.curPiece
+            if (!maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent){
+                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = true
+                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.pieceColor = editorState.curPieceColor
+                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.pieceType = editorState.curPiece === 'c' && editorState.curCustomPiece ? editorState.curCustomPiece : editorState.curPiece
                 
             } else{
-                maxBoardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = false
+                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = false
             }
         }
         const setDisable = (squareInfo:{row:number,col:number})=>{
-            let [rowIndex, colIndex] = [squareInfo.row-1, squareInfo.col-1];
-            boardState.squares[rowIndex][colIndex].squareInfo.isPiecePresent = false
-            boardState.squares[rowIndex][colIndex].disabled = !boardState.squares[rowIndex][colIndex].disabled;
+            maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = false
+            maxBoardState.squares[squareInfo.row][squareInfo.col].disabled = !maxBoardState.squares[squareInfo.row][squareInfo.col].disabled;
         }
             
-        const handleSquareClick = (payload:{clickType:string,squareInfo:{row:number,col:number}})=>{
+        const handleSquareClick = (payload:{clickType:string,row:number,col:number})=>{
             switch (payload.clickType){
                 case 'toggle-piece':
-                    togglePieceOnSquare(payload.squareInfo)
+                    togglePieceOnSquare({row:payload.row,col:payload.col})
                     break;
                 case 'disable':
-                    setDisable(payload.squareInfo);
+                    setDisable({row:payload.row,col:payload.col});
                     break;
             }
             boardRef.value.updateBoardState1D(boardState)
@@ -235,7 +237,8 @@ export default defineComponent({
             enterRoomWithLoading,
             getShareLink,
             closeRoom,
-            shiftBoard
+            shiftBoard,
+            clearBoard: ()=>{maxBoardState.squares = setupEmptyMaxSizeBoard()}
         }
     },
     

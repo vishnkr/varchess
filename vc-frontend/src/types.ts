@@ -1,6 +1,6 @@
 export type PieceColor = "black" | "white"
 
-export type SquareColor = 'dark' | 'light' | 'disabled'
+export type SquareColor = 'dark' | 'light' | 'disabled' | 'jump' | 'slide' | 'to' | 'from'
 export interface SquareInfo{
     isPiecePresent: Boolean,
     pieceColor?:PieceColor,
@@ -8,6 +8,7 @@ export interface SquareInfo{
     row:number,
     col:number
     squareColor: SquareColor
+    tempSquareColor?: SquareColor | null
 }
 
 export interface Square{
@@ -82,7 +83,7 @@ export type MPTuple = [x: number, y: number];
 export interface MovePattern{
     piece: string,
     jumpPatterns: MPTuple[],
-    slidepatterns: MPTuple[]
+    slidePatterns: MPTuple[]
 }
 
 export type MovePatterns = MovePattern[] | null;
@@ -113,7 +114,7 @@ export interface PossibleSquaresResponse {
   type PiecesInPlay = Record<string, {
     isAddedToBoard: boolean,
     isMPDefined: boolean,
-    movePattern:MovePattern
+    movePattern?:MovePattern
   }>
 
   export type EditorModeType = 'MP' | 'Game'
@@ -122,9 +123,18 @@ export interface PossibleSquaresResponse {
     curPiece: string,
     curPieceColor: PieceColor,
     isDisableTileOn:boolean,
-    piecesInPlay: PiecesInPlay
-    editorType:EditorModeType
+    piecesInPlay: PiecesInPlay,
+    editorType:EditorModeType,
+    curCustomPiece: string | null
   }
 
+export type MoveType = 'jump' | 'slide'
  
-  
+export interface MPEditorState extends Omit<EditorState, 'curCustomPiece'> {
+    moveType: MoveType,
+    curCustomPiece: string
+}
+
+export function isMPEditor(editorState: MPEditorState | EditorState): editorState is MPEditorState {
+    return (editorState as MPEditorState).moveType !== undefined;
+  }

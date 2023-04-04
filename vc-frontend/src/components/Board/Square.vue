@@ -9,7 +9,7 @@
 <script lang="ts">
 import {ref, PropType, computed} from 'vue'
 import Piece from './Piece.vue'
-import {SquareColor, SquareInfo,EditorModeType, EditorState, Square} from '../../types'
+import {SquareColor, SquareInfo,EditorModeType, EditorState, Square, MPEditorState, isMPEditor} from '../../types'
 
 export default {
     name: 'BoardSquare',
@@ -19,34 +19,47 @@ export default {
     emits:['emit-square-click'],
     props:{
         square: {type: Object as PropType<Square>, required: true},
-        editorState: {type: Object as PropType<EditorState | null> }
+        editorState: {type: Object as PropType<EditorState | MPEditorState | null> }
     },
     
     setup(props,{emit}){
         const colorMap : { [key in SquareColor]: string } = {
             'dark': '#b2c85d',
             'light': '#e4f5cb',
-            'disabled' : '#696969'
+            'disabled' : '#696969',
+            'jump': '#4056b8',
+            'slide': '#ac422a',
+            'to': '#d9bf7799',
+            'from': '#a97d5d'
+        }
 
+        const getColor = ()=>{
+          let color : SquareColor = props.square.squareInfo.tempSquareColor ?? props.square.squareInfo.squareColor;
+          if (props.editorState){
+            if(props.editorState.editorType === "Game" && props.square.disabled){ color = 'disabled'}
+          } 
+          return colorMap[color];
         }
         const cssVars = computed(()=>{
             return {
                 '--x': props.square.squareInfo.row,
                 '--y': props.square.squareInfo.col,
-                '--color': colorMap[(props.square.disabled ? 'disabled' : props.square.squareInfo.squareColor)]
+                '--color': getColor()
             }
         })
         const emitSquareClick = ()=>{
-            let squarePos = {row:props.square.squareInfo.row,col:props.square.squareInfo.col}
-            let payload = {clickType:'perform-move',squareInfo:squarePos}
+            let squarePos = {row:props.square.squareInfo.row-1,col:props.square.squareInfo.col-1}
+            let payload = {clickType:'perform-move',...squarePos}
             if (props.editorState?.editorType){
                 if(props.editorState.editorType==='Game'){
                     if (props.editorState.isDisableTileOn){
                         payload.clickType = 'disable'
                     } else { payload.clickType = 'toggle-piece'}
                     
-                } else if (props.editorState.editorType==='MP'){
-                    payload.clickType = 'set-jump-mp'
+                } else if (isMPEditor(props.editorState)){
+                    payload.clickType = props.editorState.moveType==='jump' ? 
+                    props.square.squareInfo.tempSquareColor==='jump' ? 'remove-jump-mp' : 'set-jump-mp' 
+                    : 'set-slide-mp'
                 }
             }
             emit('emit-square-click',payload)

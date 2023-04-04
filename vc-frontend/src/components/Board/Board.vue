@@ -16,8 +16,6 @@
 import BoardSquare from './Square.vue'
 import { ref,reactive, PropType, Ref, onMounted, computed } from 'vue';
 import { BoardState, Square, EditorState } from '../../types';
-import { useStore } from 'vuex';
-import { RootState } from '../../store/state';
 import { isLight } from '../../utils';
 
 export default{
@@ -30,7 +28,7 @@ export default{
     },
     emits:['handle-square-click'],
     setup(props,{expose,emit}){
-        const store = useStore<RootState>();
+        
         const board: BoardState = props.boardState;
         const boardState1D : Ref<Square[]> = ref([]);
    
@@ -77,7 +75,7 @@ export default{
             updateBoardState1D(board)
         })
 
-        const emitSquareClick = (payload:{clickType:string,squareInfo:{row:number,col:number}})=>{
+        const emitSquareClick = (payload:{clickType:string,row:number,col:number})=>{
             emit('handle-square-click',payload)
         }
         return{
