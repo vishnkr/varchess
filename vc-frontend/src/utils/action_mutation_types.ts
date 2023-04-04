@@ -15,3 +15,4 @@ export const SET_RESULT = 'SET_RESULT';
 export const CREATE_ROOM = 'createRoom';
 export const CONNECT_WS = 'webSocket/connect';
 export const CLOSE_WS = 'webSocket/close';
+export const GET_ROOM_STATE = 'getRoomState';

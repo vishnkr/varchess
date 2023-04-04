@@ -38,6 +38,8 @@ export default{
             '--size': Math.max(board.dimensions.rows,board.dimensions.cols),
         }
         })
+
+        //Converts 2D board state into 1D 
         const updateBoardState1D = (boardState:BoardState)=>{
             let newBoardState = [];
             let row, square, x=1, y=1, flipX = boardState.dimensions.rows, flipY = boardState.dimensions.cols;
@@ -52,7 +54,6 @@ export default{
                             row: x,
                             col: y,
                             squareColor: square.disabled ? 'disabled' : isLight(y,x) ? 'light' : 'dark',
-                            
                         }
                     }
                     y+=1;

@@ -1,22 +1,25 @@
 <template>
     <q-dialog persistent v-model="loading">
-    <q-card dark>
+    <q-card dark >
       <q-card-section class="text-center">
             <div class="text-h5">Share the link below to invite friends to join the room</div>
-            <div class="copyLink">
-                <q-input color="blue" class="text-white" readonly  :model-value="shareLink"/>
-                <q-btn color="blue" @click="copyToClipboard">
-                    <font-awesome-icon icon="fa-link" />
-                </q-btn>
+            <div class="q-pa-md">
+              <div class="copy-link q-gutter-y-md row " style="max-width: 400px">
+                <q-input dark filled readonly :model-value="shareLink" />
+                  <q-field borderless class="no-padded-control">
+                    <q-btn color="blue" @click="copyToClipboard">
+                        <font-awesome-icon icon="fa-link" />
+                    </q-btn>
+                  </q-field>
+              </div>
             </div>
-            <p class="mt-2">Waiting for opponent...</p>
+            <p class="mt-2 text-h6">Waiting for opponent...</p>
 
             <q-spinner-cube
             color="orange"
             size="lg"
             />
         </q-card-section>
-        
         
       <q-card-actions align="right">
         <q-btn  @click="closePopup" color="negative">Cancel</q-btn>
@@ -53,9 +56,8 @@ export default {
 </script>
 
 <style scoped>
-.copyLink{
+.copy-link{
     display:flex;   
-    
+    justify-content: center;
 }
-
 </style>

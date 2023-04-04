@@ -1,5 +1,5 @@
 <template>
-    <q-page class="parent-background">
+    <q-page class="board-background">
         <q-dialog v-model="isLoading">
             <LoadingScreen :shareLink="getShareLink" @update-loading="closeRoom"/>
         </q-dialog>
@@ -258,7 +258,7 @@ export default defineComponent({
   .parent-background:first-child { flex-basis: 100%; }
 }
 
-.parent-background{
+.board-background{
     display: flex;
     flex-direction: row;
     margin: 1em;

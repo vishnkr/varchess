@@ -1,12 +1,10 @@
 <script setup lang="ts">
-  import {provide} from 'vue';
   import Navigation from './components/Navigation.vue';
-  provide('showQuickPlayDialog',false)
   
 </script>
 
 <template>
-  <q-layout view="hHh lpr fff">
+  <q-layout >
   <div class="parent-background">
       <q-header>
         <Navigation />
@@ -17,22 +15,19 @@
             <RouterView />
           </div>
       </q-page-container>
-      
-    <footer>
+  </div>
+  <footer class="footer">
         <a href="https://github.com/vishnkr/varchess" data-size="large">
           <font-awesome-icon icon="fa-brands fa-github" />
         </a>
         <span style="margin-right: 2rem;"> Licensed by <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GNU GPLv3</a>.
         <strong>Varchess</strong> by vishnkr - {{ new Date().getFullYear() }} </span>
-        
         <span> Made with <font-awesome-icon icon="fa-solid fa-heart" style="color: #f2021a;" /> </span> 
-    </footer>
-
-  </div>
+  </footer>
 </q-layout>
 </template>
 
-<style >
+<style scoped>
 html,body{
   height: 100vh;
 }
@@ -50,18 +45,19 @@ a{
   background-color: #333333;
 }
 .content{
-  flex: 2;
+  height:100%;
   display:flex;
-  position: relative;
   flex-direction: column;
 }
-footer {
+
+.footer {
   display: flex;
   background-color: #cdcaca;
   height: 20px;
   font-size: medium;
   text-align: center;
   align-items: center;
+  justify-content: center;
   position: sticky;
 }
 </style>
