@@ -30,16 +30,38 @@
 </template>
 
 <script lang="ts">
+import { RootState } from '@/store/state';
+import { SET_PLAYERS } from '../../utils/action_mutation_types';
 import { ref } from 'vue';
+import { useRoute,useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 export default {
   emits: ['update-loading'],
   props:{
-    shareLink: {type:String,required:true}
+    shareLink: {type:String,required:true},
+    roomId: {type:String,required:true},
+    username: {type:String,required:true}
   },
   setup(props, { emit }) {
     const loading = ref(true);
+    const router = useRouter();
     
+    const store = useStore<RootState>();
+    store.subscribe((mutation,state)=>{
+      if(mutation.type === SET_PLAYERS){
+        if(store.state.gameInfo?.players.p2){
+          router.push({
+          name: 'Game',
+          params: {
+            username: props.username,
+              roomId: props.roomId,
+          },
+        });
+        }
+      }
+
+    })
     return {
       loading, 
       closePopup: ()=>{

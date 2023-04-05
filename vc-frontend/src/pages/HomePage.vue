@@ -21,7 +21,6 @@ export default defineComponent({
     const store = useStore();
     const errorText = ref(null);
     const router = useRouter();
-    const showDialog = inject('showQuickPlayDialog');
     function redirectToHome(){
       router.replace({path:'/'});
       store.dispatch(`webSocket/close`)
@@ -40,7 +39,6 @@ export default defineComponent({
     return {
       tab:ref(''),
       redirectToHome,
-      showDialog
     };
   }
 })

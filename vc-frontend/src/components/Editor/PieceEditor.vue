@@ -1,26 +1,23 @@
 <template>
-    <div class="q-pa-md q-gutter-lg">
-        <div class="text-h6">
+    <div>
+        <h6>
             Choose Color:
-        </div>
-        <div class="q-gutter-md">
+        </h6>
+        <div>
             <q-radio v-model="editorState.curPieceColor" label="White" val="white" color="orange" keep-color />
             <q-radio v-model="editorState.curPieceColor" label="Black" val="black" color="orange" keep-color />
         </div>
-        <div class="text-h6">
+        <h6>
             Choose Piece:
-        </div>
+        </h6>
         <div class="piece-options">
-            <div class="q-gutter-md">
                 <q-option-group
                     v-model="editorState.curPiece"
                     :options="pieces"
                     keep-color
                     color="orange"
                 />
-            </div>
-            <div class="custom-container">
-            <div v-if="isCustomPiece" class="custom-piece-edit">
+                <div v-if="isCustomPiece" class="custom-piece-edit">
                 <q-virtual-scroll 
                 :items="customPieces"
                 separator
@@ -35,19 +32,22 @@
                     </q-item>
 
                 </q-virtual-scroll>
-            
-                <q-btn v-if="editorState.curCustomPiece"
+                    <q-btn style="display: flex; align-items: center;" v-if="isCustomPiece && editorState.curCustomPiece"
                     color="green-9"
                     @click="dialogOpened = true;"
                     label="Set Move Pattern"
-                />
-                <MovePatternDialog  v-if="dialogOpened" 
+                    />
+                </div>
+                
+                
+                <div v-if="dialogOpened" style="max-width:700px;">
+                    <MovePatternDialog 
                     @close-dialog="closeDialog"
                     @save-mp="saveMP"
                     :editorState="editorState" 
-                />
-            </div>
-            </div>
+                    />
+                </div>
+            
         </div>
     </div>
 </template>
@@ -104,22 +104,21 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .piece-options{
     display:flex;
+    
 }
 
-.custom-container{
-    flex:1;
-    margin: 1em;
-    padding: 1em;
-    flex-direction: column;
-    justify-content: center;
-}
 .custom-piece-edit{
     display: flex;
+    flex:1;
+    padding: 1em;
+    flex-direction: row;
+    justify-content: center;
     width:50%;
-    align-items: center;
+    align-items: flex-start;
+    overflow: scroll;
 }
 .custom-piece-edit> button{
     margin:1%;
@@ -127,9 +126,15 @@ export default {
 .defined-mp{
     background-color: #2e7d32 !important;
 }
+h6{
+    margin:0;
+}
 
 .scroll-container {
     display:flex;
+    flex:1;
+    max-height: 200px;
+    overflow-y: scroll;
 }
 .scroll-container > .scroll-item{
     display:flex;

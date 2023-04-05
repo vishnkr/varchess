@@ -76,9 +76,11 @@ export const setupEmptyMaxSizeBoard = ()=>{
 }
 
 export const withId = (boardState:BoardState):BoardState =>{
+    let id = 0;
     for(let row=0; row<boardState.squares.length;row++){
         for(let col=0;col<boardState.squares[row].length;col++){
-            boardState.squares[row][col].squareId = (row*boardState.dimensions.cols)+col
+            boardState.squares[row][col].squareId =id;
+            id+=1;
         }
     }
     return boardState

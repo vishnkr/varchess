@@ -1,7 +1,7 @@
 <template>
     <div>
-        <div class="q-px-lg q-pt-md q-pb-xl">
-            <div class="text-white text-h6 bg-dark">Board height (rows)</div>
+        <div>
+            <v-pre class="text-white text-h6 bg-dark">Board height (rows)</v-pre>
             <q-slider 
                 v-model="dimensions.rows" 
                 color="orange" 
@@ -10,7 +10,7 @@
                 :max="isLoggedIn ? 16 : 8" 
                 @change="emitBoardDimensions"
                 />
-            <div class="text-white text-h6 bg-dark">Board width (cols)</div>
+            <p class="text-white text-h6 bg-dark">Board width (cols)</p>
             <q-slider 
                 v-model="dimensions.cols" 
                 color="orange" 
@@ -26,7 +26,7 @@
                 @update:model-value="emitDisable"
             />
             
-            <div class="text-h6 bg-dark text-white"> Shift Board</div>
+            <p class="text-h6 bg-dark text-white"> Shift Board</p>
             <div class="dpad-wrapper">
                 <DPad @shift-board-direction="emitShiftBoard"/>
             </div>

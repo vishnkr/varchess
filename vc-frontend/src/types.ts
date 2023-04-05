@@ -1,5 +1,5 @@
 export type PieceColor = "black" | "white"
-
+export type GameRole = "p1" | "p2" | "member"
 export type SquareColor = 'dark' | 'light' | 'disabled' | 'jump' | 'slide' | 'to' | 'from'
 export interface SquareInfo{
     isPiecePresent: Boolean,
@@ -33,6 +33,12 @@ export interface BoardState{
 export interface ChatMessage{
     username: string,
     message: string
+}
+
+export interface UserInfo{
+    username?:String,
+    isAuthenticated?:boolean,
+    curGameRole?: GameRole
 }
 
 export interface GameInfo{

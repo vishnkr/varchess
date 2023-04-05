@@ -1,4 +1,4 @@
-import { BoardState, ChatMessage, MoveInfo, MovePattern, PiecePosition, Players } from "@/types";
+import { BoardState, ChatMessage, MoveInfo, MovePattern, PiecePosition, Players, UserInfo } from "@/types";
 import * as MutationTypes from "../utils/action_mutation_types";
 import { RootState } from "./state";
 
@@ -8,6 +8,9 @@ type PayloadWithRoomId<T> = T & {roomId: string};
 const mutations ={
     [MutationTypes.UPDATE_BOARD_STATE](state:RootState,payload:{roomId:string,boardState:BoardState}) {
         state.board = payload.boardState;
+    },
+    [MutationTypes.SET_USER_INFO](state:RootState,payload:UserInfo){
+      state.userInfo = {...payload}
     },
 
     [MutationTypes.ADD_CHAT_MESSAGE](state:RootState,messageInfo:PayloadWithRoomId<ChatMessage>) {

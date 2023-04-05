@@ -1,6 +1,6 @@
 <template>
-    <div :style="cssVars" id="board-container">
-        <div id="board">
+    <div id="wrapper">
+        <div id="board" :style="cssVars">
         <BoardSquare v-for="square in boardState1D" 
             :key="square.squareId" 
             :square="square"
@@ -9,6 +9,7 @@
         />
     </div>
     </div>
+       
     
 </template>
 
@@ -34,7 +35,7 @@ export default{
    
         const cssVars = computed(()=>{
             return {
-            '--container_size': props.boardSize ? `${props.boardSize}px` : `${700}px`,
+            //'--container_size': '100%',// props.boardSize ? `${props.boardSize}px` : `${700}px`,
             '--size': Math.max(board.dimensions.rows,board.dimensions.cols),
         }
         })
@@ -70,6 +71,11 @@ export default{
             }
             boardState1D.value = newBoardState
         }
+
+        const flipBoard = ()=>{
+            boardState1D.value = boardState1D.value.reverse();
+        }
+
         expose({updateBoardState1D})
 
         onMounted(()=>{
@@ -92,15 +98,14 @@ export default{
 </script>
 
 <style scoped>
-#board-container{
-max-width: var(--container_size);
-width:80%;
-max-height: var(--container_size);
 
+#wrapper{
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
 }
-
 #board{
-    flex:1;
     background-color: #EAEAEA;
     grid-template-columns: repeat(var(--size), 1fr);
     grid-template-rows: repeat(var(--size), 1fr);
@@ -109,4 +114,10 @@ max-height: var(--container_size);
     justify-items: center;
 }
 
+@media (min-width:320px)  { 
+    #wrapper{
+        position: relative;
+        width: 100%;
+    }
+}
 </style>

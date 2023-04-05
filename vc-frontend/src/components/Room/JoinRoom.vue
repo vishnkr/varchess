@@ -1,5 +1,5 @@
 <template>
-    <q-page class="parent-background">
+    <q-page>
         <div class="join">
         <div class="child-div text-white text-h4">
             Join Room: {{ roomId }}

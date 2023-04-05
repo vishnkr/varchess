@@ -11,10 +11,19 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faGithub } from '@fortawesome/free-brands-svg-icons'
-import {faHeart, faLink, faArrowUp, faArrowDown, faArrowLeft, faArrowRight} from '@fortawesome/free-solid-svg-icons'
+import {faHeart, 
+        faLink, 
+        faArrowUp, 
+        faArrowDown, 
+        faArrowLeft, 
+        faArrowRight, 
+        faChess,
+        faMessage,
+        faUserGroup
+      } from '@fortawesome/free-solid-svg-icons'
 
 /* add icons to the library */
-library.add(faGithub,faHeart,faLink, faArrowUp, faArrowDown, faArrowLeft, faArrowRight)
+library.add(faGithub,faHeart,faLink, faArrowUp, faArrowDown, faArrowLeft, faArrowRight, faChess, faMessage, faUserGroup)
 const myApp = createApp(App)
 
 myApp.use(router)

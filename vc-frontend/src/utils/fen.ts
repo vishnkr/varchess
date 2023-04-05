@@ -89,7 +89,8 @@ function convertFENtoBoardState(fen:string){
     }
     boardState.dimensions.rows = rows.length;
     boardState.dimensions.cols = boardState.squares[0].length;
-    return withId(boardState);
+    let returnval = withId(boardState);
+    return returnval;
 }
 
 export {convertBoardStateToFEN,convertFENtoBoardState};

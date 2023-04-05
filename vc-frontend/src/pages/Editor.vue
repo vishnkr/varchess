@@ -1,14 +1,14 @@
 <template>
-    <q-page class="board-background">
-        <q-dialog v-model="isLoading">
-            <LoadingScreen :shareLink="getShareLink" @update-loading="closeRoom"/>
+    <q-page class="editor-page bg-dark">
+        <q-dialog v-model="isLoading" v-if="roomId">
+            <LoadingScreen :roomId="roomId" :username="username" :shareLink="getShareLink" @update-loading="closeRoom"/>
         </q-dialog>
-        <div class="board-editor">
+        <div class="column board-editor">
             <q-card dark class="card q-pa-md">
                 <q-card-section class="top-row">
-                    <div class="text-h5" align="right"> 
+                    <p class="text-h5"> 
                         Game Editor
-                    </div>
+                    </p>
                     <div class="top-btns">
                         <q-btn color="negative" style="margin-right:5px;" label="Clear Board" @click="clearBoard"></q-btn>
                         <q-btn class="bg-green-9" label="Create Room" @click="enterRoomWithLoading"></q-btn>
@@ -40,13 +40,15 @@
                 </q-card-section>
             </q-card>
         </div>
-        <Board 
+        <div class="board-panel column bg-dark">
+            <Board 
             :isFlipped="false" 
             :boardState="boardState" 
             :editorState="editorState" 
             @handle-square-click="handleSquareClick"
             ref="boardRef"
         />
+        </div>
     </q-page>
 </template>
 
@@ -83,7 +85,7 @@ export default defineComponent({
         const boardState :BoardState = reactive(convertFENtoBoardState(STANDARD_FEN));
         const boardRef = ref();
         const router = useRouter();
-        const username = router.currentRoute.value.params.username;
+        const username = router.currentRoute.value.params.username.toString();
         const roomId = ref(null);
         const editorState: EditorState = reactive({
             curPiece: 'p',
@@ -227,6 +229,7 @@ export default defineComponent({
             tab,
             boardState,
             roomId,
+            username,
             updateBoardDimensions,
             boardRef,
             editorState,
@@ -247,27 +250,56 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.card{
+@media (min-width:320px)and(min-width:641px)  { /* smartphones, iPhone, portrait 480x320 phones */
+    .editor-page{
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    max-width: 100%;
+    align-items: center;
+    }
+    .board-panel{
+        width:100%;
+    }
+}
+/*
+@media (min-width:481px)  {  }
+@media (min-width:641px)  { 
+    .editor-page{
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    max-width: 100%;
+    align-items: center;
+    }
+@media (min-width:961px)  { /* tablet, landscape iPad, lo-res laptops ands desktops  }
+@media (min-width:1025px) { /* big landscape tablets, laptops, and desktops  }
+@media (min-width:1281px) { /* hi-res laptops and desktops  }*/
+.editor-page{
+    display: flex;
+    flex-direction: row;
+    max-height: 100%;
+    max-width: 100%;
+    align-items: center;
+    padding-bottom: 2%;
+}
+.board-editor{
+    width:100%;
+    padding: 1%;
+}
+
+.board-panel{
+    max-width: 800px;
+    width:100%;
+    padding:1%;
+}
+.board-editor> .card{
     display:flex;
     justify-content: center;
     flex-direction: column;
-}
-
-@media screen and (max-width:990px) {
-  .parent-background { flex-wrap: wrap;  }
-  .parent-background:first-child { flex-basis: 100%; }
-}
-
-.board-background{
-    display: flex;
-    flex-direction: row;
-    margin: 1em;
-}
-.board-editor{
     flex:1;
-    margin-right: 1em;
-    margin-bottom: 1em;
 }
+
 .top-row{
     display:flex;
     flex-direction: row;
@@ -275,7 +307,7 @@ export default defineComponent({
 .top-row>.top-btns{
     display:flex;
     justify-content: end;
-    flex:3;
+    padding: 1em;
 }
 
 .top-row>div{

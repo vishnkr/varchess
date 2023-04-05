@@ -30,7 +30,7 @@ const cssVars = computed(()=>{
 
 <style scoped>
 
-.piee {
+.piece {
         position: relative;
         text-align: center;
         color: white;

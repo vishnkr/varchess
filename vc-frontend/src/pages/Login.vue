@@ -16,7 +16,7 @@
             <q-btn unelevated color="light-green-8" size="lg" class="full-width" label="Login" />
           </q-card-actions>
           <q-card-section class="text-center q-pa-none">
-            <p class="text-grey-6">Not registered? <AppLink name="Signup"><p style="cursor: pointer;">Create an Account</p></AppLink></p>
+            <p class="text-grey-6">Not registered? <p @click="redirectToSignup" style="cursor: pointer;">Create an Account</p></p>
           </q-card-section>
         </q-card>
       </div>
@@ -25,14 +25,19 @@
 </template>
 
 <script lang="ts">
-import { useQuasar } from 'quasar';
 import {ref} from 'vue'
-import AppLink from '../components/AppLink.vue'
+import { useRouter } from 'vue-router';
+
 export default{
     setup(){
         const username = ref(null)
         const password = ref(null)
         
+        const router = useRouter();
+        const redirectToSignup = ()=>{
+          router.push({name:'Signup'})
+        }
+
         return {
             username,
             password,
@@ -41,7 +46,8 @@ export default{
             onReset () {
                 username.value = null
                 password.value = null
-            }
+            },
+            redirectToSignup
         }
     }
 }

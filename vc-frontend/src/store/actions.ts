@@ -70,7 +70,7 @@ const actions = {
 
   },
   async createRoom(
-    { state }: ActionContext<RootState,RootState>,
+    { state,commit }: ActionContext<RootState,RootState>,
     payload:{ fen: string, movePatterns?: MovePattern[] }
     ):Promise<string>{
       try{
@@ -78,6 +78,7 @@ const actions = {
         return response.roomId;
       } catch (error) {
         console.error(error);
+        commit(SET_SERVER_STATUS,{isOnline:false,errorMessage:"Cannot connect to server at the moment. Please try again later."})
         throw new Error('Error creating room');
       }
     },

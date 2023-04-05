@@ -10,10 +10,11 @@
         <q-card class="text-white mp-card" dark>
             <div class="top-row">
                 <q-btn color="negative" label="Close" @click="closeDialog"></q-btn>
-                <q-btn color="positive" label="Save" @click="saveMP"></q-btn>
+                <q-btn class="bg-green-9" label="Save" @click="saveMP"></q-btn>
             </div>
             
-            <div class="flex-panels">
+            <div class="mp-editor">
+                <div class="board-wrapper">
                 <Board 
                     :board-state="boardState" 
                     :isFlipped="false" 
@@ -21,6 +22,7 @@
                     :editor-state="editorState"
                     ref="boardRef"
                 />
+                </div>
                 <div class="options">
                     <div class="text-white text-h6 bg-dark">Move Type</div>
                     <q-radio v-model="editorState.moveType" val="jump" label="Jump" color="blue" keep-color/>
@@ -36,8 +38,8 @@
                         <q-checkbox keep-color v-model="directions" label="South West" val="southwest" color="red" />
                     </div>
                 </div>
-                
             </div>
+            
             
         </q-card>
     </q-dialog>
@@ -129,31 +131,38 @@ export default {
 .mp-card{
     display:flex;
     flex-direction: column;
+    justify-content: center;
     margin: 1%;
     padding: 2%;
+}
+.mp-editor{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 .top-row{
     display:flex;
     justify-content: end;
-    margin: 1em;
+    margin: 1rem;
+}
+.board-wrapper{
+    width:100%;
+    max-width: 30vw;
 }
 
-.flex-panels{
-    flex-direction: row;
-    display: flex;
-}
 .slide-checkboxes{
     display:flex;
-    flex-direction:column
+    justify-content: start;
 }
+
 .options{
     display:flex;
     margin: 1%;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    
+    justify-content: start;
 }
+
 .flex-panels > *{ margin:1%}
 
 </style>

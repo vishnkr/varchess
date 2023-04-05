@@ -1,32 +1,39 @@
 <template>
-    <nav class="navbar-bg">
-            <AppLink 
+        <div 
             class="navbar-brand nav-left"
-            name="Home"> 
+            :class="[!showButton ? 'lite' : null]"
+            @click="redirectToHome"> 
                 Varchess
-            </AppLink>
-            <div class="nav-right">
-                <QuickPlayButton />
-                <AppLink name="Login">
-                    <q-btn outline class="routerlink" style="color: goldenrod; " label="Login" />
-                </AppLink>
             </div>
-            
-    </nav>
+            <div class="nav-right">
+                <QuickPlayButton v-if="showButton"/>
+                <div name="Login" v-if="showButton">
+                    <q-btn outline class="routerlink" @click="redirectToLogin" style="color: goldenrod; " label="Login" />
+                </div>
+            </div>
 </template>
 
 <script lang="ts">
 
-import AppLink from '../components/AppLink.vue'
 import QuickPlayButton from './Other/QuickPlayButton.vue'
-import { ref, inject } from 'vue'
+import { ref, inject, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router';
 export default{
     components:{
         QuickPlayButton
-    },
+    },    
     setup(){
+        const router = useRouter();
+        const route = useRoute();
+
+        const showButton = computed(()=> route.name === 'Home');
+        const redirectToHome = ()=> router.push({name:'Home'})
+        const redirectToLogin = ()=> router.push({name:'Login'})
         return{
-            showQuickPlayDialog: ref(false)
+            showQuickPlayDialog: ref(false),
+            redirectToHome,
+            redirectToLogin,
+            showButton,
         }
     }
 }
@@ -36,22 +43,18 @@ export default{
 
 .navbar-brand {
   font-family: 'Bangers', sans-serif;
-  font-size: 3rem !important;
-  padding-top: 0rem !important;
-  margin: 0 0 0 2rem !important;
-  color: white !important;
+  font-size: 3rem;
+  margin: 0 0 0 2rem;
+  color: white;
   text-shadow: -2px 2px black;
+  cursor: pointer;
 }
 
-nav{
-    overflow: hidden;
+.lite{
+    font-size: 2rem !important;
+    margin: 0 0 0 0 2rem !important;
 }
-.navbar-bg{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    background-color: #171717;
-}
+
 .nav-left, .nav-right{
     display: flex;
     flex:1;

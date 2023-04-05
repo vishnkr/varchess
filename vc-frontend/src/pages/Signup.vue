@@ -1,23 +1,21 @@
 <template>
-    <q-page class="bg-light-green window-height window-width row justify-center items-center">
-    <div class="column">
+    <q-page class="bg-orange-9 row justify-center items-center">
+      <div >
       <div class="row">
-        <h5 class="text-h5 text-white q-my-md">Create an Account</h5>
+        <div class="text-h4 text-white q-my-md">Create an Account</div>
       </div>
       <div class="row">
-        <q-card square bordered class="q-pa-lg shadow-1">
+        <q-card rounded bordered class="q-pa-md shadow-1 card-props" >
           <q-card-section>
             <q-form class="q-gutter-md">
-              <q-input square filled clearable v-model="username" type="email" label="email" />
+              <q-input square filled clearable v-model="username" type="email" label="username" />
+              <q-input square filled clearable v-model="email" type="email" label="email" />
               <q-input square filled clearable v-model="password" type="password" label="password" />
             </q-form>
           </q-card-section>
           <q-card-actions class="q-px-md">
-            <q-btn unelevated color="light-green-7" size="lg" class="full-width" label="Login" />
+            <q-btn unelevated color="light-green-8" size="lg" class="full-width" label="Create Account" />
           </q-card-actions>
-          <q-card-section class="text-center q-pa-none">
-            <p class="text-grey-6">Not registered? <AppLink name="SignUp"><p style="cursor: pointer;">Create an Account</p></AppLink></p>
-          </q-card-section>
         </q-card>
       </div>
     </div>
@@ -27,16 +25,18 @@
 <script lang="ts">
 import { useQuasar } from 'quasar';
 import {ref} from 'vue'
-import AppLink from '../components/AppLink.vue'
+
 export default{
     setup(){
         const q = useQuasar()
         const username = ref(null)
         const password = ref(null)
-        
+        const email = ref(null)
+
         return {
             username,
             password,
+            email,
             onSubmit(){
                 q.notify({
                     color: 'green-4',
@@ -48,6 +48,7 @@ export default{
             onReset () {
                 username.value = null
                 password.value = null
+                email.value = null
             }
         }
     }
@@ -63,7 +64,8 @@ export default{
      );
 }
 
-.card{
-    
+.card-props{
+    width: 25rem;
+    border-radius: 20px;
 }
 </style>
