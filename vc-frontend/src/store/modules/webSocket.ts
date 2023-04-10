@@ -2,7 +2,8 @@ import { Module,ActionContext } from 'vuex';
 import { RootState } from '../state';
 import { MoveInfo, MoveInfoPayload, WsMessage } from '../../types';
 import store from '..';
-import * as MutationTypes from '../../utils/action_mutation_types';
+import * as MutationTypes from '../mutation_types';
+import * as ActionTypes from "../action_types";
 
 const server_host = import.meta.env.VITE_SERVER_WS;
 
@@ -47,7 +48,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
         let apiMsg = JSON.parse(msg.data);
         switch(apiMsg.type){
             case "chatMessage": {
-              let msgData = JSON.parse(apiMsg.data);
+              let msgData = apiMsg.data;
               if (rootState.chatMessages[msgData.roomId]==undefined){
                    msgData.id=1
                } else {
@@ -70,6 +71,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
               store.commit(MutationTypes.UPDATE_MEMBERS,{members:msgData.members})
             }
             case "performMove":{
+              console.log('got pm',apiMsg)
               if(apiMsg.isValid){ //only if move is valid you perform commit
                 store.commit(MutationTypes.PERFORM_MOVE,apiMsg)
               }
@@ -93,7 +95,6 @@ const webSocketModule: Module<WebSocketState, RootState> = {
 
     close({ state }) {
       if (state.ws !== null) {
-        console.log('closing ws');
         state.ws.close();
         state.ws = null;
       }
@@ -115,7 +116,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
         }
       });
       if (!context.state.ws || !isOpen(context.state.ws)) return;
-      console.log('sending jsonreq',JSON.stringify(payload))
+      //console.log('sending jsonreq',JSON.stringify(payload))
       context.state.ws.send(JSON.stringify(payload));
       
     },
@@ -132,15 +133,15 @@ const webSocketModule: Module<WebSocketState, RootState> = {
       context.dispatch('sendJSONReq', { type: 'draw', data: payload});
     },
 
-    sendMoveInfo(context: ActionContext<WebSocketState, RootState>, payload: MoveInfoPayload) {
+    validateMove(context: ActionContext<WebSocketState, RootState>, payload: MoveInfoPayload) {
       if (!context.rootState.gameInfo?.result) {
         const data: MoveInfo = {
           piece: payload.piece,
           roomId: payload.roomId,
-          srcRow: payload.srcRow - 1,
-          srcCol: payload.srcCol - 1,
-          destRow: payload.destRow - 1,
-          destCol: payload.destCol - 1,
+          srcRow: payload.srcRow,
+          srcCol: payload.srcCol,
+          destRow: payload.destRow,
+          destCol: payload.destCol,
           color: payload.color,
           castle: !!payload.castle
         };

@@ -77,21 +77,12 @@
      -webkit-font-smoothing: antialiased;
      -moz-osx-font-smoothing: grayscale;
    }
-   .slider{
-    height: 100;
-   }
-   .slide-title{
-        display: flex;
 
-   }
    .slide-desc{
-        display: flex;
-        justify-content: center;
-        flex-direction: row;
-    }
-    .slide-img{
-       display: flex;
-       max-width: 60%;
+        display: grid;
+        grid-auto-flow: column;
+        gap: 1rem;
+        text-align: center;
     }
 
    .slide-img img{
@@ -100,7 +91,6 @@
    }
 
    .slide-text{
-        max-width:40%;
         display: flex;
         text-align: center;
         align-items: center;

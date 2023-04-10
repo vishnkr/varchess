@@ -19,11 +19,26 @@ import {faHeart,
         faArrowRight, 
         faChess,
         faMessage,
-        faUserGroup
+        faUserGroup,
+        faRepeat,
+        faHandshake,
+        faFlag
       } from '@fortawesome/free-solid-svg-icons'
 
 /* add icons to the library */
-library.add(faGithub,faHeart,faLink, faArrowUp, faArrowDown, faArrowLeft, faArrowRight, faChess, faMessage, faUserGroup)
+library.add(faGithub,
+  faHeart, 
+  faLink, 
+  faArrowUp, 
+  faArrowDown, 
+  faArrowLeft, 
+  faArrowRight, 
+  faChess,
+  faMessage,
+  faUserGroup,
+  faRepeat,
+  faHandshake,
+  faFlag)
 const myApp = createApp(App)
 
 myApp.use(router)

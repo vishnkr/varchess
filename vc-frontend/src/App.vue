@@ -2,8 +2,8 @@
   import { ref } from 'vue';
 import { Store, useStore } from 'vuex';
 import Navigation from './components/Navigation.vue';
-import state, { RootState } from './store/state';
-import { SET_SERVER_STATUS } from './utils/action_mutation_types';
+import { RootState } from './store/state';
+import { SET_SERVER_STATUS } from './store/mutation_types';
   
   const store: Store<RootState> = useStore();
   const errorText = ref<String|null>(null);
@@ -57,7 +57,7 @@ a{
 }
 
 .footer {
-  background-color: #727272;
+  background-color: #171717;
   font-size: medium;
   text-align: center;
   align-items: center;

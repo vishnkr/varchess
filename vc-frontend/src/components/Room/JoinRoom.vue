@@ -15,8 +15,9 @@
 </template>
 
 <script lang="ts">
-import { RoomState } from '@/types';
-import { CONNECT_WS, GET_ROOM_STATE, SET_MOVE_PATTERNS, SET_PLAYERS, UPDATE_BOARD_STATE } from '../../utils/action_mutation_types';
+import { GameInfo, RoomState } from '@/types';
+import { SET_MOVE_PATTERNS, SET_PLAYERS, SET_USER_INFO, UPDATE_BOARD_STATE } from '../../store/mutation_types';
+import {CONNECT_WS, GET_ROOM_STATE} from '../../store/action_types';
 import { convertFENtoBoardState } from '../../utils/fen';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -34,6 +35,12 @@ export default{
         store.subscribe((mutation,state)=>{
             if(mutation.type===SET_PLAYERS){
                 if (store.state.gameInfo.players.p2 && roomId && username){
+                    let gameInfo : GameInfo = store.state.gameInfo;
+                    store.commit(SET_USER_INFO,{
+                        username:username.value,
+                        isAuthenticated:false, 
+                        curGameRole: username.value === gameInfo.players.p1 ? 'p1' : username.value === gameInfo.players.p2 ? 'p2' : 'member'
+                    })
                     router.push({name:'Game',params:{username:username.value,roomId:roomId.value}})
                 }
             }

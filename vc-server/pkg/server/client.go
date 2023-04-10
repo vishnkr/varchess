@@ -113,7 +113,7 @@ func (c *Client) Read() {
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		reqData := MessageStruct{}
 		json.Unmarshal([]byte(msg), &reqData)
-		log.Println("received data: {} {}", reqData.Type,string(reqData.Data))
+		log.Println("received data:", reqData.Type,string(reqData.Data))
 		if handler, ok := messageHandlers[reqData.Type]; ok {
             handler(&reqData)
         }
@@ -192,7 +192,7 @@ func (c *Client) handleChatMessage(data *MessageStruct) {
 	json.Unmarshal([]byte(data.Data), &chatMessage)
 	if room, ok := RoomsMap[chatMessage.RoomId]; ok {
 		if message, err := json.Marshal(data); err == nil {
-			room.BroadcastToMembersExceptSender(message, c)
+			room.BroadcastToMembers(message)
 		}
 	} else {
 		errorMsg := "Room does not exist, connection expired"
@@ -209,13 +209,11 @@ func (c *Client) handlePerformMove(data *MessageStruct) {
 	json.Unmarshal([]byte(data.Data), &(move))
 	moveResp := &MoveResponse{Piece: move.PieceType, SrcRow: move.SrcRow, SrcCol: move.SrcCol, DestRow: move.DestRow, DestCol: move.DestCol}
 	val, ok := game.StrToTypeMap[strings.ToLower(move.PieceType)]
-	piece := game.Piece{}
+	piece := game.Piece{Type:val}
 	if !ok {
 		piece.Type = game.Custom
 		piece.CustomPieceName = move.PieceType
-	} else {
-		piece.Type = val
-	}
+	} 
 	r := []rune(move.PieceType)
 	if unicode.IsUpper(r[0]) {
 		piece.Color = game.White
@@ -224,18 +222,22 @@ func (c *Client) handlePerformMove(data *MessageStruct) {
 	}
 
 	room, ok := RoomsMap[move.RoomId]
-
+	fmt.Println("ok",ok,RoomsMap)
 	if ok {
 		var res bool = false
 		curGame := room.Game
 		if curGame.Turn == piece.Color {
 			validMoves := curGame.Board.GetAllValidMoves(curGame.Turn)
+			fmt.Println("move",move)
 			for mv, movePiece := range validMoves {
+				fmt.Println(mv,movePiece)
 				if piece == movePiece && game.IsSameMove(*mv, move) {
 					res = true
 				}
 			}
 		}
+		
+		fmt.Println("isvalid",res)
 		if res {
 			curGame.Board.PerformMove(piece, move)
 			//check for checkmates/check on opponents

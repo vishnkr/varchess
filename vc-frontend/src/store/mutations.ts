@@ -1,5 +1,5 @@
 import { BoardState, ChatMessage, MoveInfo, MovePattern, PiecePosition, Players, UserInfo } from "@/types";
-import * as MutationTypes from "../utils/action_mutation_types";
+import * as MutationTypes from "./mutation_types";
 import { RootState } from "./state";
 
 
@@ -35,8 +35,8 @@ const mutations ={
       }
     },
 
-    [MutationTypes.SET_SRC_SELECTION](state:RootState,payload:PiecePosition){
-      state.curStartPos = {piece: payload.piece, row: payload.row, col: payload.col}
+    [MutationTypes.SET_SRC_SELECTION](state:RootState,payload:PiecePosition|null){
+      state.curStartPos = payload
     },
     [MutationTypes.UNDO_SRC_SELECTION](state:RootState){
       state.curStartPos = null

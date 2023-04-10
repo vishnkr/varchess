@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import { RootState } from '@/store/state';
-import { SET_PLAYERS } from '../../utils/action_mutation_types';
+import { SET_PLAYERS } from '../../store/mutation_types';
 import { ref } from 'vue';
 import { useRoute,useRouter } from 'vue-router';
 import { useStore } from 'vuex';

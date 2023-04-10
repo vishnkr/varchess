@@ -3,7 +3,7 @@
 * FEN (Forsyth–Edwards Notation) and vice-versa.
 */
 
-import { BoardState } from "@/types";
+import { BoardState, Square } from "../types";
 import { isLight, withId } from ".";
 function convertBoardStateToFEN(boardState:BoardState,turn?:string,castlingAvailability?:string,enPassant?:string){
     var cell,row,empty,fen = '';
@@ -56,7 +56,17 @@ function convertFENtoBoardState(fen:string){
         for(var j = 0; j < rows[i].length; j++){
             char = rows[i].charAt(j);
             if (char === "."){
-                boardState.squares[i].push({squareInfo:{isPiecePresent:false,row:i,col:j, squareColor: isLight(i,j) ? 'light' : 'dark'},disabled:true});
+                boardState.squares[i].push(
+                    new Square({
+                        squareInfo:{
+                            isPiecePresent:false,
+                            row:i,
+                            col:j, 
+                            squareColor: isLight(i,j) ? 'light' : 'dark'
+                        },
+                        disabled:true
+                    })
+                )
             }
             else if (/\d/.test(char)){
                 if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
@@ -66,13 +76,21 @@ function convertFENtoBoardState(fen:string){
                         colEnd = secDigit*10+parseInt(char)
                     } else {colEnd=parseInt(char)}
                     for(var empty=0; empty<colEnd;empty++){
-                        boardState.squares[i].push({squareInfo:{isPiecePresent:false, row:i, col: j, squareColor: isLight(i,j) ? 'light' : 'dark'}, disabled: false});
+                        boardState.squares[i].push(
+                            new Square({
+                                squareInfo:{
+                                    isPiecePresent:false, 
+                                    row:i, 
+                                    col: j, 
+                                    squareColor: isLight(i,j) ? 'light' : 'dark'}, 
+                                disabled: false
+                            }));
                     }
                 }
             }
             else{
                 boardState.squares[i].push(
-                    {
+                    new Square({
                         squareInfo:{
                             isPiecePresent: true,
                             pieceColor: (char == char.toLowerCase() && char != char.toUpperCase())? 'black': 'white',
@@ -82,8 +100,8 @@ function convertFENtoBoardState(fen:string){
                             squareColor:isLight(i,j) ? 'light' : 'dark'
                         },
                         disabled: false,
-                    }
-                    )
+                    })
+                )
             }
         }
     }

@@ -13,7 +13,8 @@ import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import SlideShow from '../components/Other/SlideShow.vue';
 
-import { SET_SERVER_STATUS } from '../utils/action_mutation_types';
+import { SET_SERVER_STATUS } from '../store/mutation_types';
+import { CHECK_SERVER_STATUS } from '../store/action_types';
 
 export default defineComponent({
   components:{ SlideShow, QuickPlayDialog },
@@ -28,7 +29,7 @@ export default defineComponent({
 
     onMounted(()=>{ 
 
-        store.dispatch('checkServerStatus');
+        store.dispatch(CHECK_SERVER_STATUS);
         store.subscribe((mutation,state)=>{
         if(mutation.type=== SET_SERVER_STATUS){
           errorText.value = state.serverStatus.errorMessage ? state.serverStatus.errorMessage : null;
@@ -46,7 +47,8 @@ export default defineComponent({
 
 <style>
  .background-container {
-    display:flex;;
+    display:grid;
+    grid-template-rows: 1fr;
     height: 100%;
     background-color: #333333;
 }

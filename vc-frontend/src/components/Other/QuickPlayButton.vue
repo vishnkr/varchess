@@ -22,8 +22,11 @@
 
 </template>
 <script lang="ts">
+import { RootState } from '@/store/state';
+import { SET_USER_INFO } from '../../store/mutation_types';
 import { Ref, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 
 export default{
   setup(){
@@ -31,6 +34,8 @@ export default{
     const username : Ref<string|null> = ref(null);
     const errorText : Ref<string|null> = ref(null);
     const router = useRouter();
+    
+    const store = useStore<RootState>();
     const checkUsername = () =>{
         if (!username || username.value === ''){
           errorText.value = 'Enter Username'
@@ -46,6 +51,7 @@ export default{
       checkUsername ,
       enterEditor: ()=>{
         if (checkUsername()){
+          store.commit(SET_USER_INFO,{ username:username.value,isAuthenticated:false, curGameRole: 'p1'})
           router.push({name:'Editor', params: {username:username.value}})
         }
       },

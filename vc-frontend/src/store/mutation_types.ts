@@ -10,10 +10,3 @@ export const SET_SERVER_STATUS = 'SET_SERVER_STATUS';
 export const SET_MOVE_PATTERNS = 'SET_MOVE_PATTERNS';
 export const SET_RESULT = 'SET_RESULT';
 export const SET_USER_INFO = 'SET_USER_INFO';
-
-
-// Action Types
-export const CREATE_ROOM = 'createRoom';
-export const CONNECT_WS = 'webSocket/connect';
-export const CLOSE_WS = 'webSocket/close';
-export const GET_ROOM_STATE = 'getRoomState';

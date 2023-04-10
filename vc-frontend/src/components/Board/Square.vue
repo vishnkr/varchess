@@ -9,7 +9,9 @@
 <script lang="ts">
 import {ref, PropType, computed} from 'vue'
 import Piece from './Piece.vue'
-import {SquareColor, SquareInfo,EditorModeType, EditorState, Square, MPEditorState, isMPEditor} from '../../types'
+import {SquareColor, SquareInfo,EditorModeType, EditorState, Square, MPEditorState, isMPEditor, SquareClick} from '../../types'
+import { RootState } from '@/store/state'
+import { useStore } from 'vuex'
 
 export default {
     name: 'BoardSquare',
@@ -32,7 +34,6 @@ export default {
             'to': '#d9bf7799',
             'from': '#a97d5d'
         }
-
         const getColor = ()=>{
           let color : SquareColor = props.square.squareInfo.tempSquareColor ?? props.square.squareInfo.squareColor;
           if (props.editorState){
@@ -40,27 +41,33 @@ export default {
           } 
           return colorMap[color];
         }
+
+        const store = useStore<RootState>();
         const cssVars = computed(()=>{
             return {
-                '--x': props.square.squareInfo.row,
-                '--y': props.square.squareInfo.col,
+                '--x': props.square.x,
+                '--y': props.square.y,
                 '--color': getColor()
             }
         })
         const emitSquareClick = ()=>{
             let squarePos = {row:props.square.squareInfo.row-1,col:props.square.squareInfo.col-1}
-            let payload = {clickType:'perform-move',...squarePos}
+            let payload:SquareClick = {clickType:'select-mv-square',...squarePos}
             if (props.editorState?.editorType){
-                if(props.editorState.editorType==='Game'){
-                    if (props.editorState.isDisableTileOn){
-                        payload.clickType = 'disable'
-                    } else { payload.clickType = 'toggle-piece'}
+              if(props.editorState.editorType==='Game'){
+                  if (props.editorState.isDisableTileOn){
+                      payload.clickType = 'disable'
+                  } else { payload.clickType = 'toggle-piece'}
                     
-                } else if (isMPEditor(props.editorState)){
-                    payload.clickType = props.editorState.moveType==='jump' ? 
-                    props.square.squareInfo.tempSquareColor==='jump' ? 'remove-jump-mp' : 'set-jump-mp' 
-                    : 'set-slide-mp'
-                }
+              } else if (isMPEditor(props.editorState)){
+                  payload.clickType = props.editorState.moveType==='jump' ? 
+                  props.square.squareInfo.tempSquareColor==='jump' ? 'remove-jump-mp' : 'set-jump-mp' 
+                  : 'set-slide-mp'
+              }
+            } else{
+              if(props.square.squareInfo.isPiecePresent){
+                payload.piece = props.square.squareInfo.pieceType
+              }
             }
             emit('emit-square-click',payload)
         }
@@ -112,29 +119,5 @@ export default {
 .move-slide-pattern{
   background-color: #ac422a !important;
   border-color: black;
-}
-
-@media only screen and (max-device-width: 480px) {
-  .square {
-  background: transparent;
-  border: 1px solid transparent;
-  float: left;
-  font-size: 6px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 12px;/*48px;*/
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
-  text-align: center;
-  width: 12px;
-  }
-  .dark {
-    background-color: #b2c85d;
-  }
-
-  .light {
-    background-color: #e4f5cb;
-  }
 }
 </style>

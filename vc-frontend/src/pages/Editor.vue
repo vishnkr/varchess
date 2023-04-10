@@ -3,8 +3,8 @@
         <q-dialog v-model="isLoading" v-if="roomId">
             <LoadingScreen :roomId="roomId" :username="username" :shareLink="getShareLink" @update-loading="closeRoom"/>
         </q-dialog>
-        <div class="column board-editor">
-            <q-card dark class="card q-pa-md">
+        
+        <q-card dark class="card q-pa-md">
                 <q-card-section class="top-row">
                     <p class="text-h5"> 
                         Game Editor
@@ -38,9 +38,7 @@
                         </q-tab-panel>
                     </q-tab-panels>
                 </q-card-section>
-            </q-card>
-        </div>
-        <div class="board-panel column bg-dark">
+        </q-card>
             <Board 
             :isFlipped="false" 
             :boardState="boardState" 
@@ -48,22 +46,39 @@
             @handle-square-click="handleSquareClick"
             ref="boardRef"
         />
-        </div>
     </q-page>
 </template>
 
+<style scoped>
+.editor-page{
+    display:grid;
+    gap: 1rem;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr 1fr;
+    padding: 1rem;
+}
+
+@media screen and (max-width:730px) {
+    .editor-page{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+    }
+    
+}
+</style>
 <script lang="ts">
 import { createDefaultMaxBoardStateSquares, setupEmptyMaxSizeBoard } from '../utils';
 import { reactive, ref,Ref, defineComponent, computed, watch } from 'vue';
 import BoardEditor from '../components/Editor/BoardEditor.vue'
 import Board from '../components/Board/Board.vue'
 import PieceEditor from '../components/Editor/PieceEditor.vue'
-import { BoardState, EditorState, PieceColor, MovePattern, Square} from '@/types';
+import { BoardState, EditorState, PieceColor, MovePattern, Square, GameInfo, SquareClick} from '@/types';
 import { convertBoardStateToFEN, convertFENtoBoardState } from '../utils/fen';
 import { STANDARD_FEN } from '../utils/constants';
 import { useStore } from 'vuex';
 import { RootState } from '../store/state';
-import { UPDATE_BOARD_STATE,CREATE_ROOM, SET_MOVE_PATTERNS, CONNECT_WS, SET_SERVER_STATUS, CLOSE_WS } from '../utils/action_mutation_types';
+import { UPDATE_BOARD_STATE, SET_MOVE_PATTERNS, SET_SERVER_STATUS} from '../store/mutation_types';
+import { CREATE_ROOM, CONNECT_WS, CLOSE_WS} from '../store/action_types';
 import { validateStartSetup } from '../utils/validator';
 import { useRouter } from 'vue-router';
 import LoadingScreen from '../components/Other/LoadingScreen.vue';
@@ -206,7 +221,7 @@ export default defineComponent({
             maxBoardState.squares[squareInfo.row][squareInfo.col].disabled = !maxBoardState.squares[squareInfo.row][squareInfo.col].disabled;
         }
             
-        const handleSquareClick = (payload:{clickType:string,row:number,col:number})=>{
+        const handleSquareClick = (payload:SquareClick)=>{
             switch (payload.clickType){
                 case 'toggle-piece':
                     togglePieceOnSquare({row:payload.row,col:payload.col})
@@ -249,69 +264,4 @@ export default defineComponent({
 
 </script>
 
-<style scoped>
-@media (min-width:320px)and(min-width:641px)  { /* smartphones, iPhone, portrait 480x320 phones */
-    .editor-page{
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-    max-width: 100%;
-    align-items: center;
-    }
-    .board-panel{
-        width:100%;
-    }
-}
-/*
-@media (min-width:481px)  {  }
-@media (min-width:641px)  { 
-    .editor-page{
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-    max-width: 100%;
-    align-items: center;
-    }
-@media (min-width:961px)  { /* tablet, landscape iPad, lo-res laptops ands desktops  }
-@media (min-width:1025px) { /* big landscape tablets, laptops, and desktops  }
-@media (min-width:1281px) { /* hi-res laptops and desktops  }*/
-.editor-page{
-    display: flex;
-    flex-direction: row;
-    max-height: 100%;
-    max-width: 100%;
-    align-items: center;
-    padding-bottom: 2%;
-}
-.board-editor{
-    width:100%;
-    padding: 1%;
-}
 
-.board-panel{
-    max-width: 800px;
-    width:100%;
-    padding:1%;
-}
-.board-editor> .card{
-    display:flex;
-    justify-content: center;
-    flex-direction: column;
-    flex:1;
-}
-
-.top-row{
-    display:flex;
-    flex-direction: row;
-}
-.top-row>.top-btns{
-    display:flex;
-    justify-content: end;
-    padding: 1em;
-}
-
-.top-row>div{
-    flex:1;
-}
-
-</style>

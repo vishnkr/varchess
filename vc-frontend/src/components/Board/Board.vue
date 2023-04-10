@@ -5,7 +5,7 @@
             :key="square.squareId" 
             :square="square"
             :editorState="editorState ?? null"
-            @emit-square-click="emitSquareClick"
+            @emit-square-click="handleSquareClick"
         />
     </div>
     </div>
@@ -13,97 +13,12 @@
     
 </template>
 
-<script lang="ts">
-import BoardSquare from './Square.vue'
-import { ref,reactive, PropType, Ref, onMounted, computed } from 'vue';
-import { BoardState, Square, EditorState } from '../../types';
-import { isLight } from '../../utils';
-
-export default{
-    components:{BoardSquare},
-    props:{
-        boardState: {type: Object as PropType<BoardState>, required: true },
-        isFlipped: {type:Boolean, required: true},
-        boardSize: {type:Number},
-        editorState:{type: Object as PropType<EditorState>}
-    },
-    emits:['handle-square-click'],
-    setup(props,{expose,emit}){
-        
-        const board: BoardState = props.boardState;
-        const boardState1D : Ref<Square[]> = ref([]);
-   
-        const cssVars = computed(()=>{
-            return {
-            //'--container_size': '100%',// props.boardSize ? `${props.boardSize}px` : `${700}px`,
-            '--size': Math.max(board.dimensions.rows,board.dimensions.cols),
-        }
-        })
-
-        //Converts 2D board state into 1D 
-        const updateBoardState1D = (boardState:BoardState)=>{
-            let newBoardState = [];
-            let row, square, x=1, y=1, flipX = boardState.dimensions.rows, flipY = boardState.dimensions.cols;
-            for (row of board.squares){
-                for (square of row){
-                    let newSquare :Square = {
-                        disabled: square.disabled,
-                        squareId: square.squareId ? square.squareId + (props.isFlipped ? -1 : 1) : 0,
-                        x: props.isFlipped ? flipX : x,
-                        y: props.isFlipped ? flipY : y,
-                        squareInfo: {...square.squareInfo,
-                            row: x,
-                            col: y,
-                            squareColor: square.disabled ? 'disabled' : isLight(y,x) ? 'light' : 'dark',
-                        }
-                    }
-                    y+=1;
-                    flipY-=1;
-                    newBoardState.push(newSquare)
-                }
-                x+=1
-                flipX-=1
-                flipY = boardState.dimensions.cols
-                y=1
-            }
-            if(props.isFlipped){
-                newBoardState.reverse();
-            }
-            boardState1D.value = newBoardState
-        }
-
-        const flipBoard = ()=>{
-            boardState1D.value = boardState1D.value.reverse();
-        }
-
-        expose({updateBoardState1D})
-
-        onMounted(()=>{
-            updateBoardState1D(board)
-        })
-
-        const emitSquareClick = (payload:{clickType:string,row:number,col:number})=>{
-            emit('handle-square-click',payload)
-        }
-        return{
-            board,
-            boardState1D,
-            cssVars,
-            emitSquareClick
-        }
-
-
-    }
-}
-</script>
-
 <style scoped>
 
 #wrapper{
     position: relative;
     width: 100%;
-    height: 0;
-    padding-bottom: 100%;
+    height: 100%;
 }
 #board{
     background-color: #EAEAEA;
@@ -121,3 +36,117 @@ export default{
     }
 }
 </style>
+
+<script lang="ts">
+import BoardSquare from './Square.vue'
+import { ref, PropType, Ref, onMounted, computed } from 'vue';
+import { BoardState, Square, EditorState, MoveInfoPayload, SquareClick, MoveInfo } from '../../types';
+import { isLight } from '../../utils';
+import { useStore } from 'vuex';
+import { RootState } from '@/store/state';
+import { PERFORM_MOVE, SET_SRC_SELECTION } from '../../store/mutation_types';
+export default{
+    components:{BoardSquare},
+    props:{
+        boardState: {type: Object as PropType<BoardState>, required: true },
+        isFlipped: {type:Boolean, required: true},
+        boardSize: {type:Number},
+        editorState:{type: Object as PropType<EditorState>}
+    },
+    emits:['handle-square-click'],
+    setup(props,{expose,emit}){
+        
+        const board: BoardState = props.boardState;
+        const boardState1D : Ref<Square[]> = ref([]);
+        const cssVars = computed(()=>{
+            return {
+            '--size': Math.max(board.dimensions.rows,board.dimensions.cols),
+        }
+        })
+        const store = useStore<RootState>();
+        store.subscribe((mutation,state)=>{
+            if(mutation.type===PERFORM_MOVE && state.currentMove){
+                performMove(state.currentMove)
+            }
+        })
+
+
+        function performMove(moveInfo:MoveInfo){
+            board.squares[moveInfo.destRow][moveInfo.destCol].updateSquareInfo({
+                isPiecePresent: true,
+                pieceType:moveInfo.piece.toLowerCase(),
+                pieceColor:moveInfo.piece === moveInfo.piece.toUpperCase()?'white' :'black'
+            })
+
+            board.squares[moveInfo.srcRow][moveInfo.srcCol].updateSquareInfo({
+                isPiecePresent:false, 
+                pieceType:undefined,
+                pieceColor:undefined
+            })
+            
+            updateBoardState1D(board,props.isFlipped);
+            store.commit(SET_SRC_SELECTION,null) 
+        }
+        
+        
+        //Converts 2D board state into 1D 
+        const updateBoardState1D = (boardState:BoardState,isFlipped:boolean)=>{
+            let newBoardState = [];
+            const endId = boardState.dimensions.rows * boardState.dimensions.cols - 1;
+            let row, square, x=1, y=1, flipX = boardState.dimensions.rows, flipY = boardState.dimensions.cols;
+            for (row of board.squares){
+                for (square of row){
+                    let newSquare: Square = new Square({
+                        squareInfo:{
+                            ...square.squareInfo,
+                            row: x,
+                            col: y,
+                            squareColor: square.disabled ? 'disabled' : isLight(y, x) ? 'light' : 'dark',
+                        },
+                        disabled: square.disabled,
+                        squareId: square.squareId && isFlipped ? endId - square.squareId : square.squareId || 0,
+                        x: isFlipped ? flipX : x,
+                        y: isFlipped ? flipY : y
+                        });
+                    y+=1;
+                    flipY-=1;
+                    newBoardState.push(newSquare)
+                }
+                x+=1
+                flipX-=1
+                flipY = boardState.dimensions.cols
+                y=1
+            }
+            if(isFlipped){
+                newBoardState = newBoardState.reverse();
+            }
+            boardState1D.value = newBoardState
+        }
+
+        const flipBoard = (flip:boolean)=>{
+            updateBoardState1D(board,flip)
+        }
+
+        expose({updateBoardState1D,flipBoard})
+
+        onMounted(()=>{
+            updateBoardState1D(board,props.isFlipped)
+        })
+
+        
+        const handleSquareClick = (payload:SquareClick)=>{
+            emit('handle-square-click',payload)
+        }
+
+
+        return{
+            board,
+            boardState1D,
+            cssVars,
+            handleSquareClick
+        }
+
+
+    }
+}
+</script>

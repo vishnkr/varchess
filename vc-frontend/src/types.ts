@@ -1,23 +1,37 @@
 export type PieceColor = "black" | "white"
 export type GameRole = "p1" | "p2" | "member"
 export type SquareColor = 'dark' | 'light' | 'disabled' | 'jump' | 'slide' | 'to' | 'from'
+
 export interface SquareInfo{
     isPiecePresent: Boolean,
     pieceColor?:PieceColor,
-    pieceType?:String,
+    pieceType?:string,
     row:number,
     col:number
     squareColor: SquareColor
     tempSquareColor?: SquareColor | null
 }
 
-export interface Square{
-    squareId?: number,
-    x?: number,
-    y?: number,
-    disabled: boolean,
+export class Square{
+    squareId?: number;
+    x?: number;
+    y?: number;
+    disabled: boolean;
     squareInfo: SquareInfo
+
+    constructor({ disabled, squareInfo,squareId,x,y }:{squareInfo: SquareInfo,disabled?:boolean, squareId?: number, x?: number, y?: number}) {
+        this.squareId = squareId;
+        this.disabled = disabled ?? false;
+        this.x = x;
+        this.y = y;
+        this.squareInfo = squareInfo;
+    }
+
+    updateSquareInfo(newInfo: Partial<SquareInfo>) {
+        Object.assign(this.squareInfo, newInfo);
+      }
 }
+
 export interface Dimensions{
     rows: number,
     cols: number
@@ -117,6 +131,13 @@ export interface PossibleSquaresResponse {
     roomId:string
   }
   
+  export interface SquareClick{
+    clickType:string,
+    row: number,
+    col: number,
+    piece?:string
+  }
+
   type PiecesInPlay = Record<string, {
     isAddedToBoard: boolean,
     isMPDefined: boolean,
@@ -143,4 +164,10 @@ export interface MPEditorState extends Omit<EditorState, 'curCustomPiece'> {
 
 export function isMPEditor(editorState: MPEditorState | EditorState): editorState is MPEditorState {
     return (editorState as MPEditorState).moveType !== undefined;
-  }
+}
+
+export interface ChatMessage{
+    id: number,
+    username: string,
+    message: string
+}

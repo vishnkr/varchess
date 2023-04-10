@@ -44,7 +44,6 @@ func (s *Server) Start(allowedOrigins string) error {
 	router.Use(setHeadersMiddleware(allowedOrigins))
 	router.HandleFunc("/room-state", makeHTTPHandleFunc(s.roomStateHandler)).Methods("GET")
 	router.HandleFunc("/create-room", makeHTTPHandleFunc(s.createRoomHandler)).Methods("POST")
-	router.HandleFunc("/", rootHandler)
 	router.HandleFunc("/login", makeHTTPHandleFunc(s.authenticateUserHandler)).Methods("GET")
 	router.HandleFunc("/signup", makeHTTPHandleFunc(s.createAccountHandler)).Methods("POST")
 	router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.getPossibleSquares)).Methods("GET")

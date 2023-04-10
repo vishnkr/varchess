@@ -25,7 +25,6 @@ export default{
     setup(){
         const router = useRouter();
         const route = useRoute();
-
         const showButton = computed(()=> route.name === 'Home');
         const redirectToHome = ()=> router.push({name:'Home'})
         const redirectToLogin = ()=> router.push({name:'Login'})

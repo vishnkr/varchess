@@ -2,8 +2,8 @@ import { CreateRoomResponse, MovePattern, PossibleSquaresResponse, RoomState } f
 import axios from "axios";
 import { ActionContext } from "vuex";
 import { RootState } from "./state";
-import { SET_SERVER_STATUS } from "../utils/action_mutation_types";
-
+import { SET_SERVER_STATUS } from "./mutation_types";
+import * as ActionTypes from "./action_types"
 
 export async function makeHttpRequest<T>(
   url: string,
@@ -44,7 +44,7 @@ const actions = {
     }
   },
 
-  async checkServerStatus({commit}:ActionContext<RootState,RootState>):Promise<void>{
+  async [ActionTypes.CHECK_SERVER_STATUS]({commit}:ActionContext<RootState,RootState>):Promise<void>{
     try{
       const response = await axios.get(`${BASE_URL}/server-status`);
       if (response.status==200){
@@ -56,7 +56,7 @@ const actions = {
       commit(SET_SERVER_STATUS,{isOnline:false,errorMessage:"Connection to the server cannot be established at the moment, Please try again later."})
     }
   },
-  async getRoomState(
+  async [ActionTypes.GET_ROOM_STATE](
     { state }: ActionContext<RootState,RootState>,
     payload:{roomId:string}
     ):Promise<RoomState>{
@@ -69,7 +69,7 @@ const actions = {
       }
 
   },
-  async createRoom(
+  async [ActionTypes.CREATE_ROOM](
     { state,commit }: ActionContext<RootState,RootState>,
     payload:{ fen: string, movePatterns?: MovePattern[] }
     ):Promise<string>{
@@ -83,7 +83,7 @@ const actions = {
       }
     },
 
-    async deleteRoom(
+    async [ActionTypes.DELETE_ROOM](
       { state }: ActionContext<RootState,RootState>,
       payload:{ roomId: string}
       ):Promise<void>{
