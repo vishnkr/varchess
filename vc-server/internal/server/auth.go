@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 	"unicode"
-	"varchess/pkg/store"
+	"varchess/internal/store"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"

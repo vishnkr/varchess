@@ -1,6 +1,6 @@
 package variant
 
-import "varchess/pkg/game"
+import "varchess/internal/game"
 
 type VariantType uint8
 

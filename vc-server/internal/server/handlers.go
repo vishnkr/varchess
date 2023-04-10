@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"varchess/pkg/game"
+	"varchess/internal/game"
 )
 
 

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 	"unicode"
-	"varchess/pkg/game"
+	"varchess/internal/game"
 
 	"github.com/gorilla/websocket"
 )
@@ -222,25 +222,21 @@ func (c *Client) handlePerformMove(data *MessageStruct) {
 	}
 
 	room, ok := RoomsMap[move.RoomId]
-	fmt.Println("ok",ok,RoomsMap)
+	
 	if ok {
 		var res bool = false
 		curGame := room.Game
 		if curGame.Turn == piece.Color {
 			validMoves := curGame.Board.GetAllValidMoves(curGame.Turn)
-			fmt.Println("move",move)
 			for mv, movePiece := range validMoves {
-				fmt.Println(mv,movePiece)
 				if piece == movePiece && game.IsSameMove(*mv, move) {
 					res = true
 				}
 			}
 		}
 		
-		fmt.Println("isvalid",res)
 		if res {
 			curGame.Board.PerformMove(piece, move)
-			//check for checkmates/check on opponents
 			over, result := curGame.Board.IsGameOver(game.GetOpponentColor(piece.Color))
 			if over {
 				log.Println("game over")

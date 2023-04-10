@@ -3,7 +3,7 @@ package server
 import (
 	"math/rand"
 	"time"
-	"varchess/pkg/game"
+	"varchess/internal/game"
 )
 
 type DrawOffer struct {

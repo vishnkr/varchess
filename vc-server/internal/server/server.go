@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"varchess/pkg/store"
+	"varchess/internal/store"
 
 	"github.com/gorilla/mux"
 )

@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log"
 	"os"
-	"varchess/pkg/server"
-	"varchess/pkg/store"
+	"varchess/internal/server"
+	"varchess/internal/store"
 
 	"github.com/joho/godotenv"
 )

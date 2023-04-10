@@ -3,7 +3,7 @@ package variant
 import (
 	"errors"
 	"log"
-	"varchess/pkg/game"
+	"varchess/internal/game"
 )
 
 type DuckVariant struct {
