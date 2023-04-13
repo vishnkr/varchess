@@ -3,8 +3,8 @@
 * FEN (Forsyth–Edwards Notation) and vice-versa.
 */
 
-import { BoardState, Square } from "../types";
-import { isLight, withId } from ".";
+import { BoardState, Square } from "../classes";
+import { isLight } from ".";
 function convertBoardStateToFEN(boardState:BoardState,turn?:string,castlingAvailability?:string,enPassant?:string){
     var cell,row,empty,fen = '';
     for (row of boardState.squares){
@@ -43,13 +43,13 @@ function convertBoardStateToFEN(boardState:BoardState,turn?:string,castlingAvail
 }
 
 function convertFENtoBoardState(fen:string){
-    console.log("converting fen",fen)
     let splitFen = fen.split(' ');
-    let boardState:BoardState = {squares:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3], dimensions:{rows:8,cols:8}}
+    let boardState:BoardState = new BoardState({squares:[], castlingAvailability: splitFen[2], turn: splitFen[1], enPassant: splitFen[3], dimensions:{rows:8,cols:8}})
     let rows = splitFen[0].split('/');
     let char;
     let secDigit = 0;
     let colEnd = 0;
+    let id=0;
     for (var i=0; i < rows.length;i++){
         boardState.squares.push([]);
         secDigit = 0;
@@ -64,9 +64,11 @@ function convertFENtoBoardState(fen:string){
                             col:j, 
                             squareColor: isLight(i,j) ? 'light' : 'dark'
                         },
+                        squareId:id,
                         disabled:true
                     })
                 )
+                id+=1;
             }
             else if (/\d/.test(char)){
                 if(j+1<rows[i].length && (/\d/.test(rows[i].charAt(j+1)))){
@@ -83,8 +85,10 @@ function convertFENtoBoardState(fen:string){
                                     row:i, 
                                     col: j, 
                                     squareColor: isLight(i,j) ? 'light' : 'dark'}, 
+                                squareId:id,
                                 disabled: false
                             }));
+                        id+=1;
                     }
                 }
             }
@@ -99,16 +103,17 @@ function convertFENtoBoardState(fen:string){
                             col:j,
                             squareColor:isLight(i,j) ? 'light' : 'dark'
                         },
+                        squareId:id,
                         disabled: false,
                     })
                 )
+                id+=1;
             }
         }
     }
     boardState.dimensions.rows = rows.length;
     boardState.dimensions.cols = boardState.squares[0].length;
-    let returnval = withId(boardState);
-    return returnval;
+    return boardState
 }
 
 export {convertBoardStateToFEN,convertFENtoBoardState};

@@ -12,7 +12,7 @@
                 <q-item clickable v-ripple>
                     <q-item-section avatar>
                     <q-avatar rounded color="primary" text-color="white">
-                        {{ viewer.toUpperCase()[0] }}
+                        {{ viewer.username?.toUpperCase()[0] }}
                     </q-avatar>
                     </q-item-section>
                     <q-item-section>{{ viewer }}</q-item-section>

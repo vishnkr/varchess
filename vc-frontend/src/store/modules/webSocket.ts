@@ -1,6 +1,6 @@
 import { Module,ActionContext } from 'vuex';
 import { RootState } from '../state';
-import { MoveInfo, MoveInfoPayload, WsMessage } from '../../types';
+import { IMoveInfo, IMoveInfoPayload, IWsMessage } from '../../types';
 import store from '..';
 import * as MutationTypes from '../mutation_types';
 import * as ActionTypes from "../action_types";
@@ -71,7 +71,6 @@ const webSocketModule: Module<WebSocketState, RootState> = {
               store.commit(MutationTypes.UPDATE_MEMBERS,{members:msgData.members})
             }
             case "performMove":{
-              console.log('got pm',apiMsg)
               if(apiMsg.isValid){ //only if move is valid you perform commit
                 store.commit(MutationTypes.PERFORM_MOVE,apiMsg)
               }
@@ -104,6 +103,7 @@ const webSocketModule: Module<WebSocketState, RootState> = {
       await new Promise<void>((resolve, reject) => {
         if (!context.state.ws) {
           reject(new Error('WebSocket not available'));
+          store.commit(MutationTypes.SET_SERVER_STATUS,{isOnline:false,errorMessage:'WebSocket connection lost, please head to the homepage'})
           return;
         }
 
@@ -116,7 +116,6 @@ const webSocketModule: Module<WebSocketState, RootState> = {
         }
       });
       if (!context.state.ws || !isOpen(context.state.ws)) return;
-      //console.log('sending jsonreq',JSON.stringify(payload))
       context.state.ws.send(JSON.stringify(payload));
       
     },
@@ -133,17 +132,16 @@ const webSocketModule: Module<WebSocketState, RootState> = {
       context.dispatch('sendJSONReq', { type: 'draw', data: payload});
     },
 
-    validateMove(context: ActionContext<WebSocketState, RootState>, payload: MoveInfoPayload) {
+    validateMove(context: ActionContext<WebSocketState, RootState>, payload: IMoveInfoPayload) {
       if (!context.rootState.gameInfo?.result) {
-        const data: MoveInfo = {
+        const data: IMoveInfo = {
           piece: payload.piece,
           roomId: payload.roomId,
           srcRow: payload.srcRow,
           srcCol: payload.srcCol,
           destRow: payload.destRow,
           destCol: payload.destCol,
-          color: payload.color,
-          castle: !!payload.castle
+          castle: payload.castle
         };
         context.dispatch('sendJSONReq', { type: 'performMove', data });
       }

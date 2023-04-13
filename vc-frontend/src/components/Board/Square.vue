@@ -9,9 +9,8 @@
 <script lang="ts">
 import {ref, PropType, computed} from 'vue'
 import Piece from './Piece.vue'
-import {SquareColor, SquareInfo,EditorModeType, EditorState, Square, MPEditorState, isMPEditor, SquareClick} from '../../types'
-import { RootState } from '@/store/state'
-import { useStore } from 'vuex'
+import {SquareColor, IEditorState, IMPEditorState, isMPEditor, ISquareClick} from '../../types';
+import {Square} from '../../classes';
 
 export default {
     name: 'BoardSquare',
@@ -21,7 +20,7 @@ export default {
     emits:['emit-square-click'],
     props:{
         square: {type: Object as PropType<Square>, required: true},
-        editorState: {type: Object as PropType<EditorState | MPEditorState | null> }
+        editorState: {type: Object as PropType<IEditorState | IMPEditorState | null> }
     },
     
     setup(props,{emit}){
@@ -42,7 +41,6 @@ export default {
           return colorMap[color];
         }
 
-        const store = useStore<RootState>();
         const cssVars = computed(()=>{
             return {
                 '--x': props.square.x,
@@ -52,7 +50,7 @@ export default {
         })
         const emitSquareClick = ()=>{
             let squarePos = {row:props.square.squareInfo.row-1,col:props.square.squareInfo.col-1}
-            let payload:SquareClick = {clickType:'select-mv-square',...squarePos}
+            let payload:ISquareClick = {clickType:'select-mv-square',...squarePos}
             if (props.editorState?.editorType){
               if(props.editorState.editorType==='Game'){
                   if (props.editorState.isDisableTileOn){

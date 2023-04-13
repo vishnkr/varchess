@@ -1,7 +1,7 @@
 <template>
     <q-page class="editor-page bg-dark">
         <q-dialog v-model="isLoading" v-if="roomId">
-            <LoadingScreen :roomId="roomId" :username="username" :shareLink="getShareLink" @update-loading="closeRoom"/>
+            <loading-screen :roomId="roomId" :username="username" :shareLink="getShareLink" @update-loading="closeRoom"/>
         </q-dialog>
         
         <q-card dark class="card q-pa-md">
@@ -23,7 +23,7 @@
                 <q-card-section >
                     <q-tab-panels dark v-model="tab" animated>
                         <q-tab-panel name="board-editor">
-                            <BoardEditor 
+                            <board-editor 
                                 @update-board-dimensions="updateBoardDimensions" 
                                 @toggle-disable="setEditorDisable"
                                 @shift-board-direction="shiftBoard"
@@ -34,12 +34,16 @@
                             />
                         </q-tab-panel>
                         <q-tab-panel name="piece-editor">
-                            <PieceEditor :editorState="editorState" @update-piece-state="updatePieceState"/>
+                            <piece-editor 
+                                :editorState="editorState" 
+                                @update-piece-state="updatePieceState"
+                                @save-mp="saveMP"
+                            />
                         </q-tab-panel>
                     </q-tab-panels>
                 </q-card-section>
         </q-card>
-            <Board 
+            <board 
             :isFlipped="false" 
             :boardState="boardState" 
             :editorState="editorState" 
@@ -72,7 +76,8 @@ import { reactive, ref,Ref, defineComponent, computed, watch } from 'vue';
 import BoardEditor from '../components/Editor/BoardEditor.vue'
 import Board from '../components/Board/Board.vue'
 import PieceEditor from '../components/Editor/PieceEditor.vue'
-import { BoardState, EditorState, PieceColor, MovePattern, Square, GameInfo, SquareClick} from '@/types';
+import { IEditorState, IMovePattern, ISquareClick} from '../types';
+import {Square,BoardState} from '../classes';
 import { convertBoardStateToFEN, convertFENtoBoardState } from '../utils/fen';
 import { STANDARD_FEN } from '../utils/constants';
 import { useStore } from 'vuex';
@@ -82,6 +87,7 @@ import { CREATE_ROOM, CONNECT_WS, CLOSE_WS} from '../store/action_types';
 import { validateStartSetup } from '../utils/validator';
 import { useRouter } from 'vue-router';
 import LoadingScreen from '../components/Other/LoadingScreen.vue';
+import { IMovePatterns } from '../types';
 
 type EditorType = 'board-editor' | 'piece-editor'
 
@@ -102,7 +108,7 @@ export default defineComponent({
         const router = useRouter();
         const username = router.currentRoute.value.params.username.toString();
         const roomId = ref(null);
-        const editorState: EditorState = reactive({
+        const editorState: IEditorState = reactive({
             curPiece: 'p',
             curPieceColor: 'white',
             isDisableTileOn: false,
@@ -139,13 +145,16 @@ export default defineComponent({
             }
         }
 
-        function getMovePatterns(){
-            return Object.entries(editorState.piecesInPlay).map(([piece,pieceData])=>{
-                if(pieceData.isAddedToBoard){
-                    return pieceData.movePattern
+        const getMovePatterns = ():IMovePatterns=>{
+            let movePatterns:IMovePatterns = {};
+            for(let [piece,mp] of Object.entries(editorState.piecesInPlay)){
+                if(mp.isAddedToBoard && mp.isMPDefined && mp.movePattern){
+                    movePatterns[piece] = mp.movePattern
                 }
-            })
+            }
+            return movePatterns
         }
+
 
         function shiftBoard(direction:string){
             let [lastCol,lastRow,afterLastCol,afterLastRow]  = [boardState.dimensions.cols-1,boardState.dimensions.rows-1,boardState.dimensions.cols,boardState.dimensions.rows];
@@ -195,7 +204,7 @@ export default defineComponent({
             boardRef.value.updateBoardState1D(boardState)
         }
 
-        const updatePieceState = (newEditorState:EditorState)=>{
+        const updatePieceState = (newEditorState:IEditorState)=>{
             editorState.curPiece = newEditorState.curPiece;
             editorState.curPieceColor = newEditorState.curPieceColor;
             editorState.curCustomPiece = newEditorState.curCustomPiece;
@@ -208,20 +217,40 @@ export default defineComponent({
 
         const togglePieceOnSquare = (squareInfo:{row:number,col:number})=>{
             if (!maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent){
-                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = true
-                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.pieceColor = editorState.curPieceColor
-                maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.pieceType = editorState.curPiece === 'c' && editorState.curCustomPiece ? editorState.curCustomPiece : editorState.curPiece
-                
+                let pieceType:string;
+                if (editorState.curPiece === 'c' && editorState.curCustomPiece){
+                    pieceType =  editorState.curCustomPiece 
+                    editorState.piecesInPlay[editorState.curCustomPiece] = {
+                        ...(editorState.piecesInPlay[editorState.curCustomPiece] || {}),
+                        isAddedToBoard: true
+                    };
+                } else {pieceType = editorState.curPiece}
+
+                maxBoardState.squares[squareInfo.row][squareInfo.col].updateSquareInfo({
+                    isPiecePresent: true,
+                    pieceColor: editorState.curPieceColor,
+                    pieceType
+                })         
             } else{
                 maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = false
             }
         }
+
+        const saveMP =(movePattern:IMovePattern)=>{
+            editorState.piecesInPlay[movePattern.piece] = {
+                ...(editorState.piecesInPlay[movePattern.piece] || {}),
+                isMPDefined: true,
+                movePattern:movePattern
+            };
+
+        }
+
         const setDisable = (squareInfo:{row:number,col:number})=>{
             maxBoardState.squares[squareInfo.row][squareInfo.col].squareInfo.isPiecePresent = false
             maxBoardState.squares[squareInfo.row][squareInfo.col].disabled = !maxBoardState.squares[squareInfo.row][squareInfo.col].disabled;
         }
             
-        const handleSquareClick = (payload:SquareClick)=>{
+        const handleSquareClick = (payload:ISquareClick)=>{
             switch (payload.clickType){
                 case 'toggle-piece':
                     togglePieceOnSquare({row:payload.row,col:payload.col})
@@ -252,6 +281,7 @@ export default defineComponent({
             updatePieceState,
             handleSquareClick,
             setEditorDisable,
+            saveMP,
             enterRoomWithLoading,
             getShareLink,
             closeRoom,

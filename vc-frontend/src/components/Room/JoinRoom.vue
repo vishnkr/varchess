@@ -15,7 +15,8 @@
 </template>
 
 <script lang="ts">
-import { GameInfo, RoomState } from '@/types';
+import {  RoomState } from '@/types';
+import { GameInfo } from '@/classes';
 import { SET_MOVE_PATTERNS, SET_PLAYERS, SET_USER_INFO, UPDATE_BOARD_STATE } from '../../store/mutation_types';
 import {CONNECT_WS, GET_ROOM_STATE} from '../../store/action_types';
 import { convertFENtoBoardState } from '../../utils/fen';

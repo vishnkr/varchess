@@ -3,7 +3,7 @@
        <div class="keen-slider__slide number-slide1">
                 <div class="slide-desc">
                     <div class="slide-img">
-                        <img src="../../assets/mac.png"/>
+                        <img src="/assets/mac.png"/>
                     </div>
                     <div class="slide-text">
                         Play on Varying Board Sizes from 5x5 to 16x16
@@ -16,7 +16,7 @@
                         Disable squares to restrict movement on certain parts of the board
                     </div>
                     <div class="slide-img">
-                        <img src="../../assets/ipad.png"/>
+                        <img src="/assets/ipad.png"/>
                     </div>
                 </div>
         </div>
@@ -26,7 +26,7 @@
                     Create Your Own Chess Pieces with Custom Move Patterns
                 </div>
                 <div class="slide-img">
-                    <img src="../../assets/mp2.png"/>
+                    <img src="/assets/mp2.png"/>
                 </div>
             </div>
        </div>

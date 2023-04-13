@@ -26,7 +26,7 @@
     grid-template-rows: repeat(var(--size), 1fr);
     box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
     display: grid;
-    justify-items: center;
+    max-width: 1000px;
 }
 
 @media (min-width:320px)  { 
@@ -40,7 +40,8 @@
 <script lang="ts">
 import BoardSquare from './Square.vue'
 import { ref, PropType, Ref, onMounted, computed } from 'vue';
-import { BoardState, Square, EditorState, MoveInfoPayload, SquareClick, MoveInfo } from '../../types';
+import { IEditorState, ISquareClick, IMoveInfo } from '../../types';
+import {Square, BoardState} from '../../classes';
 import { isLight } from '../../utils';
 import { useStore } from 'vuex';
 import { RootState } from '@/store/state';
@@ -51,7 +52,7 @@ export default{
         boardState: {type: Object as PropType<BoardState>, required: true },
         isFlipped: {type:Boolean, required: true},
         boardSize: {type:Number},
-        editorState:{type: Object as PropType<EditorState>}
+        editorState:{type: Object as PropType<IEditorState>}
     },
     emits:['handle-square-click'],
     setup(props,{expose,emit}){
@@ -71,7 +72,7 @@ export default{
         })
 
 
-        function performMove(moveInfo:MoveInfo){
+        function performMove(moveInfo:IMoveInfo){
             board.squares[moveInfo.destRow][moveInfo.destCol].updateSquareInfo({
                 isPiecePresent: true,
                 pieceType:moveInfo.piece.toLowerCase(),
@@ -134,7 +135,7 @@ export default{
         })
 
         
-        const handleSquareClick = (payload:SquareClick)=>{
+        const handleSquareClick = (payload:ISquareClick)=>{
             emit('handle-square-click',payload)
         }
 

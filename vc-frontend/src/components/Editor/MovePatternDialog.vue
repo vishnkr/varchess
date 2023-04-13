@@ -9,13 +9,13 @@
     >
         <q-card class="text-white mp-card" dark>
             <div class="top-row">
-                <q-btn color="negative" label="Close" @click="closeDialog"></q-btn>
-                <q-btn class="bg-green-9" label="Save" @click="saveMP"></q-btn>
+                <q-btn color="negative" label="Close" @click="closeDialog" /> 
+                <q-btn class="bg-green-9" label="Save" @click="saveMP" />
             </div>
             
             <div class="mp-editor">
                 <div class="board-wrapper">
-                <Board 
+                <board 
                     :board-state="boardState" 
                     :isFlipped="false" 
                     @handle-square-click="updateJumpMP"
@@ -45,8 +45,9 @@
     </q-dialog>
 </template>
 
+
 <script lang="ts">
-import { EditorState,MPEditorState,MoveType, MovePattern } from '../../types';
+import { IEditorState,IMPEditorState,MoveType, IMovePattern } from '../../types';
 import { convertFENtoBoardState } from '../../utils/fen';
 import { PropType, reactive, ref, watch } from 'vue';
 import Board from '../Board/Board.vue';
@@ -59,12 +60,12 @@ type DirOffsets = {
 export default {
     components:{Board},
     props:{
-        editorState: { type:Object as PropType<EditorState>, required:true}
+        editorState: { type:Object as PropType<IEditorState>, required:true}
     },
     emits:["close-dialog","save-mp"],
     setup(props,{emit}){
         const showDialog = ref(true);
-        const editorState : MPEditorState = reactive({
+        const editorState : IMPEditorState = reactive({
             ...props.editorState,
             editorType:"MP",
             moveType:"jump", 
@@ -73,7 +74,7 @@ export default {
         const piece = editorState.curCustomPiece;
         const boardRef = ref();
         const directions = ref([]);
-        let tempMovePattern:MovePattern = {piece,jumpPatterns:[],slidePatterns:[]} 
+        let tempMovePattern:IMovePattern = {piece,jumpPatterns:[],slidePatterns:[]} 
         let board = convertFENtoBoardState(`9/9/9/9/4${editorState && editorState.curPieceColor==="white" && piece ? piece.toUpperCase() : piece}4/9/9/9/9 w KQkq - 0 1`);
         const boardState = reactive(board);
         const center = {row:4, col:4};
@@ -101,6 +102,8 @@ export default {
         const updateSlideMP = (direction:string,action:string)=>{
             let [dx,dy] = dirOffsets[direction];
             let [curX,curY] = [center.row+dx, center.col+dy];
+            if(action==='add'){ tempMovePattern.slidePatterns.push([dx,dy])}
+            else{ tempMovePattern.slidePatterns = tempMovePattern.slidePatterns.filter(([x, y]) => x !== dx || y !== dy);}
             while(curX>=0 && curX < boardState.dimensions.rows && curY>=0 && curY<boardState.dimensions.cols){
                 boardState.squares[curX][curY].squareInfo.tempSquareColor = (action==='add') ? 'slide' : null;
                 curX+=dx,
@@ -129,40 +132,49 @@ export default {
 <style scoped>
 
 .mp-card{
-    display:flex;
-    flex-direction: column;
-    justify-content: center;
+    display:grid;
+    grid-template-rows: 1fr 8fr;
+    grid-template-columns: auto;
     margin: 1%;
     padding: 2%;
 }
 .mp-editor{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
 }
 .top-row{
     display:flex;
     justify-content: end;
-    margin: 1rem;
+    gap: 1rem;
 }
 .board-wrapper{
     width:100%;
     max-width: 30vw;
 }
 
-.slide-checkboxes{
-    display:flex;
-    justify-content: start;
-}
-
 .options{
-    display:flex;
-    margin: 1%;
-    flex-direction: column;
+    display:grid;
     align-items: center;
-    justify-content: start;
 }
 
-.flex-panels > *{ margin:1%}
+@media screen and (max-width:730px) {
+    .mp-card{
+        display:grid;
+        grid-template-rows: 1fr 10fr;
+        grid-template-columns: auto;
+        gap: 1%;
+    }
+    .board-wrapper{
+        width:100%;
+        max-width: 70vw;
+    }
+    .mp-editor{
+        display: grid;
+        grid-auto-flow: row;
+        grid-template-columns: 1fr;
+    }
+    
+}
 
 </style>

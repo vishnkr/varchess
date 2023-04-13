@@ -1,4 +1,4 @@
-import { CreateRoomResponse, MovePattern, PossibleSquaresResponse, RoomState } from "@/types";
+import { ICreateRoomResponse, IMovePatterns, IMovePattern, PossibleSquaresResponse, RoomState } from "@/types";
 import axios from "axios";
 import { ActionContext } from "vuex";
 import { RootState } from "./state";
@@ -71,10 +71,15 @@ const actions = {
   },
   async [ActionTypes.CREATE_ROOM](
     { state,commit }: ActionContext<RootState,RootState>,
-    payload:{ fen: string, movePatterns?: MovePattern[] }
+    payload:{ fen: string, movePatterns?: IMovePatterns }
     ):Promise<string>{
       try{
-        const response = await makeHttpRequest<CreateRoomResponse>(`${BASE_URL}/create-room`,'post',JSON.stringify(payload));
+        let movePatterns = payload.movePatterns ? Object.values(payload.movePatterns) : undefined;
+        let body = {
+          fen: payload.fen,
+          ...(movePatterns && { movePatterns })
+        };
+        const response = await makeHttpRequest<ICreateRoomResponse>(`${BASE_URL}/create-room`,'post',JSON.stringify(body));
         return response.roomId;
       } catch (error) {
         console.error(error);
@@ -88,7 +93,7 @@ const actions = {
       payload:{ roomId: string}
       ):Promise<void>{
         try{
-          const response = await makeHttpRequest<CreateRoomResponse>(`${BASE_URL}/delete-room`,'post',JSON.stringify(payload));
+          const response = await makeHttpRequest<ICreateRoomResponse>(`${BASE_URL}/delete-room`,'post',JSON.stringify(payload));
           return;
         } catch (error) {
           console.error(error);

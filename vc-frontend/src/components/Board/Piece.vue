@@ -8,14 +8,14 @@
 <script setup lang="ts">
 import {computed, PropType, StyleValue} from 'vue'
 
-import { SquareInfo } from '@/types';
+import { ISquareInfo } from '@/types';
 
 const props = defineProps({
-    squareInfo: {type: Object as PropType<SquareInfo>, required: true}
+    squareInfo: {type: Object as PropType<ISquareInfo>, required: true}
 })
 
 const getPieceURL = computed(()=>{
-    const path = new URL(`../../assets/images/pieces/${props.squareInfo?.pieceColor}/${props.squareInfo?.pieceType}.svg`, import.meta.url).href
+    const path = `/assets/images/pieces/${props.squareInfo?.pieceColor}/${props.squareInfo?.pieceType}.svg`
     return path
 })
 
@@ -28,7 +28,7 @@ const cssVars = computed(()=>{
 
 </script>
 
-<style scoped>
+<style>
 
 .piece {
         position: relative;

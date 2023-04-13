@@ -1,8 +1,10 @@
+import { Players } from "./classes"
+
 export type PieceColor = "black" | "white"
 export type GameRole = "p1" | "p2" | "member"
 export type SquareColor = 'dark' | 'light' | 'disabled' | 'jump' | 'slide' | 'to' | 'from'
 
-export interface SquareInfo{
+export interface ISquareInfo{
     isPiecePresent: Boolean,
     pieceColor?:PieceColor,
     pieceType?:string,
@@ -12,72 +14,29 @@ export interface SquareInfo{
     tempSquareColor?: SquareColor | null
 }
 
-export class Square{
-    squareId?: number;
-    x?: number;
-    y?: number;
-    disabled: boolean;
-    squareInfo: SquareInfo
-
-    constructor({ disabled, squareInfo,squareId,x,y }:{squareInfo: SquareInfo,disabled?:boolean, squareId?: number, x?: number, y?: number}) {
-        this.squareId = squareId;
-        this.disabled = disabled ?? false;
-        this.x = x;
-        this.y = y;
-        this.squareInfo = squareInfo;
-    }
-
-    updateSquareInfo(newInfo: Partial<SquareInfo>) {
-        Object.assign(this.squareInfo, newInfo);
-      }
-}
-
-export interface Dimensions{
+export interface IDimensions{
     rows: number,
     cols: number
 }
-export interface BoardState{
-    squares : Square[][],
-    dimensions: Dimensions,
-    castlingAvailability: string,
-    enPassant: string,
-    turn: string
-}
 
-export interface ChatMessage{
+export interface IChatMessage{
     username: string,
     message: string
 }
 
-export interface UserInfo{
-    username?:String,
-    isAuthenticated?:boolean,
-    curGameRole?: GameRole
-}
 
-export interface GameInfo{
-    result?: string,
-    players: Players
-    members: string[],
-}
-
-export interface Players{
-    p1: string,
-    p2?: string
-}
-
-export interface WsMessage{
+export interface IWsMessage{
     type:string,
     data:string,
 }
 
-export interface PiecePosition{
+export interface IPiecePosition{
     piece: string,
     row: number,
     col: number
 }
 
-export interface MoveInfo{
+export interface IMoveInfo{
     piece: string,
     srcRow: number,
     srcCol: number,
@@ -93,20 +52,20 @@ export interface MoveInfo{
     color?:string,
 }
 
-export interface MoveInfoPayload extends MoveInfo{
+export interface IMoveInfoPayload extends IMoveInfo{
     roomId: string;
-    color: string;
 }
 
 export type MPTuple = [x: number, y: number];
 
-export interface MovePattern{
+export interface IMovePattern{
     piece: string,
     jumpPatterns: MPTuple[],
     slidePatterns: MPTuple[]
 }
 
-export type MovePatterns = MovePattern[] | null;
+export type IMovePatterns = Record<string,IMovePattern>
+
 
 export interface ServerStatus{
     isOnline: boolean | null,
@@ -119,7 +78,7 @@ export interface PossibleSquaresResponse {
   
   export interface RoomState{
     fen:string,
-    movePatterns:MovePattern[],
+    movePatterns:IMovePattern[],
     roomId:string,
     p1:string | undefined,
     p2: string | undefined,
@@ -127,11 +86,11 @@ export interface PossibleSquaresResponse {
     turn: string,
   }
   
-  export interface CreateRoomResponse{
+  export interface ICreateRoomResponse{
     roomId:string
   }
   
-  export interface SquareClick{
+  export interface ISquareClick{
     clickType:string,
     row: number,
     col: number,
@@ -141,12 +100,12 @@ export interface PossibleSquaresResponse {
   type PiecesInPlay = Record<string, {
     isAddedToBoard: boolean,
     isMPDefined: boolean,
-    movePattern?:MovePattern
+    movePattern?:IMovePattern
   }>
 
   export type EditorModeType = 'MP' | 'Game'
 
-  export interface EditorState{
+  export interface IEditorState{
     curPiece: string,
     curPieceColor: PieceColor,
     isDisableTileOn:boolean,
@@ -157,17 +116,32 @@ export interface PossibleSquaresResponse {
 
 export type MoveType = 'jump' | 'slide'
  
-export interface MPEditorState extends Omit<EditorState, 'curCustomPiece'> {
+export interface IMPEditorState extends Omit<IEditorState, 'curCustomPiece'> {
     moveType: MoveType,
     curCustomPiece: string
 }
 
-export function isMPEditor(editorState: MPEditorState | EditorState): editorState is MPEditorState {
-    return (editorState as MPEditorState).moveType !== undefined;
+export function isMPEditor(editorState: IMPEditorState | IEditorState): editorState is IMPEditorState {
+    return (editorState as IMPEditorState).moveType !== undefined;
 }
 
-export interface ChatMessage{
+export interface IChatMessage{
     id: number,
     username: string,
     message: string
 }
+
+export interface UserInfo {
+    username?: string,
+    isAuthenticated: boolean,
+    curGameRole: GameRole
+}
+
+
+export interface GameInfo {
+  players: Players,
+  members: Record<string,UserInfo>,
+  result?: string
+}
+
+export { Players }

@@ -32,9 +32,9 @@
                     <div class="text-h6 tab-title">Chat</div>
                     <chat :messages="messages" @send-chat-message="sendChatMessage"/>
                 </q-tab-panel>
-                <q-tab-panel name="move-pattern">
+                <q-tab-panel name="move-pattern" v-if="movePatterns.movePattern">
                     <div class="text-h6 tab-title" >Move Patterns</div>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                    <move-pattern-tab :move-patterns="movePatterns.movePattern" :piece="Object.keys(movePatterns)[0]" />
                 </q-tab-panel>
 
                 </q-tab-panels>
@@ -47,7 +47,7 @@
 </template>
 
 <script lang="ts">
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import Chat from './Chat.vue';
 import MovePatternTab from './MovePatternTab.vue';
 import Members from './Members.vue';
@@ -65,6 +65,7 @@ export default {
         const store = useStore<RootState>();
         const newMessage = ref(false);
         const messages = ref(store.state.chatMessages[props.roomId])
+        const movePatterns = reactive({movePattern:store.state.movePatterns})
 
         store.subscribe((mutation,state)=>{
             if (mutation.type == ADD_CHAT_MESSAGE){
@@ -75,14 +76,15 @@ export default {
             }
         })
         const sendChatMessage = (message:string)=>{
-            store.dispatch(SEND_MESSAGE,{roomId:props.roomId,message,username:store.state.userInfo.username});
+            store.dispatch(SEND_MESSAGE,{roomId:props.roomId,message,username:store.state.userInfo?.username});
         }
         return{
             tab,
             emitAction: (type:string) => emit('sidetab-action',type),
             newMessage,
             messages,
-            sendChatMessage
+            sendChatMessage,
+            movePatterns
         }
     }
 }

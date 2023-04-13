@@ -1,11 +1,12 @@
-import { BoardState, Square } from "@/types"
+import { IMovePattern, PieceColor } from "@/types";
+import { BoardState, Square } from "../classes"
 
 export const createDefaultMaxBoardStateSquares = () => {
     let squares :Square[][] =[];
     for(let row=0; row<16;row++){
         squares.push([])
         for(let col=0;col<16;col++){
-            let square: Square = {
+            let square: Square = new Square({
                 disabled:false, 
                 squareId: (row*16)+col,
                 squareInfo: {
@@ -14,7 +15,7 @@ export const createDefaultMaxBoardStateSquares = () => {
                     col: col,
                     squareColor: isLight(row,col) ? 'light' : 'dark'
                 }
-            };
+            });
             if( (col===0||col==7) && (row===0||row===7)) {
                 square.squareInfo.pieceType='r';
                 square.squareInfo.isPiecePresent=true
@@ -59,7 +60,7 @@ export const setupEmptyMaxSizeBoard = ()=>{
     for(let row=0; row<16;row++){
         squares.push([])
         for(let col=0;col<16;col++){
-            let square: Square = {
+            let square: Square = new Square({
                 squareId: (row*16)+col,
                 disabled:false, 
                 squareInfo: {
@@ -68,20 +69,41 @@ export const setupEmptyMaxSizeBoard = ()=>{
                     col: col,
                     squareColor: isLight(row,col) ? 'light' : 'dark'
                 }
-            };
+            });
             squares[row].push(square)
         }
   }
   return squares;
 }
 
-export const withId = (boardState:BoardState):BoardState =>{
-    let id = 0;
-    for(let row=0; row<boardState.squares.length;row++){
-        for(let col=0;col<boardState.squares[row].length;col++){
-            boardState.squares[row][col].squareId =id;
-            id+=1;
-        }
+export function setupMPBoard(pieceType:string,color:PieceColor,movePattern:IMovePattern,curRow:number,curCol:number):BoardState{
+    let boardState :BoardState= new BoardState({
+        squares:[], 
+        dimensions:{rows:9,cols:9},
+        castlingAvailability: '',
+        enPassant: '',
+        turn:'w',
+    });
+    for(var row =0;row<boardState.dimensions.rows;row++){
+      boardState.squares.push([])
+      let id = 0;
+      for(var col=0;col<boardState.dimensions.cols;col++){
+        var square:Square = new Square({
+            squareId: id,
+            squareInfo:{
+                isPiecePresent: row===4 && col===4,
+                pieceType: row===4 && col===4 ? pieceType : undefined,
+                pieceColor: color,
+                row,
+                col,
+                squareColor: isLight(col,row)? 'light' : 'dark',
+            }
+        })
+        id+=1
+        boardState.squares[row].push(square)
+      }
     }
     return boardState
-}
+  }
+
+  

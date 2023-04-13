@@ -1,6 +1,6 @@
 <template>
     <q-page class="background-container">
-        <SlideShow />
+        <slide-show />
     </q-page>
     
 </template>

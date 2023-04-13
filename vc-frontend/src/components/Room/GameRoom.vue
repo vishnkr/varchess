@@ -23,7 +23,7 @@ import SideTabs from './SideTabs/SideTabs.vue';
 import { useRoute } from 'vue-router';
 import { VALIDATE_MOVE } from '../../store/action_types';
 import { SET_SRC_SELECTION } from '../../store/mutation_types';
-import { MoveInfoPayload } from '@/types';
+import { IMoveInfoPayload, ISquareClick } from '@/types';
 
 export default{
     components:{Board, SideTabs},
@@ -40,28 +40,27 @@ export default{
             if(srcInfo){
                 let piece = store.state.userInfo.curGameRole === 'p1' ? 
                     srcInfo.piece.toUpperCase() : 
-                    srcInfo?.piece;
-                let mvInfo: MoveInfoPayload ={
+                    srcInfo.piece;
+                let mvInfo: IMoveInfoPayload ={
                     roomId,
                     piece,
                     srcRow: srcInfo.row,
                     srcCol: srcInfo.col,
                     destRow: destPos.row,
                     destCol: destPos.col,
-                    color: store.state.userInfo.curGameRole === 'p1' ? 'w' : 'b'
                 }
                 store.dispatch(VALIDATE_MOVE,mvInfo);
             }  
         }
 
-        const handleMove = (payload:{clickType:string,row:number,col:number,piece?:string})=>{
+        const handleMove = (payload:ISquareClick)=>{
             if(payload.clickType==='select-mv-square'){
                 if(store.state.curStartPos){
                     if (store.state.curStartPos.row !== payload.row || store.state.curStartPos.col !== payload.col){
                         validateMove({row:payload.row,col:payload.col})
                     }
                     else{ store.commit(SET_SRC_SELECTION,null) }
-                } else{
+                } else if(payload.piece){
                     store.commit(SET_SRC_SELECTION,{row:payload.row,col:payload.col,piece:payload.piece})
                 }
                 return

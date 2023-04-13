@@ -1,24 +1,24 @@
-import {ChatMessage, BoardState, GameInfo, MoveInfo, PiecePosition, MovePatterns, ServerStatus, UserInfo } from "@/types"
+import {IChatMessage, IMoveInfo, IPiecePosition, IMovePatterns, ServerStatus } from "@/types"
 import { STANDARD_FEN } from "../utils/constants";
 import { convertFENtoBoardState } from "../utils/fen";
+import {User, BoardState, GameInfo} from "../classes";
 
 
 export interface RootState{
     board : BoardState,
-    userInfo:UserInfo,
-    chatMessages : Record<string,ChatMessage[]>,
+    userInfo: User ,
+    chatMessages : Record<string,IChatMessage[]>,
     gameInfo : GameInfo | null,
-    curStartPos : PiecePosition | null,
-    curDestPos : PiecePosition | null,
-    currentMove: MoveInfo | null,
+    curStartPos : IPiecePosition | null,
+    curDestPos : IPiecePosition | null,
+    currentMove: IMoveInfo | null,
     serverStatus: ServerStatus,
-    movePatterns: MovePatterns,
-
+    movePatterns: IMovePatterns | null,
 }
 
 const state: RootState = {
     board: convertFENtoBoardState(STANDARD_FEN),
-    userInfo:{isAuthenticated:false},
+    userInfo: new User(),
     chatMessages: {},
     gameInfo: null,
     curStartPos: null, 

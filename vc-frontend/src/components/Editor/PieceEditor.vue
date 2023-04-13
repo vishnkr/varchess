@@ -24,12 +24,12 @@
                 v-slot="{item,index}"
                 style="max-height: 300px;"
                 >          
-                    <q-item :key="index" >
+                    <q-btn :key="index" >
                         <div class="scroll-item" :class="[editorState.piecesInPlay[item]?.isMPDefined ? 'defined-mp' : null]">
                             <q-radio v-model="editorState.curCustomPiece" :val="item" color="orange" keep-color/>
-                            <q-img :src="getCustomPiecePath(item)" width="4em" />
+                            <img :src="getCustomPiecePath(item)" />
                         </div>
-                    </q-item>
+                    </q-btn>
 
                 </q-virtual-scroll>
                     <q-btn style="display: flex; align-items: center;" v-if="isCustomPiece && editorState.curCustomPiece"
@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import { EditorState, MovePattern } from '@/types';
+import { IEditorState, IMovePattern } from '@/types';
 import MovePatternDialog from '../Editor/MovePatternDialog.vue'
 import {computed, PropType, reactive, ref,watch} from 'vue'
 
@@ -61,7 +61,7 @@ export default {
     components:{MovePatternDialog},
     emits: ['update-piece-state','save-mp'],
     props:{
-        editorState: {type: Object as PropType<EditorState>, required:true}
+        editorState: {type: Object as PropType<IEditorState>, required:true}
     },
     setup(props,{emit}){
         const customPieces = ['a','j','d','i','g','s','u','v','z'];
@@ -83,7 +83,7 @@ export default {
                 { label: 'Custom', value: 'c'}
             ],
             getCustomPiecePath: (pieceName:string)=>{
-                return new URL(`../../assets/images/pieces/white/${pieceName}.svg`,import.meta.url).href
+                return `/assets/images/pieces/white/${pieceName}.svg`
             },
             dialogOpened,
             closeDialog:()=>{
@@ -93,7 +93,7 @@ export default {
             isCustomPiece:computed(()=>{
                 return editorState.curPiece==='c' 
             }),
-            saveMP:(movePattern:MovePattern)=>{
+            saveMP:(movePattern:IMovePattern)=>{
                 if(movePattern.piece in editorState.piecesInPlay){
                     editorState.piecesInPlay[movePattern.piece].isMPDefined = true;
                 } else { editorState.piecesInPlay[movePattern.piece] = {isMPDefined:true,isAddedToBoard:false}}
@@ -110,16 +110,7 @@ export default {
     
 }
 
-.custom-piece-edit{
-    display: flex;
-    flex:1;
-    padding: 1em;
-    flex-direction: row;
-    justify-content: center;
-    width:50%;
-    align-items: flex-start;
-    overflow: scroll;
-}
+
 .custom-piece-edit> button{
     margin:1%;
 }

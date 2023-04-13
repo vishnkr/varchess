@@ -4,7 +4,7 @@
 * always a valid start position.
 */
 
-import { BoardState } from "@/types";
+import { BoardState } from "@/classes";
 import { convertFENtoBoardState } from "./fen";
 
 export function validateStartSetupFen(fen:string){

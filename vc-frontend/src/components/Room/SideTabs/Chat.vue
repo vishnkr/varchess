@@ -17,10 +17,10 @@
 
 <script lang="ts">
 import {ref } from 'vue';
-import { ChatMessage } from '@/types';
+import { IChatMessage } from '@/types';
 
 export default{
-    props:{messages:{type: Array<ChatMessage>,required:true}},
+    props:{messages:{type: Array<IChatMessage>,required:true}},
     emits:['send-chat-message'],
     setup(props,{emit}){
         const curMessage = ref(null);

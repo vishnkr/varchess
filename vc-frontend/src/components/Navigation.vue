@@ -6,7 +6,7 @@
                 Varchess
             </div>
             <div class="nav-right">
-                <QuickPlayButton v-if="showButton"/>
+                <quick-play-button v-if="showButton"/>
                 <div name="Login" v-if="showButton">
                     <q-btn outline class="routerlink" @click="redirectToLogin" style="color: goldenrod; " label="Login" />
                 </div>
@@ -16,7 +16,7 @@
 <script lang="ts">
 
 import QuickPlayButton from './Other/QuickPlayButton.vue'
-import { ref, inject, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 export default{
     components:{
