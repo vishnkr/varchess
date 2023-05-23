@@ -12,6 +12,8 @@ require (
 	golang.org/x/crypto v0.6.0
 )
 
+require github.com/go-chi/cors v1.2.1 // indirect
+
 require (
 	github.com/ClickHouse/ch-go v0.53.0 // indirect
 	github.com/ClickHouse/clickhouse-go/v2 v2.6.4 // indirect

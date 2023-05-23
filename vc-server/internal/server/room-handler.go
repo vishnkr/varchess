@@ -1,4 +1,6 @@
-package handler
+package server
+
+import "net/http"
 
 /*
 type DrawOffer struct {
@@ -13,7 +15,7 @@ type Room struct {
 	P2      *Client
 	DrawOffer DrawOffer
 }
-
+s
 type PossibleMoves struct {
 	Piece string  `json:"piece"`
 	Moves [][]int `json:"moves"`
@@ -72,3 +74,15 @@ func (room *Room) getViewerClients() []string{
 	}
 	return clientList
 }*/
+
+func (s *server) handleCreateRoom() http.HandlerFunc {
+	type request struct {
+		Username string
+	}
+	type response struct {
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}

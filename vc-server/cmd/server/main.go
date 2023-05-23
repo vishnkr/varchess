@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var l = logger.Get();
+var l = logger.Get()
 
 func main() {
 	err := godotenv.Load(".env")
@@ -27,8 +27,8 @@ func main() {
 	if err != nil {
 		l.Err(err).Msg("error connecting to database")
 	}
-	server := server.NewServer(*addr, store)
-	l.Info().Str("port",port).Msgf("Starting Varchess Server")
 	var allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
-	server.Start(allowedOrigins)
+	s := server.NewServer(*addr, store, allowedOrigins)
+	l.Info().Str("port", port).Msgf("Starting Varchess Server")
+	s.Start()
 }

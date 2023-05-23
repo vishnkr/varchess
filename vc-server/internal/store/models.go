@@ -1,7 +1,7 @@
 package store
 
 type User struct {
-	ID       int
+	id       int
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`

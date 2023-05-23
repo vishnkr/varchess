@@ -58,7 +58,7 @@ func (s *PostgresStore) CreateUser(user *User) error {
 
 func (s *PostgresStore) GetUserByUsername(username string) (*User, error) {
 	var user User
-	err := s.db.QueryRow("SELECT id, username, password FROM users WHERE username=$1", username).Scan(&user.ID, &user.Username, &user.Password)
+	err := s.db.QueryRow("SELECT id, username, password FROM users WHERE username=$1", username).Scan(&user.id, &user.Username, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sql.ErrNoRows

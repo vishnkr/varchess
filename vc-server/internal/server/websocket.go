@@ -1,4 +1,4 @@
-package websocket
+package server
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 )
 
 type WebsocketServer struct {
-	clients    map[*Client]bool //map clientId/username to Client which contains connection info
+	clients    map[int]*Client //map clientId/username to Client which contains connection info
 	register   chan *Client
 	unregister chan *Client
 	broadcast  chan []byte
@@ -19,7 +19,7 @@ type WebsocketServer struct {
 
 func NewWebsocketServer() *WebsocketServer {
 	return &WebsocketServer{
-		clients:    make(map[*Client]bool),
+		clients:    make(map[int]*Client),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte),
@@ -47,11 +47,11 @@ func (ws *WebsocketServer) Run() {
 }
 
 func (server *WebsocketServer) registerClient(client *Client) {
-	server.clients[client] = true
+	server.clients[1] = client
 }
-/*
-func (server *WsServer) unregisterClient(client *Client) {
-	var roomId = client.roomId
+
+func (server *WebsocketServer) unregisterClient(client *Client) {
+	/*var roomId = client.roomId
 	if _, ok := RoomsMap[roomId]; ok {
 		if _, ok := RoomsMap[roomId].Clients[client]; ok {
 			delete(RoomsMap[roomId].Clients, client)
@@ -60,9 +60,9 @@ func (server *WsServer) unregisterClient(client *Client) {
 	}
 	if _, ok := server.clients[client]; ok {
 		delete(server.clients, client)
-	}
+	}*/
 }
-
+/*
 func (server *WsServer) deleteEmptyRooms(client *Client) {
 	client.mu.Lock()
 	defer client.mu.Unlock()
@@ -99,6 +99,7 @@ type MessageStruct struct {
 
 
 type Client struct {
+	id int
 	conn     *websocket.Conn
 	mu       sync.Mutex
 	wsServer *WebsocketServer

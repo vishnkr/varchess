@@ -1,19 +1,21 @@
-package handler
+package server
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
-type Logger interface{
-
+type Logger interface {
 }
 
-
-func HealthCheckHandler(w http.ResponseWriter, r *http.Request) error{
-		w.WriteHeader(http.StatusOK)
-		return nil
+func WriteJSON(w http.ResponseWriter, status int, v any) error {
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(v)
 }
 
+func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) error {
+	return WriteJSON(w, http.StatusOK, nil)
+}
 
 /*
 type CreateRoomResponse struct {
@@ -55,7 +57,7 @@ func (s *Server) createRoomHandler(w http.ResponseWriter,r *http.Request) error{
             delete(RoomsMap, roomId)
         }
     }(uniqueRoomId)
-	
+
 	return WriteJSON(w,http.StatusOK,response)
 }
 
@@ -82,7 +84,7 @@ func (s *Server) roomStateHandler(w http.ResponseWriter, r *http.Request) error{
 	} else {
 		return WriteJSON(w, http.StatusBadRequest,ApiError{Error: "Invalid Room ID"})
 	}
-	
+
 	return WriteJSON(w,http.StatusOK,response)
 }
 
@@ -106,7 +108,7 @@ func (s *Server) getPossibleSquares(w http.ResponseWriter, r *http.Request) erro
     if err != nil {
         return errors.New("Invalid src row: " + startRow)
     }
-	
+
     srcCol, err := strconv.Atoi(startCol)
     if err != nil {
         return errors.New("Invalid src column: " + startCol)
