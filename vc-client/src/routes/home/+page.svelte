@@ -1,5 +1,11 @@
+<script>
+	import Card from "$lib/components/shared/Card.svelte";
+
+</script>
 <svelte:head>
 	<title> Home - Varchess</title>
 </svelte:head>
 
-sdf
+<div class="container">
+	<Card />
+</div>

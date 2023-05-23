@@ -14,7 +14,7 @@
 
 {#if isOpen}
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class="modal-overlay" on:click={closeModal}>
+	<div class="modal-overlay m-5" on:click={closeModal}>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<div class="modal" on:click={(e) => e.stopPropagation()}>
 			<slot />

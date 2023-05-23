@@ -6,14 +6,17 @@ export default {
   theme: {
     extend:
     {
+      opacity: {
+        '10': '0.1',
+      },
       fontFamily: {
-        inter: ['Inter', 'sans-serif']
+        inter: ['Inter', 'sans-serif'],
       },
       gridTemplateAreas: {
         'sidebar': ['"left-panel content right-panel"']
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography'),],
   purge: ['./src/**/*.{html,js,svelte,ts}']
 };

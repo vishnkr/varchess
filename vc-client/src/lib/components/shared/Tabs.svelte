@@ -7,7 +7,7 @@
     const dispatch = createEventDispatcher();
 </script>
 
-<div class="tabs">
+<div class="tabs text-white">
     <ul>
         {#each items as item}
             <li on:click={()=>dispatch('tabChange',item)}>
@@ -37,9 +37,4 @@
         cursor: pointer;
     }
 
-    .active{
-        color:#d91b42;
-        border-bottom: 2px solid;
-        padding-bottom: 8px;
-    }
 </style>
