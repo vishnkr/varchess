@@ -24,7 +24,6 @@
 
 		if(username?.length ==0){
 		}
-		console.log('we here',username,baseUrl);
 		const response = await fetch(`${baseUrl}/health`,{
 			method:'GET',
 			headers:{

@@ -4,12 +4,30 @@
 	import pieceSvg from "$lib/assets/svg/piece.svg";
     import boardSvg from "$lib/assets/svg/board.svg";
     import Tabs from "$lib/components/shared/Tabs.svelte";
-
+	import type { BoardConfig } from "$lib/board/types";
+	import Board from "$lib/board/Board.svelte";
     let items = ['Custom','Predefined'];
     let activeItem = 'Custom';
     const tabChange=(e:CustomEvent<string>)=> activeItem = e.detail;
+    
+    export let boardConfig:BoardConfig = {
+		fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+		dimensions: { ranks: 8, files: 8 },
+		editable: false,
+		interactive: false,
+        isFlipped:false,
+	}
+    let shiftBoard:(direction:string)=>void;
+    function handleShift(event:CustomEvent<string>){
+        const direction = event.detail;
+        shiftBoard(direction);
+    }
+
 </script>
 
+<svelte:head>
+	<title> Editor - Varchess</title>
+</svelte:head>
 <div class="font-inter grid min-h-screen text-zinc-900">
     <div class="flex-1 flex m-4"> 
         <div class="bg-zinc-700 rounded-md w-3/12 mx-3 p-3">
@@ -27,7 +45,10 @@
                             group-open:rotate-90 transition-transform origin-left"></div>
                         </div>
                     </summary>
-                        <div><BoardEditor /></div>
+                        <div><BoardEditor 
+                            bind:dimensions={boardConfig.dimensions}
+                            on:shift={handleShift}
+                            /></div>
                     </details>
                     <details class="bg-white shadow rounded group">
                         <summary class="list-none flat flex flex-wrap items-center cursor-pointer">
@@ -55,8 +76,11 @@
             </div>
         </div>
         <div class="bg-blue-300 rounded-md w-6/12 mx-3 p-3">
-            Board Container
-            <!--vc-board-element></!--vc-board-element>-->
+            
+            <Board 
+            boardConfig={boardConfig}
+            bind:shift={shiftBoard}
+            />
         </div>
         <div class="bg-red-300 rounded-md w-3/12 mx-3 p-3">
            Right Panel

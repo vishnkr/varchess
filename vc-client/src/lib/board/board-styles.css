@@ -1,0 +1,60 @@
+:root{
+    --default-light-square: hsl(51deg 24% 84%);
+    --default-dark-square: hsl(145deg 32% 44%);
+    --default-hover-square: hsl(52deg 98% 70%);
+}
+
+.bg-piece{
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    cursor: pointer;
+}
+
+.bb {
+    background-image: url("../assets/pieces/black/b.svg");
+}
+
+.bn {
+    background-image: url("../assets/pieces/black/n.svg");
+}
+
+.bk {
+    background-image: url("../assets/pieces/black/k.svg");
+}
+
+.bq {
+    background-image: url("../assets/pieces/black/q.svg");
+}
+
+.bp {
+    background-image: url("../assets/pieces/black/p.svg");
+}
+
+.br {
+    background-image: url("../assets/pieces/black/r.svg");
+}
+
+.wb {
+    background-image: url("../assets/pieces/white/b.svg");
+}
+
+.wn {
+    background-image: url("../assets/pieces/white/n.svg");
+}
+
+.wk {
+    background-image: url("../assets/pieces/white/k.svg");
+}
+
+.wq {
+    background-image: url("../assets/pieces/white/q.svg");
+}
+
+.wp {
+    background-image: url("../assets/pieces/white/p.svg");
+}
+
+.wr {
+    background-image: url("../assets/pieces/white/r.svg");
+}
