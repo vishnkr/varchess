@@ -1,4 +1,5 @@
-import type { Coordinate, CoordinatetoIDMap, Dimensions, IPiece, PiecePositions, PiecePresentInfo, SquareIdx, SquareInfo, SquareMaps, SquareNotation } from "./types";
+
+import type { Coordinate, CoordinatetoIDMap, Dimensions, DisabledSquares, IPiece, Position, PiecePresentInfo, SquareIdx, SquareInfo, SquareMaps, SquareNotation, PiecePositions } from "./types";
 
 
 export const generateSquareMaps = (dimensions:Dimensions,isFlipped:boolean)=> {
@@ -32,16 +33,19 @@ export const generateSquareMaps = (dimensions:Dimensions,isFlipped:boolean)=> {
       return {sqToIdMap,idToSqMap,coordToIdMap,squares};
 }
 
-export const updatePiecePositions = (maxBoardState:PiecePresentInfo[][],dimensions:Dimensions):PiecePositions=>{
+export const updatePiecePositions = (maxBoardState:PiecePresentInfo[][],dimensions:Dimensions):Position=>{
     let piecePositions:PiecePositions = {};
+    let disabled:DisabledSquares = {}
     for(let row=0;row<dimensions.ranks;row++){
         for(let col=0;col<dimensions.files;col++){
             if(maxBoardState[row][col].isPiecePresent){
                 piecePositions[((dimensions.ranks-row-1)*(dimensions.files))+col] = maxBoardState[row][col].piece as IPiece;
+            } else if(maxBoardState[row][col].disabled){
+                disabled[((dimensions.ranks-row-1)*(dimensions.files))+col] = true;
             }
         }
     }
-    return piecePositions;
+    return {piecePositions,disabled};
 }
 
 

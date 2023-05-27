@@ -6,12 +6,13 @@
     import Tabs from "$lib/components/shared/Tabs.svelte";
 	import type { BoardConfig } from "$lib/board/types";
 	import Board from "$lib/board/Board.svelte";
+	import PieceEditor from "$lib/components/editor/PieceEditor.svelte";
     let items = ['Custom','Predefined'];
     let activeItem = 'Custom';
     const tabChange=(e:CustomEvent<string>)=> activeItem = e.detail;
     
     export let boardConfig:BoardConfig = {
-		fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+		fen: "rnbqkbnr/pnpppppp/p6p/5.../7P/P6P/PPPPPPPP/RNBQKBNR",
 		dimensions: { ranks: 8, files: 8 },
 		editable: false,
 		interactive: false,
@@ -42,7 +43,7 @@
                             <img class="w-g h-6"  src={boardSvg} alt="board editor" />
                         <div class="w-8 flex items-center justify-center">
                             <div class="border-8 border-transparent border-l-gray-600 ml-2
-                            group-open:rotate-90 transition-transform origin-left"></div>
+                            group-open:rotate-90 transition-transform origin-left" />
                         </div>
                     </summary>
                         <div><BoardEditor 
@@ -50,16 +51,16 @@
                             on:shift={handleShift}
                             /></div>
                     </details>
-                    <details class="bg-white shadow rounded group">
+                    <details class="bg-white shadow rounded grou mb-4">
                         <summary class="list-none flat flex flex-wrap items-center cursor-pointer">
                             <h3 class="flex flex-1 p-4 text-xl font-semibold">Piece Editor </h3>
                             <img class="w-g h-6" src={pieceSvg} alt="piece editor" />
                         <div class="w-8 flex items-center justify-center">
                             <div class="border-8 border-transparent border-l-gray-600 ml-2
-                            group-open:rotate-90 transition-transform origin-left"></div>
+                            group-open:rotate-90 transition-transform origin-left" />
                         </div>
                     </summary>
-                    <div><p>sfdg</p></div>
+                    <div><PieceEditor /></div>
                     </details>
                 {:else}
                 <details class="bg-white shadow rounded group">
@@ -75,14 +76,14 @@
                 {/if}
             </div>
         </div>
-        <div class="bg-blue-300 rounded-md w-6/12 mx-3 p-3">
+        <div class="bg-zinc-700 rounded-md w-6/12 mx-3 p-3">
             
             <Board 
             boardConfig={boardConfig}
             bind:shift={shiftBoard}
             />
         </div>
-        <div class="bg-red-300 rounded-md w-3/12 mx-3 p-3">
+        <div class="bg-zinc-700 text-white rounded-md w-3/12 mx-3 p-3">
            Right Panel
         </div>
     </div>

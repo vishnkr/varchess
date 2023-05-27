@@ -1,27 +1,43 @@
 <script lang="ts">
     import "./board-styles.css"
 	import type { Dimensions, IPiece, PiecePositions, SquareColor, SquareIdx } from "./types";
+    import cross from '$lib/assets/svg/cross.svg';
 
-    export let idx:SquareIdx;
     export let gridX:number;
     export let gridY:number;
     export let color:SquareColor;
     export let piece:IPiece|null = null;
-
+    export let disabled:boolean;
+    
     function getPieceClass(piece:IPiece){
         return piece.color.charAt(0).toLowerCase() + piece.pieceType.charAt(0).toLowerCase();
     }
 </script>
 
 
-<div style="--x:{ gridX }; --y:{gridY};" 
-    data-square-color={color}
-    class={`${piece ? getPieceClass(piece): null} bg-piece`}
-    >
-        <slot />
+<div
+  class={`relative w-full h-full ${piece ? getPieceClass(piece) : ""} bg-piece`}
+  style="--x:{ gridX }; --y:{gridY};"
+  data-square-color={color}
+>
+  {#if disabled}
+    <div class="absolute inset-0 flex items-center justify-center p-1">
+        <img src={cross} alt="disabled">
+    </div>
+  {:else}
+    <slot />
+  {/if}
 </div>
 
 <style>
+    .disabled-icon-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
     [data-square-color] {
         width: 100%;
         height: 0;
@@ -30,6 +46,21 @@
         grid-row: var(--x);
         background-color: var(--square-color);
     }
+
+
+  .portal {
+    animation: spin 3s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
 
     [data-square-color="dark"] {
     --square-color: var(--default-dark-square);

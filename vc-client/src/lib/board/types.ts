@@ -42,14 +42,16 @@ export interface SquareInfo{
 export type Coordinate = [number, number];
 
 export type PiecePositions = Record<SquareIdx, IPiece>;
-
+export type DisabledSquares = Record<SquareIdx, boolean>;
 export interface Position {
-    piecePositions: PiecePositions
+    piecePositions: PiecePositions,
+    disabled:DisabledSquares,
 }
 
 export interface PiecePresentInfo{
     isPiecePresent:boolean,
-    piece?:IPiece
+    piece?:IPiece,
+    disabled?:boolean
   }
 export type CoordinatetoIDMap = Record<string, SquareIdx>;
 export interface BoardConfig{

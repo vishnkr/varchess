@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { getSquareColor, type Position, type SquareInfo, type SquareMaps, type PiecePresentInfo } from "./types";
+	import { getSquareColor, type Position, type SquareInfo, type SquareMaps, type PiecePresentInfo, type SquareIdx } from "./types";
     import Square from "./Square.svelte";
     import "./board-styles.css"
     import type { BoardConfig } from "./types";
 	import { generateSquareMaps, updatePiecePositions } from "./board";
-	import type { SquareIdx } from "$lib/chessboard/square";
 	import { convertFenToPosition } from "./fen";
 
 	
@@ -30,7 +29,6 @@
                     } 
                     return row
                 });
-                console.log(maxBoardState)
                 break;
             case 'up':
                 let firstRowSquares = maxBoardState[0]
@@ -43,14 +41,14 @@
                 maxBoardState = [...[lastRowSquares],...tempSquares,...maxBoardState.slice(afterLastRow)]
                 break;
         }
-        position.piecePositions = updatePiecePositions(maxBoardState,boardConfig.dimensions)
+        position = updatePiecePositions(maxBoardState,boardConfig.dimensions)
         
     };
 
     let squareMaps:SquareMaps = generateSquareMaps(boardConfig.dimensions,boardConfig.isFlipped ?? false);
     let boardSquares: Record<SquareIdx,SquareInfo> = squareMaps.squares;
     const convertedPos = convertFenToPosition(boardConfig.fen);
-    let position:Position = {piecePositions:{}};
+    let position:Position = {piecePositions:{},disabled:{}};
     let maxBoardState: PiecePresentInfo[][] = [];
     if (convertedPos){
         position=convertedPos.position;
@@ -59,7 +57,7 @@
     function updateBoardState(){
         squareMaps = generateSquareMaps(boardConfig.dimensions,boardConfig.isFlipped ?? false);
         boardSquares = squareMaps.squares;
-        position.piecePositions = updatePiecePositions(maxBoardState,boardConfig.dimensions);
+        position = updatePiecePositions(maxBoardState,boardConfig.dimensions);
     }
     
 
@@ -73,11 +71,11 @@
     <div id="board" style={`--size: ${Math.max(boardConfig.dimensions.ranks, boardConfig.dimensions.files)}`}>
         {#each Array(boardConfig.dimensions.ranks*boardConfig.dimensions.files) as _, idx}
             <Square 
-                {idx} 
                 gridX={boardSquares[idx]?.gridX} 
                 gridY={boardSquares[idx]?.gridY} 
                 color={getSquareColor(boardSquares[idx]?.row,boardSquares[idx]?.column,boardConfig.isFlipped)}
                 piece={position.piecePositions[idx] ?? null}
+                disabled={position.disabled[idx] ?? false}
             >
                 
             </Square>

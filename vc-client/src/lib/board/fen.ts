@@ -7,10 +7,10 @@ export const convertFenToPosition = (fen:string):{
   }|undefined =>{
   let position:Position = {
     piecePositions:{},
+    disabled:{}
   };
   let dimensions = {ranks:8,files:8};
   let maxBoardState = createEmptyMaxBoardState();
-  let tempPiecePositions:Map<Coordinate,IPiece> = new Map();
   const fenSplit = fen.split(" ");
   const ranks = fenSplit[0].split("/");
   const rankCount = ranks.length;
@@ -26,9 +26,11 @@ export const convertFenToPosition = (fen:string):{
       const rank = rankCount-i;
       secDigit = 0;
       colCount = 0;
-      for(let j = 0; j < ranks[i].length; j++){
+      let j = 0; 
+      while(j < ranks[i].length){
           char = ranks[i].charAt(j);
          if (char === "."){
+              maxBoardState[i][j]={isPiecePresent:false,disabled:true}
               colCount+=1;
               idx+=1;
           }
@@ -39,8 +41,13 @@ export const convertFenToPosition = (fen:string):{
                 if(secDigit!=0){
                     colEnd = secDigit*10+parseInt(char)
                 } else {colEnd=parseInt(char)}
+                for(let empty=0;empty<colEnd;empty++){
+                  maxBoardState[i][j+empty] = {isPiecePresent:false}
+                  j+=1;
+                }
                 colCount+=colEnd
                 idx+=colEnd;
+                continue;
             }
           }
           else{
@@ -52,6 +59,7 @@ export const convertFenToPosition = (fen:string):{
             colCount+=1;
 
           }
+          j+=1;
         }
   }
   dimensions.files = colCount;
