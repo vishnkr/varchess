@@ -4,70 +4,15 @@
     import "./board-styles.css"
     import type { BoardConfig } from "./types";
 	import { generateSquareMaps, updatePiecePositions } from "./board";
-	import { convertFenToPosition } from "./fen";
 
-	
-    
     export let boardConfig:BoardConfig;
-    export const shift = (direction:string):void=>{
-        let [lastCol,lastRow,afterLastCol,afterLastRow]  = [boardConfig.dimensions.files-1,boardConfig.dimensions.ranks-1,boardConfig.dimensions.files,boardConfig.dimensions.ranks];
-        let tempSquares:PiecePresentInfo[][];
-        switch(direction){
-            case 'right':
-                maxBoardState = maxBoardState.map((row,i)=>{
-                    if(i<boardConfig.dimensions.ranks){
-                        return [...row.slice(lastCol,afterLastCol),...row.slice(0,lastCol),...row.slice(afterLastCol)]
-                    }
-                    return row;
-                })
-                break;
-            case 'left':
-                maxBoardState = maxBoardState.map((row:PiecePresentInfo[],i) => {
-                    let firstSquare = row[0];
-                    if(i<boardConfig.dimensions.ranks){
-                        return [...row.slice(1,afterLastCol),...[firstSquare],...row.slice(afterLastCol)]
-                    } 
-                    return row
-                });
-                break;
-            case 'up':
-                let firstRowSquares = maxBoardState[0]
-                tempSquares = maxBoardState.slice(1,afterLastRow)
-                maxBoardState = [...tempSquares,...[firstRowSquares],...maxBoardState.slice(afterLastRow)]
-                break;
-            case 'down':
-                let lastRowSquares = maxBoardState[lastRow];
-                tempSquares = maxBoardState.slice(0,lastRow)
-                maxBoardState = [...[lastRowSquares],...tempSquares,...maxBoardState.slice(afterLastRow)]
-                break;
-        }
-        position = updatePiecePositions(maxBoardState,boardConfig.dimensions)
-        
-    };
-
-    let squareMaps:SquareMaps = generateSquareMaps(boardConfig.dimensions,boardConfig.isFlipped ?? false);
-    let boardSquares: Record<SquareIdx,SquareInfo> = squareMaps.squares;
-    const convertedPos = convertFenToPosition(boardConfig.fen);
-    let position:Position = {piecePositions:{},disabled:{}};
-    let maxBoardState: PiecePresentInfo[][] = [];
-    if (convertedPos){
-        position=convertedPos.position;
-        maxBoardState = convertedPos.maxBoardState;
-    }
-    function updateBoardState(){
-        squareMaps = generateSquareMaps(boardConfig.dimensions,boardConfig.isFlipped ?? false);
-        boardSquares = squareMaps.squares;
-        position = updatePiecePositions(maxBoardState,boardConfig.dimensions);
-    }
+    export let position: Position;
     
-
-    $:{
-        boardConfig.dimensions=boardConfig.dimensions
-        updateBoardState()
-        
-    }
+    export let boardSquares: Record<SquareIdx,SquareInfo>;
 </script>
+
 <div id="wrapper">
+
     <div id="board" style={`--size: ${Math.max(boardConfig.dimensions.ranks, boardConfig.dimensions.files)}`}>
         {#each Array(boardConfig.dimensions.ranks*boardConfig.dimensions.files) as _, idx}
             <Square 
@@ -77,8 +22,8 @@
                 piece={position.piecePositions[idx] ?? null}
                 disabled={position.disabled[idx] ?? false}
             >
-                
-            </Square>
+            
+        </Square>
         {/each}
     </div>
 </div>
@@ -105,6 +50,27 @@
   #wrapper{
     position: relative;
     width: 100%;
-    padding-bottom: 100%;
   }
+
+  #border {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(var(--size), 1fr);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index:2;
+    }
+
+    .notation {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 14px;
+        font-weight: bold;
+        color: black;
+        pointer-events: none;
+    }
 </style>
