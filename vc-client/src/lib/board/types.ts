@@ -14,8 +14,8 @@ export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
 
 export type SquareNotation = `${File}${Rank}`;
 export type SquareMaps = {
-  sqToIdMap: { [key: string]: number },
-  idToSqMap: { [key: number]: SquareNotation },
+  //sqToIdMap: { [key: string]: number },
+  //idToSqMap: { [key: number]: SquareNotation },
   coordToIdMap:CoordinatetoIDMap,
   squares: Record<SquareIdx,SquareInfo>
 };
@@ -33,7 +33,8 @@ export interface Dimensions{
 }
 
 export interface SquareInfo{
-    squareIndex:SquareIdx
+    squareIndex:SquareIdx,
+    squareNotation:SquareNotation,
     gridX:number,
     gridY:number, 
     row:number,
@@ -57,11 +58,12 @@ export type CoordinatetoIDMap = Record<string, SquareIdx>;
 export interface BoardConfig{
     dimensions:Dimensions,
     fen:string,
+    //editable refers to the board allowing additions/deletions to board squares
     editable:boolean,
+    //interactive refers to the board allowing moves to be made through clicks/drags
     interactive:boolean,
     isFlipped?:boolean
 }
-
 
 /*
 

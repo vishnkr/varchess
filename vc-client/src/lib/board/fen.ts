@@ -22,17 +22,19 @@ export const convertFenToPosition = (fen:string):{
   let secDigit,colEnd = 0;
   let char;
   let colCount=0;
+  let row=0;
   for (let i=0;i<ranks.length;i++){
-      const rank = rankCount-i;
       secDigit = 0;
       colCount = 0;
       let j = 0; 
+      let col=0;
       while(j < ranks[i].length){
           char = ranks[i].charAt(j);
          if (char === "."){
-              maxBoardState[i][j]={isPiecePresent:false,disabled:true}
+              maxBoardState[i][col]={isPiecePresent:false,disabled:true}
               colCount+=1;
               idx+=1;
+              col+=1;
           }
           else if (/\d/.test(char)){
             if(j+1<ranks[i].length && (/\d/.test(ranks[i].charAt(j+1)))){
@@ -42,12 +44,11 @@ export const convertFenToPosition = (fen:string):{
                     colEnd = secDigit*10+parseInt(char)
                 } else {colEnd=parseInt(char)}
                 for(let empty=0;empty<colEnd;empty++){
-                  maxBoardState[i][j+empty] = {isPiecePresent:false}
-                  j+=1;
+                  maxBoardState[row][col] = {isPiecePresent:false}
+                  col+=1;
                 }
                 colCount+=colEnd
                 idx+=colEnd;
-                continue;
             }
           }
           else{
@@ -55,24 +56,17 @@ export const convertFenToPosition = (fen:string):{
               color: char.toLowerCase() === char ? Color.BLACK : Color.WHITE,
               pieceType: char
             };
-            maxBoardState[i][j]={isPiecePresent:true,piece}
+            maxBoardState[row][col]={isPiecePresent:true,piece}
             colCount+=1;
+            col+=1;
 
           }
           j+=1;
         }
+        row+=1
   }
-  dimensions.files = colCount;
-  let sqIndex = 0;
-  for(let row=0;row<dimensions.ranks;row++){
-    for(let col=0;col<dimensions.files;col++){
-      if(maxBoardState[row][col].isPiecePresent && maxBoardState[row][col].piece){
-        position.piecePositions[sqIndex] = maxBoardState[dimensions.ranks-1-row][col].piece as IPiece;
-      }
-      sqIndex+=1;
-    }
-  }
-  
+  dimensions.files = colCount;  
+  console.log(maxBoardState,position)
   return {position,dimensions,maxBoardState};
 }
 
