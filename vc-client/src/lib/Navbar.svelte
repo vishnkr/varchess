@@ -17,7 +17,7 @@
         <div class="flex space-x-4">
           <div>
             <a class=" flex" href="/">
-              <img src="./logo.svg" alt="logo" class="w-40 ml-3" >
+              <img src="/logo.svg" alt="logo" class="w-40 ml-3" >
             </a>
           </div>
         </div>

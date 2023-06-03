@@ -58,6 +58,7 @@
     "postcss-import": "^15.1.0",
     "svelte-awesome": "^3.2.0",
     "svelte-modals": "^1.2.1",
-    "svelte-router-spa": "^6.0.3"
+    "svelte-router-spa": "^6.0.3",
+    "svelte-switch": "^0.0.5"
   }
 }
