@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	
+
 	export let isOpen = false;
 
 	const dispatch = createEventDispatcher();
 
 	function closeModal() {
-        isOpen = false;
+		isOpen = false;
 		dispatch('close');
 	}
-    
 </script>
 
 {#if isOpen}
@@ -42,5 +41,5 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-	}	
+	}
 </style>

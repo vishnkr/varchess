@@ -1,4 +1,4 @@
-export interface BoardEditorState{
-    ranks: number,
-    files:number
+export interface BoardEditorState {
+	ranks: number;
+	files: number;
 }
