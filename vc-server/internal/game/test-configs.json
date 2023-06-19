@@ -1,0 +1,121 @@
+[
+    {
+        "variantType":"Custom",
+        "turn":"white",
+        "dimensions":{
+            "ranks":"9",
+            "files":"9"
+        },
+        "pieceLocations": {
+            "34" : {
+                "pieceType" :  "pawn",
+                "color" : "black"
+            },
+            "48" : {
+                "pieceType": "pawn",
+                "color":"black"
+            },
+            "58" : {
+                "pieceType": "knight",
+                "color":"white"
+            },
+            "1":{
+                "pieceType": "king",
+                "color":"white"
+            },
+            "9":{
+                "pieceType": "king",
+                "color":"black"
+            }
+        },
+        "rules":{
+            "objective":"checkmate"
+        },
+        "customPieces": {
+            "ninja": {
+                "slideOffsets": [
+                    [0, -1],
+                    [1, 1],
+                    [1, -1]
+                ],
+                "canDoubleJumpCapture": true,
+                "canDoubleJumpQuiet": false
+            }
+        },
+        "disabledSquares": [12,15,16,25]
+    },
+    {
+        "variantType":"Custom",
+        "turn":"black",
+        "dimensions":{
+            "ranks":"14",
+            "files":"6"
+        },
+        "pieceLocations": {
+            "34" : {
+                "pieceType" :  "pawn",
+                "color" : "black"
+            },
+            "48" : {
+                "pieceType": "pawn",
+                "color":"black"
+            },
+            "58" : {
+                "pieceType": "knight",
+                "color":"white"
+            },
+            "1":{
+                "pieceType": "king",
+                "color":"white"
+            },
+            "9":{
+                "pieceType": "duck",
+                "color":"black"
+            }
+        },
+        "objective":{
+            "type":"nCheck",
+            "objectiveProps":{ 
+                "targetChecks":"4"
+            }
+        },
+        "customPieces": {
+            "zebra": {
+                "slideOffsets": [
+                    [0, -1],
+                    [1, 1],
+                    [1, -1]
+                ],
+                "canDoubleJumpCapture": true,
+                "canDoubleJumpQuiet": false,
+                "jumpProps": [
+                    {
+                        "xOffset":1,
+                        "yOffset":-2,
+                        "allowedJumpMoveType": "captureOnly"
+                    },
+                    {
+                        "xOffset":11,
+                        "yOffset":0,
+                        "allowedJumpMoveType": "quietOnly"
+                    },
+                    {
+                        "xOffset":1,
+                        "yOffset":-3,
+                        "allowedJumpMoveType": "allJumps"
+                    }
+                ],
+                "promoProps": {
+                    "promotionSquares": [23, 25, 26,27,28],
+                    "canPromoteTo": [
+                        {"pieceType":"Queen", "name":"q"},
+                        {"pieceType":"Bishop", "name":"b"}
+                    ]
+                }
+            }
+        }
+    },
+    {
+
+    }
+]
