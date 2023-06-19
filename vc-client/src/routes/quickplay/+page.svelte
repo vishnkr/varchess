@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-	<title>Editor - Varchess</title>
+	<title>QuickPlay - Varchess</title>
 </svelte:head>
 <div class="font-inter text-zinc-90 flex-grow">
 	<div class="flex-1 flex m-4 lg:flex-row flex-col">
@@ -57,15 +57,14 @@
 							bind:dimensions={boardConfig.dimensions}
 							on:shift={(e) => shiftBoard(e.detail)}
 							on:clear={() => clearBoard()}
-							loggedIn={true}
 						/>
 					</ExpandableCard>
 					<ExpandableCard svg={pieceSvg} title="Piece Editor">
-						<PieceEditor loggedIn={true} />
+						<PieceEditor />
 					</ExpandableCard>
 
 					<ExpandableCard iconClass="fa-solid fa-gear fa-lg" title="Game Settings">
-						<GameSettings loggedIn={true}/>
+						<GameSettings />
 					</ExpandableCard>
 				{:else}
 					<ExpandableCard title="Duck Chess">
@@ -107,14 +106,6 @@
 					on:click={copyToClipboard}
 				>
 					Share <i class="fa-solid fa-link" />
-				</button>
-			</div>
-			<div>
-				<button class="flex gap-1 items-center justify-center rounded-md bg-orange-600 text-white hover:bg-gray-400 px-4 py-2 shadow-md"> 
-					<i class="fa-solid fa-check"></i> 
-					<span class="hidden md:inline">
-						Ready
-					</span>
 				</button>
 			</div>
 			<Members {actions}/>

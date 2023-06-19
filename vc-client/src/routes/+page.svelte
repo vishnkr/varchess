@@ -1,21 +1,29 @@
 <script lang="ts">
-	import { handleKeyDown } from '$lib/utils';
+	import { generateUsername, handleKeyDown } from '$lib/utils';
 	import Modal from '$lib/components/shared/Modal.svelte';
 	import { goto } from '$app/navigation';
+	import type { BoardConfig } from '$lib/board/types';
+	import Board from '$lib/board/Board.svelte';
 
 	function routeToPage(route: string, replaceState: boolean) {
 		goto(`/${route}`, { replaceState });
 	}
 
 	let showModal = false;
-	let username = '';
+	let username = generateUsername();
 	const setShowModal = (val: boolean) => (showModal = val);
-	const baseUrl: string = import.meta.env.VITE_VARCHESS_SERVER_BASE;
+	const baseUrl: string = import.meta.env.VITE_SERVER_BASE;
+	export let boardConfig: BoardConfig = {
+		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDDN.B/R.BQ1BKN1',
+		dimensions: { ranks: 7, files: 9 },
+		editable: false,
+		interactive: true,
+	};
 	const cardData = [
 		{
 			title: 'Variable Board Sizes',
 			description: 'Play on variable board sizes ranging from 5x5 to 16x16',
-			bg: 'bg-[#2b2b2b]'
+			bg: 'bg-green-600'
 		},
 		{
 			title: 'Custom Pieces',
@@ -24,7 +32,7 @@
 		},
 		{
 			title: 'Chess with Walls',
-			description: 'Ever wondered what chess would be like with walls?',
+			description: 'Disable squares to play with walls',
 			bg: 'bg-red-600'
 		},
 		{
@@ -35,7 +43,7 @@
 		{
 			title: 'Variant Templates',
 			description: 'Save your game templates for later use and share with friends!',
-			bg: 'bg-yellow-600'
+			bg: 'bg-purple-600'
 		}
 	];
 	async function handleSubmit() {
@@ -56,13 +64,13 @@
 	<title>Varchess - Create and Play Custom Chess Variants</title>
 </svelte:head>
 
-<section class="font-inter bg-[#0a0c13] dark:bg-[#1d2a35] dark:text-white flex-grow">
-	<div class=" max-w-6xl mx-auto py-5 sm:py-24 px-4 sm:px-6 lg:px-8">
+<section class="font-inter dark:bg-[#0a0c13] dark:text-white flex-grow">
+	<div class=" max-w-6xl mx-auto sm:py-5 px-4 sm:px-6 lg:px-8">
 		<div class="isolate">
 			<div class="relative px-6 lg:px-8 py-16 sm:py-8">
-				<div class=" pb-8 ">
-					<div class="flex space-x-8 items-center justify-start">
-						<div class="text-left w-[38rem]">
+				<div class="pb-1 ">
+					<div class="flex flex-cols space-x-8 items-center justify-start">
+						<div class="flex-1 text-left w-[38rem]">
 							<h1 class="text-center font-bold tracking-tight text-white text-6xl">
 								Chess Variants
 								<span
@@ -78,56 +86,67 @@
 								</span>
 							</div>
 						</div>
+						<div class="flex-1">
+							<Board {boardConfig}/>
+						</div>
+
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="grid grid-cols-2 gap-4 mx-auto py-5 text-white sm:py-24 px-4 sm:px-6 lg:px-8">
-		{#each cardData as card}
-			<div
-				class="block p-6 dark:bg-white border dark:border-gray-200 rounded-lg shadow dark:hover:bg-gray-100 bg-gray-800 border-gray-700 hover:bg-gray-700"
-			>
-				<h5 class="mb-2 text-2xl font-bold tracking-tight dark:text-gray-900 text-white">
-					{card.title}
-				</h5>
-				<p class="font-normal dark:text-gray-700 text-gray-400">{card.description}</p>
-			</div>
-		{/each}
+	<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mx-auto mb-5 text-white sm:py-2 px-4 sm:px-6 lg:px-8">
+	{#each cardData as card}
+		<div class="block p-6 dark:bg-white border dark:border-gray-200 rounded-lg shadow dark:hover:bg-gray-100 {card.bg} gray-800 border-gray-700 hover:bg-gray-700">
+		<h5 class="mb-2 text-xl md:text-2xl font-bold tracking-tight dark:text-gray-900 text-white">
+			{card.title}
+		</h5>
+		<p class="font-normal text-white dark:text-gray-400 text-sm md:text-base">
+			{card.description}
+		</p>
+		</div>
+	{/each}
 	</div>
 	<Modal isOpen={showModal} on:close={() => setShowModal(false)}>
-		<div class="grid grid-cols-1 text-white">
-			<div class="text-center px-3 py-3 bg-[#1d2a35] rounded-md">
+		<div class="text-white bg-[#1d2a35] py-3">
+			<div class="text-center px-3 py-1">
 				<h3>Create a room now to play with friends!</h3>
-				<h5>
+				<p>
 					NOTE: QuickPlay Variants are limited to 8x8 boards or smaller. Login to play on larger
-					boards.
-				</h5>
+					boards and save game templates.
+				</p>
 			</div>
-			<form method="POST" on:submit|preventDefault={handleSubmit}>
-				<div class="text-zinc-700 p-5 grid grid-cols-1 grid-rows-2 items-center">
-					<label for="username">
-						Enter Username
-						<input
-							type="text"
-							bind:value={username}
-							class="rounded-md border border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
-							name="username"
-						/>
-					</label>
+			<form method="GET" action="/quickplay">
+			<div class="grid grid-cols-1 grid-rows-2">
+				<div class="flex justify-center items-center">
+					<div class="p-1 items-center">
+						<label for="username">
+							Your username
+							<input
+								type="text"
+								bind:value={username}
+								disabled
+								class="rounded-md border border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
+								name="username"
+							/>
+						</label>
+					</div>
 				</div>
-				<div>
-					<button class="mt-10 flex items-center justify-center gap-x-6">
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<span
-							class="btn-custom-1"
-							on:click={handleSubmit}
-							on:keydown={(e) => handleKeyDown(e, handleSubmit)}
-						>
-							Create Room
-						</span>
-					</button>
+				<div class="flex justify-center items-center">
+					<div>
+						<button class="flex items-center justify-center gap-x-6">
+							<!-- svelte-ignore a11y-click-events-have-key-events -->
+							<span
+								class="btn-custom-1"
+								on:click={handleSubmit}
+								on:keydown={(e) => handleKeyDown(e, handleSubmit)}
+							>
+								Create Room
+							</span>
+						</button>
+					</div>
 				</div>
+			</div>
 			</form>
 		</div>
 	</Modal>

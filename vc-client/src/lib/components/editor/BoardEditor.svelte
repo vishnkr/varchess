@@ -12,13 +12,14 @@
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
-
+	export let loggedIn = false;
 	// @ts-ignore
 	function handleChange(e) {
 		const { checked } = e.detail;
 		checkedValue = checked;
 		editorSettings.update((val) => ({ ...val, disableSelected: checked }));
 	}
+	let maxDimension = loggedIn ? 16 : 8;
 </script>
 
 <div>
@@ -34,11 +35,11 @@
 	</div>
 	<div class="bg-white py-2 rounded-md shadow-md">
 		<h3 class="text-xl font-semibold">Board Width : {dimensions.files}</h3>
-		<input class="cursor-pointer" type="range" min={5} max={16} bind:value={dimensions.files} />
+		<input class="cursor-pointer" type="range" min={5} max={maxDimension} bind:value={dimensions.files} />
 	</div>
 	<div class="bg-white py-2 rounded-md shadow-md">
 		<h3 class="text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
-		<input class="cursor-pointer" type="range" min={5} max={16} bind:value={dimensions.ranks} />
+		<input class="cursor-pointer" type="range" min={5} max={maxDimension} bind:value={dimensions.ranks} />
 	</div>
 	<div class="flex flex-col justify-between items-center h-auto p-2">
 		<h3 class="text-xl">Shift Board</h3>

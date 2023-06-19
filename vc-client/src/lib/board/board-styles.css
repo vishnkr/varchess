@@ -2,6 +2,7 @@
 	--default-light-square: hsl(51deg 24% 84%);
 	--default-dark-square: hsl(145deg 32% 44%);
 	--default-hover-square: hsl(52deg 98% 70%);
+	--drag-piece-over-square: hsl(221, 75%, 44%);
 }
 
 .bg-piece {
@@ -11,20 +12,41 @@
 	cursor: pointer;
 }
 
+.ba {
+	background-image: url('/src/lib/assets/pieces/black/a.svg');
+}
+
 .bb {
 	background-image: url('/src/lib/assets/pieces/black/b.svg');
+}
+
+.bd {
+	background-image: url('/src/lib/assets/pieces/black/d.svg');
 }
 
 .bn {
 	background-image: url('/src/lib/assets//pieces/black/n.svg');
 }
 
+.bg {
+	background-image: url('/src/lib/assets/pieces/black/g.svg');
+}
+
+
 .bk {
 	background-image: url('/src/lib/assets/pieces/black/k.svg');
 }
 
+.bi {
+	background-image: url('/src/lib/assets/pieces/black/i.svg');
+}
+
 .bq {
 	background-image: url('/src/lib/assets/pieces/black/q.svg');
+}
+
+.bj {
+	background-image: url('/src/lib/assets/pieces/black/j.svg');
 }
 
 .bp {
@@ -33,6 +55,38 @@
 
 .br {
 	background-image: url('/src/lib/assets/pieces/black/r.svg');
+}
+
+.bs {
+	background-image: url('/src/lib/assets/pieces/black/s.svg');
+}
+
+.bu {
+	background-image: url('/src/lib/assets/pieces/black/u.svg');
+}
+
+.bv {
+	background-image: url('/src/lib/assets/pieces/black/v.svg');
+}
+
+.wa {
+	background-image: url('/src/lib/assets/pieces/white/a.svg');
+}
+
+.wd {
+	background-image: url('/src/lib/assets/pieces/white/d.svg');
+}
+
+.wg {
+	background-image: url('/src/lib/assets/pieces/white/g.svg');
+}
+
+.wi {
+	background-image: url('/src/lib/assets/pieces/white/i.svg');
+}
+
+.wj {
+	background-image: url('/src/lib/assets/pieces/white/j.svg');
 }
 
 .wb {
@@ -57,4 +111,16 @@
 
 .wr {
 	background-image: url('/src/lib/assets/pieces/white/r.svg');
+}
+
+.ws {
+	background-image: url('/src/lib/assets/pieces/white/s.svg');
+}
+
+.wu {
+	background-image: url('/src/lib/assets/pieces/white/u.svg');
+}
+
+.wv {
+	background-image: url('/src/lib/assets/pieces/white/v.svg');
 }

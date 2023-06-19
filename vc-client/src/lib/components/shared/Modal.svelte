@@ -15,7 +15,7 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div class="modal-overlay m-5" on:click={closeModal}>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
-		<div class="modal" on:click={(e) => e.stopPropagation()}>
+		<div class="modal max-w-2xl" on:click={(e) => e.stopPropagation()}>
 			<slot />
 		</div>
 	</div>
@@ -42,4 +42,5 @@
 		flex-direction: column;
 		align-items: center;
 	}
+	
 </style>

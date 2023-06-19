@@ -60,7 +60,7 @@ export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean) =
 	return { /*sqToIdMap,idToSqMap,*/ coordToIdMap, squares };
 };
 
-export const updatePiecePositions = (
+export const updatePiecePositionsFromMaxBoard = (
 	maxBoardState: PiecePresentInfo[][],
 	dimensions: Dimensions
 ): Position => {

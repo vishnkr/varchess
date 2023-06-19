@@ -3,19 +3,20 @@
 	import type { Position, SquareInfo, SquareMaps, PiecePresentInfo, SquareIdx } from './types';
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
-	import { generateSquareMaps, updatePiecePositions } from './board';
+	import { generateSquareMaps, updatePiecePositionsFromMaxBoard } from './board';
 	import { convertFenToPosition, createEmptyMaxBoardState } from './fen';
 	import Board from './Board.svelte';
 	import { editorMaxBoard } from './stores';
 	import { onDestroy } from 'svelte';
 
 	export let boardConfig: BoardConfig;
+    boardConfig = {...boardConfig, interactive: false, editable:true}
 	let { squares } = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
 	const convertedPos = convertFenToPosition(boardConfig.fen);
 	let position: Position = { piecePositions: {}, disabled: {} };
-	let maxBoardState: PiecePresentInfo[][] = [];
+	let maxBoardState: PiecePresentInfo[][] = $editorMaxBoard;
 	if (convertedPos) {
-		maxBoardState = convertedPos.maxBoardState;
+		({position,maxBoardState} = convertedPos);
 	}
 	editorMaxBoard.set(maxBoardState);
 	function updateBoardState() {
@@ -31,7 +32,7 @@
 
 	$: {
 		maxBoardState;
-		position = updatePiecePositions(maxBoardState, boardConfig.dimensions);
+		position = updatePiecePositionsFromMaxBoard(maxBoardState, boardConfig.dimensions);
 	}
 
 	const unsubscribe = editorMaxBoard.subscribe((value) => (maxBoardState = value));
@@ -39,7 +40,7 @@
 
 	export const clear = (): void => {
 		maxBoardState = createEmptyMaxBoardState();
-		position = updatePiecePositions(maxBoardState, boardConfig.dimensions);
+		position = updatePiecePositionsFromMaxBoard(maxBoardState, boardConfig.dimensions);
 	};
 
 	export const shift = (direction: string): void => {
@@ -87,9 +88,9 @@
 				maxBoardState = [...[lastRowSquares], ...tempSquares, ...maxBoardState.slice(afterLastRow)];
 				break;
 		}
-		position = updatePiecePositions(maxBoardState, boardConfig.dimensions);
+		position = updatePiecePositionsFromMaxBoard(maxBoardState, boardConfig.dimensions);
 		$editorMaxBoard = maxBoardState;
 	};
 </script>
 
-<Board {boardConfig} {position} boardSquares={squares} />
+<Board {boardConfig} {position} {squares} />

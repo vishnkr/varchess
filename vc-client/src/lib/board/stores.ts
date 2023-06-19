@@ -3,7 +3,7 @@ import { Color, type EditorSettings, type PiecePresentInfo } from './types';
 
 export const editorSettings: Writable<EditorSettings> = writable({
 	disableSelected: false,
-	pieceSelection: { pieceType: 'p', color: Color.WHITE }
+	pieceSelection: { pieceType: 'p', color: Color.WHITE, group:'standard' }
 });
 
 function createEditorMaxBoard() {

@@ -9,48 +9,55 @@
 	let selectedGoal = 'Checkmate';
 	let selectedGoalIdx = 0;
 	const goals = [
-		{ name: 'Checkmate', desc: 'Check the king and attack all of its escape squares' },
-		{ name: 'Capture', desc: "Capture all of your opponent's pieces on the board" },
-		{ name: 'n-Check', desc: 'Check the opponent king n-times' },
-		{
-			name: 'Target Square',
-			desc: 'Move one of your selected pieces to a target square on the board'
-		}
+		{ name: 'Checkmate', desc: 'Check the king and attack all of its escape squares to win' },
+		{ name: 'Antichess', desc: "Sacrifice all of your pieces on the board to win" },
+		{ name: 'n-Check', desc: 'Check the opponent king n-times to win' },
+		{ name: 'Target Square', desc: 'Move one of your selected pieces to a target square on the board to win'}
 	];
-
+	export let loggedIn=false;
 	function selectGoal(selected: string, idx: number) {
 		selectedGoal = selected;
 		selectedGoalIdx = idx;
 	}
 </script>
 
-<div class="flex flex-col p-3">
-	<!-- svelte-ignore a11y-label-has-associated-control -->
-	<label class="relative inline-flex items-center cursor-pointer">
-		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Show Legal Moves</span>
-		<Switch on:change={handleChange} checked={checkedValue} />
-	</label>
-	<br />
-	<h2 class="font-bold md:text-xl sm:text-lg">Select Objective:</h2>
-	<div class="flex flex-col">
-		{#each goals as goal, index}
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<div
-				class="p-1 m-3 flex lg:flex-row flex-col items-center space-x-3 cursor-pointer
-            {selectedGoalIdx === index
-					? 'border-indigo-900 border-solid border-2 rounded'
-					: 'border-gray-300'}"
-				on:click={() => selectGoal(goal, index)}
-			>
-				<input
-					type="radio"
-					class="form-radio text-indigo-600 h-4 w-4"
-					value={goal.name}
-					checked={selectedGoalIdx === index}
-				/>
-				<h5 class="font-bold md:text-lg text-sm">{goal.name}</h5>
-				<p>{goal.desc}</p>
+	<div class="flex flex-col p-3">
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<label class="relative inline-flex items-center cursor-pointer">
+			<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Show Legal Moves</span>
+			<Switch on:change={handleChange} checked={checkedValue} />
+		</label>
+		<br />
+		<h2 class="font-bold md:text-xl sm:text-lg">Select Objective:</h2>
+		<div class="relative flex flex-col" id="goal">
+			{#each goals as goal, index}
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
+				<div
+					class="p-1 m-1 flex lg:flex-row flex-col items-center space-x-3 cursor-pointer
+				{selectedGoalIdx === index
+						? 'border-indigo-900 border-solid border-2 rounded'
+						: 'border-gray-300'}"
+					on:click={() => selectGoal(goal, index)}
+				>
+					<input
+						type="radio"
+						class="form-radio text-indigo-600 h-4 w-4"
+						value={goal.name}
+						checked={selectedGoalIdx === index}
+					/>
+					<h5 class="font-bold md:text-lg text-sm">{goal.name}</h5>
+					<p><i class="fa-solid fa-circle-question fa-lg" style="color: #628be6;"></i></p>
+				</div>
+			{/each}
+			{#if !loggedIn}
+			<div class="absolute inset-0 flex flex-col bg-black opacity-70 rounded items-center justify-center">
+				<!-- Content for the overlay div -->
+				<i class="fa-solid fa-lock" style="color: #ffffff;"></i>
+				<p class="text-white md:text-2xl text-lg px-2">
+					Login to modify objective 
+				</p>
 			</div>
-		{/each}
-	</div>
-</div>
+			{/if}
+		</div>
+		
+	</div>	

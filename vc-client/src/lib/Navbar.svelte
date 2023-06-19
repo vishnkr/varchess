@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+
 	let loggedIn = false;
+
 	onMount(() => {
 		const btn = document.querySelector('button.mobile-menu-btn');
 		const menu = document.querySelector('.mobile-menu');
@@ -9,7 +11,7 @@
 		});
 	});
 </script>
-
+{#if !loggedIn}
 <nav class="sticky top-0 z-50 bg-[#0a0c13] dark:bg-[#1a1e25]">
 	<div class="max-w-8xl mx-auto px-4">
 		<div class="flex justify-between">
@@ -22,14 +24,6 @@
 			</div>
 			<div class="hidden md:flex items-center space-x-1" />
 			<div class="hidden md:flex md:gap-x-9 md:flex-end items-center space-x-1">
-				<div class="font-semibold px-3 py-5 cursor-pointer text-white">
-					<a href="/guide" class="group transition duration-300 ease-in-out cursor-pointer"
-						>Guide
-						<span
-							class="block max-w-0 group-hover:max-w-full transition-all duration-500 h-0.5 bg-gradient-to-r from-orange-500 to-blue-800"
-						/>
-					</a>
-				</div>
 				<div class="font-semibold px-3 py-5  cursor-pointer text-white">
 					<a href="/login" class="group transition duration-300 ease-in-out cursor-pointer"
 						>Log in <span aria-hidden="true">→</span>
@@ -65,5 +59,18 @@
 	</div>
 </nav>
 
-<style>
-</style>
+{:else}
+<nav class="sticky top-0 z-50 bg-[#0a0c13] dark:bg-[#1a1e25]">
+	<div class="max-w-8xl mx-auto px-4">
+		<div class="flex justify-between">
+			<div class="flex space-x-4">
+				<div>
+					<a class=" flex" href="/">
+						<img src="/logo.svg" alt="logo" class="ml-3 w-32" />
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</nav>
+{/if}

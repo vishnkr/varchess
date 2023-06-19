@@ -2,33 +2,32 @@
 	import {
 		getSquareColor,
 		type Position,
-		type SquareInfo,
-		type SquareIdx,
-		type EditorSettings
 	} from './types';
 	import Square from './Square.svelte';
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
+	import { generateSquareMaps } from './board';
+	import { convertFenToPosition } from './fen';
 
 	export let boardConfig: BoardConfig;
-	export let position: Position;
-
-	export let boardSquares: Record<SquareIdx, SquareInfo>;
+	export let squares = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false).squares;
+	export let position:Position = convertFenToPosition(boardConfig.fen)?.position ?? { piecePositions: {}, disabled: {} };
 </script>
 
 <div id="wrapper">
 	<div
 		id="board"
 		style={`--size: ${Math.max(boardConfig.dimensions.ranks, boardConfig.dimensions.files)}`}
+		class={`${boardConfig.editable ? 'cursor-pointer' : null}`}
 	>
 		{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
 			<Square
 				editable={boardConfig.editable}
 				interactive={boardConfig.interactive}
-				squareData={boardSquares[idx]}
+				squareData={squares[idx]}
 				color={getSquareColor(
-					boardSquares[idx]?.row,
-					boardSquares[idx]?.column,
+					squares[idx]?.row,
+					squares[idx]?.column,
 					boardConfig.isFlipped
 				)}
 				piece={position.piecePositions[idx] ?? null}
@@ -53,7 +52,6 @@
 		touch-action: none;
 		border-collapse: collapse;
 		box-sizing: border-box;
-		cursor: pointer;
 	}
 
 	#wrapper {
