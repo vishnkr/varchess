@@ -33,8 +33,8 @@
 			}
 		}));
 	};
-    const updateColor = (color:Color)=>{
-        color = color;
+    const updateColor = (newColor:Color)=>{
+        color = newColor;
         editorSettings.update((val) => ({
 			...val,
 			pieceSelection: {

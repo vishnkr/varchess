@@ -9,6 +9,7 @@
 	import GameSettings from '$lib/components/editor/GameSettings.svelte';
 	import ExpandableCard from '$lib/components/ExpandableCard.svelte';
 	import Members from '$lib/components/shared/Members.svelte';
+	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	let items = ['Edit'];
 	let activeItem = 'Edit';
 	let inputValue = 'localhost:5sfds137';
@@ -63,9 +64,11 @@
 					<ExpandableCard svg={pieceSvg} title="Piece Editor">
 						<PieceEditor loggedIn={true} />
 					</ExpandableCard>
-
+					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rules Editor">
+						<RulesEditor/>
+					</ExpandableCard>
 					<ExpandableCard iconClass="fa-solid fa-gear fa-lg" title="Game Settings">
-						<GameSettings loggedIn={true}/>
+						<GameSettings />
 					</ExpandableCard>
 				{:else}
 					<ExpandableCard title="Duck Chess">

@@ -35,9 +35,9 @@
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
-    if(!piece && !disabled && interactive){
-      dragOver=true;
-    }
+		if(!piece && !disabled && interactive){
+		dragOver=true;
+		}
 	}
 
 	function onDrop(e: DragEvent) {
@@ -115,7 +115,7 @@
 >
 	{#if piece}
 		<div
-			class={`absolute bg-piece ${interactive ? 'draggable' : null} w-full h-full ${piece ? getPieceClass(piece) : ''}`}
+			class={`absolute bg-piece ${interactive? 'draggable' : null} w-full h-full ${piece ? getPieceClass(piece) : ''}`}
 			draggable={interactive}
 			id={`p-${squareData.squareIndex}`}
 			bind:this={pieceEl}

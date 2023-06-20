@@ -1,63 +1,65 @@
 <script lang="ts">
-	// @ts-nocheck
+// @ts-nocheck
+	import { afterUpdate, onMount } from 'svelte';
 	import Switch from 'svelte-switch';
-	let checkedValue = false;
-	function handleChange(e) {
-		const { checked } = e.detail;
-		checkedValue = checked;
+	let settingsChecked = { 
+		disableChat:false, 
+		showLegalMoves:false, 
+		boardTheme: "Default"
 	}
-	let selectedGoal = 'Checkmate';
-	let selectedGoalIdx = 0;
-	const goals = [
-		{ name: 'Checkmate', desc: 'Check the king and attack all of its escape squares to win' },
-		{ name: 'Antichess', desc: "Sacrifice all of your pieces on the board to win" },
-		{ name: 'n-Check', desc: 'Check the opponent king n-times to win' },
-		{ name: 'Target Square', desc: 'Move one of your selected pieces to a target square on the board to win'}
-	];
-	export let loggedIn=false;
-	function selectGoal(selected: string, idx: number) {
-		selectedGoal = selected;
-		selectedGoalIdx = idx;
-	}
-</script>
+	function updateColors() {
+		const light = colorThemes[settingsChecked.boardTheme].lightColor;
+		const dark = colorThemes[settingsChecked.boardTheme].darkColor;
+		console.log('cahgned color theme',settingsChecked.boardTheme)
+		document.documentElement.style.setProperty('--default-light-square', light);
+		document.documentElement.style.setProperty('--default-dark-square', dark);
 
+	}
+	
+	const colorThemes = {
+		"Default" :  {lightColor: 'hsl(51deg 24% 84%)', darkColor: 'hsl(145deg 32% 44%)'},
+		"Brown": {lightColor: 'hsl(36, 81%, 84%)', darkColor: 'hsl(25, 31%, 51%)' },
+		"Aqua": {lightColor: 'hsl(197, 34%, 83%)', darkColor: 'hsl(217, 68%, 52%)' },
+		"Classic": {lightColor:'hsl(0, 0%, 100%)', darkColor: 'hsl(0, 0%, 45%)'},
+		"Candy": {lightColor: 'hsl(314, 100%, 90%)', darkColor: 'hsl(328, 100%, 55%)'}
+	};
+</script>
+<style>
+	.b{
+		background-color: hsl(318, 100%, 67%);
+	}
+</style>
 	<div class="flex flex-col p-3">
 		<!-- svelte-ignore a11y-label-has-associated-control -->
 		<label class="relative inline-flex items-center cursor-pointer">
 			<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Show Legal Moves</span>
-			<Switch on:change={handleChange} checked={checkedValue} />
+			<Switch checked={settingsChecked.showLegalMoves} />
 		</label>
 		<br />
-		<h2 class="font-bold md:text-xl sm:text-lg">Select Objective:</h2>
-		<div class="relative flex flex-col" id="goal">
-			{#each goals as goal, index}
-				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<div
-					class="p-1 m-1 flex lg:flex-row flex-col items-center space-x-3 cursor-pointer
-				{selectedGoalIdx === index
-						? 'border-indigo-900 border-solid border-2 rounded'
-						: 'border-gray-300'}"
-					on:click={() => selectGoal(goal, index)}
-				>
-					<input
-						type="radio"
-						class="form-radio text-indigo-600 h-4 w-4"
-						value={goal.name}
-						checked={selectedGoalIdx === index}
-					/>
-					<h5 class="font-bold md:text-lg text-sm">{goal.name}</h5>
-					<p><i class="fa-solid fa-circle-question fa-lg" style="color: #628be6;"></i></p>
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<label class="relative inline-flex items-center cursor-pointer">
+			<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Disable Chat</span>
+			<Switch checked={settingsChecked.disableChat} />
+		</label>
+		<!-- svelte-ignore a11y-label-has-associated-control -->
+		<div class="flex items-center">
+			<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Board Theme: </span>
+			<select
+			  class="appearance-none border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
+			  bind:value={settingsChecked.boardTheme}
+			  on:change={updateColors}
+			>
+			  {#each Object.keys(colorThemes) as theme}
+				<option value={theme}>{theme}</option>
+			  {/each}
+			</select>
+		  
+			{#if settingsChecked.boardTheme}
+				<div class="ml-4 flex items-center">
+					<div class="w-6 h-6 rounded-sm" style="background-color: {colorThemes[settingsChecked.boardTheme].lightColor}"></div>
+					<div class="w-6 h-6 rounded-sm ml-2" style="background-color: {colorThemes[settingsChecked.boardTheme].darkColor}"></div>
 				</div>
-			{/each}
-			{#if !loggedIn}
-			<div class="absolute inset-0 flex flex-col bg-black opacity-70 rounded items-center justify-center">
-				<!-- Content for the overlay div -->
-				<i class="fa-solid fa-lock" style="color: #ffffff;"></i>
-				<p class="text-white md:text-2xl text-lg px-2">
-					Login to modify objective 
-				</p>
-			</div>
 			{/if}
 		</div>
-		
+
 	</div>	
