@@ -1,7 +1,7 @@
 <script lang="ts">
 	import './board-styles.css';
 	import type { BoardType, IPiece, SquareColor, SquareInfo } from './types';
-	import cross from '$lib/assets/svg/cross.svg';
+	import wall from '$lib/assets/svg/wall.svg';
 	import { editorSettings, editorMaxBoard } from './stores';
 
 	export let squareData: SquareInfo;
@@ -123,8 +123,8 @@
 			on:dragend={handleDragEnd}
 		/>
 	{:else if disabled}
-		<div class="absolute inset-0 flex items-center justify-center p-1">
-			<img draggable={false} src={cross} alt="disabled" />
+		<div class="absolute inset-0 flex items-center justify-center bg-red-400">
+			<img draggable={false} src={wall} alt="disabled" class="w-full h-full" />
 		</div>
 	{:else}
 		<slot />

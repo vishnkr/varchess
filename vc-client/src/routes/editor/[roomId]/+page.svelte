@@ -9,8 +9,8 @@
 	import GameSettings from '$lib/components/editor/GameSettings.svelte';
 	import ExpandableCard from '$lib/components/ExpandableCard.svelte';
 	import Members from '$lib/components/shared/Members.svelte';
-	let items = ['Custom', 'Preset'];
-	let activeItem = 'Custom';
+	let items = ['Edit'];
+	let activeItem = 'Edit';
 	let inputValue = 'localhost:5sfds137';
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 
@@ -46,12 +46,12 @@
 </svelte:head>
 <div class="font-inter text-zinc-90 flex-grow">
 	<div class="flex-1 flex m-4 lg:flex-row flex-col">
-		<div class="bg-zinc-700 rounded-md lg:w-3/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
+		<div class="bg-zinc-700 rounded-md lg:w-5/12 mx-1 p-3 max-h-[45rem] overflow-y-auto">
 			<div class="border-b border-gray-200 dark:border-gray-700 flex flex-col text-center">
 				<div class="flex justify-center">
 					<Tabs {activeItem} {items} on:tabChange={tabChange} />
 				</div>
-				{#if activeItem === 'Custom'}
+				{#if activeItem === 'Edit'}
 					<ExpandableCard svg={boardSvg} title="Board Editor">
 						<BoardEditor
 							bind:dimensions={boardConfig.dimensions}
@@ -92,13 +92,22 @@
 				{/if}
 			</div>
 		</div>
-		<div class=" rounded-md lg:w-6/12 mx-3 my-3 p-3">
+		<div class=" rounded-md lg:w-7/12 mx-1 max-h-[45rem] p-3">
 			<EditableBoard {boardConfig} bind:shift={shiftBoard} bind:clear={clearBoard} />
 		</div>
-		<div class="flex flex-col bg-zinc-700 rounded-md lg:w-3/12 mx-3 p-3">
+		
+	</div>
+</div>
+
+<style>
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+	/*
+	<div class="flex flex-col bg-zinc-700 rounded-md lg:w-2/12 mx-1 p-3">
 			<div class="flex mb-5">
 				<input
-					class="border border-gray-300 px-4 py-2 text-white rounded-l w-64"
+					class="border border-gray-300 px-1 py-2 text-white max-w-64"
 					bind:value={inputValue}
 					disabled
 				/>
@@ -119,11 +128,5 @@
 			</div>
 			<Members {actions}/>
 		</div>
-	</div>
-</div>
-
-<style>
-	::-webkit-scrollbar {
-		width: 10px;
-	}
+	**/
 </style>
