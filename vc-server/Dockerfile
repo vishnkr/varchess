@@ -1,6 +1,5 @@
-FROM golang:latest
+FROM golang:1.18-alpine
 
-RUN mkdir /app
 WORKDIR /app/vc-server
 
 COPY go.mod .
@@ -8,5 +7,8 @@ COPY go.sum .
 RUN go mod download
 COPY . .
 
-CMD ["make","build_run"]
+RUN go build -o vc-server ./cmd/server
+
 EXPOSE 5000
+
+CMD ["./vc-server"]
