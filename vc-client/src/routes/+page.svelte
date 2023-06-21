@@ -17,7 +17,7 @@
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDDN.B/R.BQ1BKN1',
 		dimensions: { ranks: 7, files: 9 },
 		editable: false,
-		interactive: true,
+		interactive: true
 	};
 	const cardData = [
 		{
@@ -87,25 +87,28 @@
 							</div>
 						</div>
 						<div class="flex-1">
-							<Board {boardConfig}/>
+							<Board {boardConfig} />
 						</div>
-
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mx-auto mb-5 text-white sm:py-2 px-4 sm:px-6 lg:px-8">
-	{#each cardData as card}
-		<div class="block p-6 dark:bg-white border dark:border-gray-200 rounded-lg shadow dark:hover:bg-gray-100 {card.bg} gray-800 border-gray-700 hover:bg-gray-700">
-		<h5 class="mb-2 text-xl md:text-2xl font-bold tracking-tight dark:text-gray-900 text-white">
-			{card.title}
-		</h5>
-		<p class="font-normal text-white dark:text-gray-400 text-sm md:text-base">
-			{card.description}
-		</p>
-		</div>
-	{/each}
+	<div
+		class="grid grid-cols-1 md:grid-cols-2 gap-2 mx-auto mb-5 text-white sm:py-2 px-4 sm:px-6 lg:px-8"
+	>
+		{#each cardData as card}
+			<div
+				class="block p-6 dark:bg-white border dark:border-gray-200 rounded-lg shadow dark:hover:bg-gray-100 {card.bg} gray-800 border-gray-700 hover:bg-gray-700"
+			>
+				<h5 class="mb-2 text-xl md:text-2xl font-bold tracking-tight dark:text-gray-900 text-white">
+					{card.title}
+				</h5>
+				<p class="font-normal text-white dark:text-gray-400 text-sm md:text-base">
+					{card.description}
+				</p>
+			</div>
+		{/each}
 	</div>
 	<Modal isOpen={showModal} on:close={() => setShowModal(false)}>
 		<div class="text-white bg-[#1d2a35] py-3">
@@ -117,36 +120,36 @@
 				</p>
 			</div>
 			<form method="GET" action="/quickplay">
-			<div class="grid grid-cols-1 grid-rows-2">
-				<div class="flex justify-center items-center">
-					<div class="p-1 items-center">
-						<label for="username">
-							Your username
-							<input
-								type="text"
-								bind:value={username}
-								disabled
-								class="rounded-md border border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
-								name="username"
-							/>
-						</label>
+				<div class="grid grid-cols-1 grid-rows-2">
+					<div class="flex justify-center items-center">
+						<div class="p-1 items-center">
+							<label for="username">
+								Your username
+								<input
+									type="text"
+									bind:value={username}
+									disabled
+									class="rounded-md border border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
+									name="username"
+								/>
+							</label>
+						</div>
+					</div>
+					<div class="flex justify-center items-center">
+						<div>
+							<button class="flex items-center justify-center gap-x-6">
+								<!-- svelte-ignore a11y-click-events-have-key-events -->
+								<span
+									class="btn-custom-1"
+									on:click={handleSubmit}
+									on:keydown={(e) => handleKeyDown(e, handleSubmit)}
+								>
+									Create Room
+								</span>
+							</button>
+						</div>
 					</div>
 				</div>
-				<div class="flex justify-center items-center">
-					<div>
-						<button class="flex items-center justify-center gap-x-6">
-							<!-- svelte-ignore a11y-click-events-have-key-events -->
-							<span
-								class="btn-custom-1"
-								on:click={handleSubmit}
-								on:keydown={(e) => handleKeyDown(e, handleSubmit)}
-							>
-								Create Room
-							</span>
-						</button>
-					</div>
-				</div>
-			</div>
 			</form>
 		</div>
 	</Modal>

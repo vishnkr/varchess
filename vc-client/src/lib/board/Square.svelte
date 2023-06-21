@@ -19,12 +19,12 @@
 
 	let pieceEl: HTMLElement;
 	let squareEl: HTMLElement;
-  	let hover: boolean = false;
-  	let dragOver:boolean=false;
+	let hover: boolean = false;
+	let dragOver: boolean = false;
 	function handleDragStart(e: DragEvent) {
-		  let dragInfo = { idx: squareData.squareIndex, piece };
-		  e.dataTransfer?.setData('dragInfo', JSON.stringify(dragInfo));
-		  pieceEl.style.opacity = '0.4';
+		let dragInfo = { idx: squareData.squareIndex, piece };
+		e.dataTransfer?.setData('dragInfo', JSON.stringify(dragInfo));
+		pieceEl.style.opacity = '0.4';
 	}
 
 	function handleDragEnd(e: DragEvent) {
@@ -35,24 +35,23 @@
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
-		if(!piece && !disabled && interactive){
-		dragOver=true;
+		if (!piece && !disabled && interactive) {
+			dragOver = true;
 		}
 	}
 
 	function onDrop(e: DragEvent) {
-    e.preventDefault();
+		e.preventDefault();
 		const data = e.dataTransfer?.getData('dragInfo');
 		if (data && !disabled && interactive) {
 			var obj = JSON.parse(data);
 			piece = obj.piece;
 			dragOver = false;
 			editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-						isPiecePresent: true,
-						piece
+				isPiecePresent: true,
+				piece
 			});
 		}
-		
 	}
 
 	function handleClick(e: MouseEvent) {
@@ -67,34 +66,33 @@
 				});
 			} else {
 				if ($editorSettings.pieceSelection)
-        editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 						isPiecePresent: piece ? false : true,
 						piece: piece ? null : $editorSettings.pieceSelection
-			  });
+					});
 			}
 		}
 	}
 
-  const isViewableOnly = () => !editable && !interactive;
+	const isViewableOnly = () => !editable && !interactive;
 
-  function handleMouseEnter(e:MouseEvent){
-    e.preventDefault()
-    if(piece && !isViewableOnly()){
-      hover=true;
-    }
-  }
+	function handleMouseEnter(e: MouseEvent) {
+		e.preventDefault();
+		if (piece && !isViewableOnly()) {
+			hover = true;
+		}
+	}
 
-  function handleMouseLeave(e:MouseEvent){
-    e.preventDefault()
-    hover=false;
-  }
+	function handleMouseLeave(e: MouseEvent) {
+		e.preventDefault();
+		hover = false;
+	}
 
-  function handleDragLeave(e:DragEvent){
-    e.preventDefault()
-    dragOver = false;
-    hover=false;
-  }
-
+	function handleDragLeave(e: DragEvent) {
+		e.preventDefault();
+		dragOver = false;
+		hover = false;
+	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -107,7 +105,7 @@
 	on:dragover={handleDragOver}
 	on:drop={onDrop}
 	on:click={handleClick}
-	class:hover 
+	class:hover
 	class:dragOver
 	on:mouseenter={handleMouseEnter}
 	on:mouseleave={handleMouseLeave}
@@ -115,7 +113,9 @@
 >
 	{#if piece}
 		<div
-			class={`absolute bg-piece ${interactive? 'draggable' : null} w-full h-full ${piece ? getPieceClass(piece) : ''}`}
+			class={`absolute bg-piece ${interactive ? 'draggable' : null} w-full h-full ${
+				piece ? getPieceClass(piece) : ''
+			}`}
 			draggable={interactive}
 			id={`p-${squareData.squareIndex}`}
 			bind:this={pieceEl}
@@ -132,7 +132,6 @@
 </div>
 
 <style>
-
 	[data-square-color] {
 		width: 100%;
 		height: 0;
@@ -142,12 +141,12 @@
 		background-color: var(--square-color);
 	}
 
-  .hover{
-    background-color: var(--default-hover-square);
-  }
-  .dragOver{
-    background-color: var(--drag-piece-over-square);
-  }
+	.hover {
+		background-color: var(--default-hover-square);
+	}
+	.dragOver {
+		background-color: var(--drag-piece-over-square);
+	}
 
 	.portal {
 		animation: spin 3s linear infinite;
@@ -162,7 +161,6 @@
 		}
 	}
 
-  
 	[data-square-color='dark'] {
 		--square-color: var(--default-dark-square);
 		--p-label-color: var(--default-light-square);

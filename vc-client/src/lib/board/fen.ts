@@ -1,12 +1,18 @@
 import type { configDefaults } from 'vitest/config';
-import { Color, type Dimensions, type PiecePositions, type PiecePresentInfo, type Position } from './types';
+import {
+	Color,
+	type Dimensions,
+	type PiecePositions,
+	type PiecePresentInfo,
+	type Position
+} from './types';
 
 export const convertFenToPosition = (
 	fen: string
 ):
 	| {
 			dimensions: Dimensions;
-      position:Position;
+			position: Position;
 			maxBoardState: PiecePresentInfo[][];
 	  }
 	| undefined => {
@@ -15,7 +21,7 @@ export const convertFenToPosition = (
 	const fenSplit = fen.split(' ');
 	const ranks = fenSplit[0].split('/');
 	const rankCount = ranks.length;
-  const position: Position = {piecePositions:{},disabled:{}}
+	const position: Position = { piecePositions: {}, disabled: {} };
 	dimensions.ranks = rankCount;
 	if (rankCount > 16) {
 		return undefined;
@@ -25,7 +31,7 @@ export const convertFenToPosition = (
 	let char;
 	let colCount = 0;
 	let row = 0;
-  let idx=0;
+	let idx = 0;
 	for (let i = 0; i < ranks.length; i++) {
 		secDigit = 0;
 		colCount = 0;
@@ -35,9 +41,9 @@ export const convertFenToPosition = (
 			char = ranks[i].charAt(j);
 			if (char === '.') {
 				maxBoardState[i][col] = { isPiecePresent: false, disabled: true };
-        position.disabled[idx]=true
+				position.disabled[idx] = true;
 				colCount += 1;
-        idx+=1;
+				idx += 1;
 				col += 1;
 			} else if (/\d/.test(char)) {
 				if (j + 1 < ranks[i].length && /\d/.test(ranks[i].charAt(j + 1))) {
@@ -51,7 +57,7 @@ export const convertFenToPosition = (
 					for (let empty = 0; empty < colEnd; empty++) {
 						maxBoardState[row][col] = { isPiecePresent: false };
 						col += 1;
-            idx+=1;
+						idx += 1;
 					}
 					colCount += colEnd;
 				}
@@ -61,23 +67,23 @@ export const convertFenToPosition = (
 					pieceType: char
 				};
 				maxBoardState[row][col] = { isPiecePresent: true, piece };
-        		position.piecePositions[idx]=piece;
+				position.piecePositions[idx] = piece;
 				colCount += 1;
 				col += 1;
-        idx+=1;
+				idx += 1;
 			}
 			j += 1;
 		}
 		row += 1;
 	}
 	dimensions.files = colCount;
-	const newPiecePositions:PiecePositions = {};
-	const total = (dimensions.files*dimensions.ranks)
-	for (let idx = 0;idx<total;idx++){
-		newPiecePositions[total-1-idx] = position.piecePositions[idx];
+	const newPiecePositions: PiecePositions = {};
+	const total = dimensions.files * dimensions.ranks;
+	for (let idx = 0; idx < total; idx++) {
+		newPiecePositions[total - 1 - idx] = position.piecePositions[idx];
 	}
 	position.piecePositions = newPiecePositions;
-	return { dimensions,position, maxBoardState };
+	return { dimensions, position, maxBoardState };
 };
 
 export const createEmptyMaxBoardState = (): PiecePresentInfo[][] => {

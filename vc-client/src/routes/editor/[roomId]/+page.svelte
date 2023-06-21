@@ -35,11 +35,11 @@
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 
-	let actions:{ type:string; handler: () => void }[]=[
-		{type:"Remove",handler:()=>{}},
-		{type:"Set as White",handler:()=>{}},
-		{type:"Set as Black",handler:()=>{}},
-  	];
+	let actions: { type: string; handler: () => void }[] = [
+		{ type: 'Remove', handler: () => {} },
+		{ type: 'Set as White', handler: () => {} },
+		{ type: 'Set as Black', handler: () => {} }
+	];
 </script>
 
 <svelte:head>
@@ -65,7 +65,7 @@
 						<PieceEditor loggedIn={true} />
 					</ExpandableCard>
 					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rules Editor">
-						<RulesEditor/>
+						<RulesEditor />
 					</ExpandableCard>
 					<ExpandableCard iconClass="fa-solid fa-gear fa-lg" title="Game Settings">
 						<GameSettings />
@@ -98,7 +98,6 @@
 		<div class=" rounded-md lg:w-7/12 mx-1 max-h-[45rem] p-3">
 			<EditableBoard {boardConfig} bind:shift={shiftBoard} bind:clear={clearBoard} />
 		</div>
-		
 	</div>
 </div>
 

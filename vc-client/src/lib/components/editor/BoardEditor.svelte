@@ -35,11 +35,23 @@
 	</div>
 	<div class="bg-white py-2 rounded-md shadow-md">
 		<h3 class="text-xl font-semibold">Board Width : {dimensions.files}</h3>
-		<input class="cursor-pointer" type="range" min={5} max={maxDimension} bind:value={dimensions.files} />
+		<input
+			class="cursor-pointer"
+			type="range"
+			min={5}
+			max={maxDimension}
+			bind:value={dimensions.files}
+		/>
 	</div>
 	<div class="bg-white py-2 rounded-md shadow-md">
 		<h3 class="text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
-		<input class="cursor-pointer" type="range" min={5} max={maxDimension} bind:value={dimensions.ranks} />
+		<input
+			class="cursor-pointer"
+			type="range"
+			min={5}
+			max={maxDimension}
+			bind:value={dimensions.ranks}
+		/>
 	</div>
 	<div class="flex flex-col justify-between items-center h-auto p-2">
 		<h3 class="text-xl">Shift Board</h3>

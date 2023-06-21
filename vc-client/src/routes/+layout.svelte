@@ -15,7 +15,7 @@
 </div>
 
 <style>
-	.radial-bg{
+	.radial-bg {
 		background: radial-gradient(circle, hsl(240, 60%, 9%), hsl(210, 7%, 5%));
 	}
 </style>

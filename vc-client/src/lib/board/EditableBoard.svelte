@@ -10,13 +10,13 @@
 	import { onDestroy } from 'svelte';
 
 	export let boardConfig: BoardConfig;
-    boardConfig = {...boardConfig, interactive: false, editable:true}
+	boardConfig = { ...boardConfig, interactive: false, editable: true };
 	let { squares } = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
 	const convertedPos = convertFenToPosition(boardConfig.fen);
 	let position: Position = { piecePositions: {}, disabled: {} };
 	let maxBoardState: PiecePresentInfo[][] = $editorMaxBoard;
 	if (convertedPos) {
-		({position,maxBoardState} = convertedPos);
+		({ position, maxBoardState } = convertedPos);
 	}
 	editorMaxBoard.set(maxBoardState);
 	function updateBoardState() {

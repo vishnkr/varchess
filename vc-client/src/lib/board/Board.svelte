@@ -1,8 +1,5 @@
 <script lang="ts">
-	import {
-		getSquareColor,
-		type Position,
-	} from './types';
+	import { getSquareColor, type Position } from './types';
 	import Square from './Square.svelte';
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
@@ -10,8 +7,14 @@
 	import { convertFenToPosition } from './fen';
 
 	export let boardConfig: BoardConfig;
-	export let squares = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false).squares;
-	export let position:Position = convertFenToPosition(boardConfig.fen)?.position ?? { piecePositions: {}, disabled: {} };
+	export let squares = generateSquareMaps(
+		boardConfig.dimensions,
+		boardConfig.isFlipped ?? false
+	).squares;
+	export let position: Position = convertFenToPosition(boardConfig.fen)?.position ?? {
+		piecePositions: {},
+		disabled: {}
+	};
 </script>
 
 <div id="wrapper">
@@ -25,11 +28,7 @@
 				editable={boardConfig.editable}
 				interactive={boardConfig.interactive}
 				squareData={squares[idx]}
-				color={getSquareColor(
-					squares[idx]?.row,
-					squares[idx]?.column,
-					boardConfig.isFlipped
-				)}
+				color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
 				piece={position.piecePositions[idx] ?? null}
 				disabled={position.disabled[idx] ?? false}
 			/>

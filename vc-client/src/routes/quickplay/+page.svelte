@@ -34,11 +34,11 @@
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 
-	let actions:{ type:string; handler: () => void }[]=[
-		{type:"Remove",handler:()=>{}},
-		{type:"Set as White",handler:()=>{}},
-		{type:"Set as Black",handler:()=>{}},
-  	];
+	let actions: { type: string; handler: () => void }[] = [
+		{ type: 'Remove', handler: () => {} },
+		{ type: 'Set as White', handler: () => {} },
+		{ type: 'Set as Black', handler: () => {} }
+	];
 </script>
 
 <svelte:head>
@@ -108,7 +108,7 @@
 					Share <i class="fa-solid fa-link" />
 				</button>
 			</div>
-			<Members {actions}/>
+			<Members {actions} />
 		</div>
 	</div>
 </div>
