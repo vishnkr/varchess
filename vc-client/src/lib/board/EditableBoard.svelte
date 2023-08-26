@@ -41,6 +41,7 @@
 	export const clear = (): void => {
 		maxBoardState = createEmptyMaxBoardState();
 		position = updatePiecePositionsFromMaxBoard(maxBoardState, boardConfig.dimensions);
+		$editorMaxBoard = maxBoardState;
 	};
 
 	export const shift = (direction: string): void => {

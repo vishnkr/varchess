@@ -37,7 +37,7 @@
 			<div
 				class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-700"
 			>
-				<svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+				<svg class=" h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
 					<path
 						fill-rule="evenodd"
 						d="M6.293 8.707a1 1 0 010-1.414l3-3a1 1 0 10-1.414-1.414L5 5.586 2.707 3.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0z"
@@ -72,7 +72,7 @@
 					<h6 class="text-sm">{goal.desc}</h6>
 				</div>
 			{/each}
-			{#if !loggedIn}
+			{#if loggedIn}
 				<div
 					class="absolute inset-0 flex flex-col bg-black opacity-70 rounded items-center justify-center"
 				>

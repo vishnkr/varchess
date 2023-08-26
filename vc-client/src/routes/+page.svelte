@@ -11,7 +11,10 @@
 
 	let showModal = false;
 	let username = generateUsername();
-	const setShowModal = (val: boolean) => (showModal = val);
+	const setShowModal = (val: boolean) => {
+		showModal = val;
+		username = generateUsername();
+	};
 	const baseUrl: string = import.meta.env.VITE_SERVER_BASE;
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDDN.B/R.BQ1BKN1',
@@ -32,12 +35,12 @@
 		},
 		{
 			title: 'Chess with Walls',
-			description: 'Disable squares to play with walls',
+			description: 'Disable squares to remove access to certain squares on the board',
 			bg: 'bg-red-600'
 		},
 		{
 			title: 'Predefined Variants',
-			description: 'Play Wormhole, SniperChess and many more variants',
+			description: 'Play Wormhole, ArcherChess and many more variants',
 			bg: 'bg-orange-600'
 		},
 		{
@@ -46,17 +49,25 @@
 			bg: 'bg-purple-600'
 		}
 	];
+
 	async function handleSubmit() {
 		if (username?.length == 0) {
 		}
-		const response = await fetch(`${baseUrl}/health`, {
-			method: 'GET',
+		const response = await fetch(`${baseUrl}/room`, {
+			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json'
-			}
-			//body: JSON.stringify({username})
-		});
+			'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({username}) 
+      	});
+		if (response.ok){
+			
+			const data = await response.json();
+			if(data.roomId) goto(`/editor/${data.roomId}`)
+		}
 		showModal = false;
+
+		
 	}
 </script>
 
@@ -80,11 +91,11 @@
 								</span>
 							</h1>
 							<p class="mt-8 text-2xl text-center leading-8 text-white">Create. Customize. Play</p>
-							<div class="mt-10 flex items-center justify-center gap-x-6">
-								<span class="btn-custom-1" on:click={() => setShowModal(true)}>
-									Try Quick Play
-								</span>
-							</div>
+								<div class="mt-10 flex items-center justify-center gap-x-6" on:click={()=>setShowModal(true)}>
+									<span class="btn-custom-1">
+										Play now!
+									</span>
+								</div>
 						</div>
 						<div class="flex-1">
 							<Board {boardConfig} />
@@ -115,11 +126,10 @@
 			<div class="text-center px-3 py-1">
 				<h3>Create a room now to play with friends!</h3>
 				<p>
-					NOTE: QuickPlay Variants are limited to 8x8 boards or smaller. Login to play on larger
-					boards and save game templates.
+					NOTE: Game templates can be downloaded for future use
 				</p>
 			</div>
-			<form method="GET" action="/quickplay">
+			<form on:submit|preventDefault={handleSubmit}>
 				<div class="grid grid-cols-1 grid-rows-2">
 					<div class="flex justify-center items-center">
 						<div class="p-1 items-center">
@@ -128,8 +138,7 @@
 								<input
 									type="text"
 									bind:value={username}
-									disabled
-									class="rounded-md border border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
+									class="rounded-md border bg-slate-600 text-white border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
 									name="username"
 								/>
 							</label>
@@ -137,11 +146,10 @@
 					</div>
 					<div class="flex justify-center items-center">
 						<div>
-							<button class="flex items-center justify-center gap-x-6">
+							<button type="submit" class="flex items-center justify-center gap-x-6">
 								<!-- svelte-ignore a11y-click-events-have-key-events -->
 								<span
 									class="btn-custom-1"
-									on:click={handleSubmit}
 									on:keydown={(e) => handleKeyDown(e, handleSubmit)}
 								>
 									Create Room
