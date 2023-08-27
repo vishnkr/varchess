@@ -13,14 +13,6 @@ type castlingRights struct {
 	blackQueenSide bool
 }
 
-/*type pieceProps struct{
-	Name string
-	SlideOffsets map[moveOffset]bool `json:"slideOffsets"`
-	JumpProps map[moveOffset]allowedJumpMoveType
-	CanDoubleJump bool
-	DoubleJumpSquares map[int]bool
-	promotionProps
-}*/
 
 type promotionProps struct {
 	promotionSquares      map[int]bool

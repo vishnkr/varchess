@@ -10,9 +10,9 @@ func TestNewPosition(t *testing.T) {
 		VariantType: Custom,
 		gameConfigPosition: gameConfigPosition{
 			Dimensions: dimensions{Ranks: 8, Files: 8},
-			Fen:       "4r3/8/8/8/8/8/8/R1B1K2R w KQ - 0 1", //"rnbkqbnr/pppppppp/q7/8/8/8/1PPPPPPP/RNBKQBNR w Qkq - 0 1",
+			Fen:       "n3r3/8/7p/8/8/8/8/R1B1K2R w KQ - 0 1", //"rnbkqbnr/pppppppp/q7/8/8/8/1PPPPPPP/RNBKQBNR w Qkq - 0 1",
 		},
-		Objective: Objective{ObjectiveType: Checkmate},
+		Objective: Objective{ObjectiveType: Antichess},
 	}
 
 	position, err := newPosition(gameConfig)

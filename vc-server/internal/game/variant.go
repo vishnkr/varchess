@@ -16,7 +16,7 @@ type Variant interface {
 	unmakeMove(Move)
 	getPseudoLegalMoves(color, bool) []Move
 	GetLegalMoves() []Move
-	IsGameOver() (result, bool)
+	PerformMove(Move) (result,bool)
 }
 
 type variant struct {
@@ -24,6 +24,9 @@ type variant struct {
 	position
 	variantType
 	recentCapture piece
+	possibleLegalMoves []Move
+	gameResult result
+	isGameOverBool bool
 }
 
 func (v *variant) getTargetSquare(currentSquareID int, offset moveOffset) (int, bool) {
@@ -315,8 +318,33 @@ func (cv *CheckmateVariant) isKingUnderCheck(color color) bool {
 	return ok
 }
 
-func (cv *CheckmateVariant) IsGameOver() (result, bool) {
+func (cv *CheckmateVariant) checkGameOver() (result, bool) {
+	cv.possibleLegalMoves = cv.GetLegalMoves()
+	if cv.turn==ColorBlack{
+		bc := cv.isKingUnderCheck(ColorBlack)
+		if len(cv.possibleLegalMoves)==0{
+			if bc { return WhiteWins,true } else {return Stalemate,true}
+		}
+	} else {
+		wc := cv.isKingUnderCheck(ColorBlack)
+		if len(cv.possibleLegalMoves)==0{
+			if wc { return BlackWins,true } else {return Stalemate,true}
+		}
+	}
 	return 0, false
+}
+
+func (v *variant) IsGameOver() (result, bool) {
+	return v.gameResult,v.isGameOverBool
+}
+
+func (cv *CheckmateVariant) PerformMove(move Move)(result, bool){
+	cv.makeMove(move)
+	cv.switchTurn()
+	res,over:= cv.checkGameOver()
+	cv.gameResult = res
+	cv.isGameOverBool = over
+	return res,over
 }
 
 type NCheckVariant struct {
@@ -336,18 +364,49 @@ func (ncv *NCheckVariant) GetLegalMoves() []Move {
 	return []Move{}
 }
 
-func (ncv *NCheckVariant) IsGameOver() (result, bool) {
-	//check if opponents king received nchecks after making the move
+func (ncv *NCheckVariant) isKingUnderCheck(color color) bool {
+	ncv.getPseudoLegalMoves(ncv.getOpponentColor(), false)
+	var kingPos int
+	if color == ColorWhite {
+		kingPos = ncv.variant.position.additionalProps.whiteKingPos
+	} else {
+		kingPos = ncv.variant.position.additionalProps.blackKingPos
+	}
+	_, ok := ncv.attackedSquares[kingPos]
+	return ok
+}
+
+func (ncv *NCheckVariant) checkGameOver() (result, bool) {
+	ncv.possibleLegalMoves = ncv.GetLegalMoves()
 	if ncv.turn == ColorBlack && ncv.whiteKingCheckCount == ncv.targetChecks {
 		return BlackWins, true
 	} else if ncv.blackKingCheckCount == ncv.targetChecks {
 		return WhiteWins, true
 	}
-
-	//check for checkmate
+	if ncv.turn==ColorBlack{
+		bc := ncv.isKingUnderCheck(ColorBlack)
+		if len(ncv.possibleLegalMoves)==0{
+			if bc { return WhiteWins,true } else {return Stalemate,true}
+		}
+	} else {
+		wc := ncv.isKingUnderCheck(ColorBlack)
+		if len(ncv.possibleLegalMoves)==0{
+			if wc { return BlackWins,true } else {return Stalemate,true}
+		}
+	}
 	return 0, false
 }
 
+func (ncv *NCheckVariant) PerformMove(move Move)(result, bool){
+	ncv.makeMove(move)
+	ncv.switchTurn()
+	res,over:= ncv.checkGameOver()
+	ncv.gameResult = res
+	ncv.isGameOverBool = over
+	return res,over
+}
+
+//Antichess
 type AntichessVariant struct {
 	variant
 }
@@ -367,7 +426,18 @@ func (av *AntichessVariant) GetLegalMoves() []Move {
 	return pseudoMoves
 }
 
-func (av *AntichessVariant) IsGameOver() (result, bool) {
 
+func (av *AntichessVariant) PerformMove(move Move)(result, bool){
+	av.makeMove(move)
+	av.switchTurn()
+	res,over:= av.checkGameOver()
+	av.gameResult = res
+	av.isGameOverBool = over
+	return res,over
+}
+
+func (av *AntichessVariant) checkGameOver() (result, bool) {
+	av.possibleLegalMoves = av.GetLegalMoves()
+	
 	return 0, false
 }
