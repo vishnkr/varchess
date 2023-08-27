@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 	"varchess/internal/logger"
-	"varchess/internal/server/session"
 	"varchess/internal/store"
 
 	"github.com/go-chi/chi/v5"
@@ -18,14 +16,6 @@ type ApiError struct {
 	Error string
 }
 
-type Session struct {
-	userId string
-}
-
-var (
-	AUTH_KEY string = "authenticated"
-	USER_ID  string = "user_id"
-)
 
 type apiFunction func(http.ResponseWriter, *http.Request) error
 
@@ -33,7 +23,7 @@ type server struct {
 	listenAddr   string
 	router       *chi.Mux
 	store        store.Storage
-	sessionStore session.SessionStore[Session]
+	
 }
 
 var l = logger.Get()
@@ -59,50 +49,28 @@ func NewServer(listenAddr string, store store.Storage, allowedOrigins string) *s
 		MaxAge:           3600,
 	}))
 
-	var sessionStore session.SessionStore[Session]
-	sessionStore.InitStore("auth_store", time.Hour*5)
-
 	s := &server{
-		listenAddr:   listenAddr,
-		router:       router,
-		store:        store,
-		sessionStore: sessionStore,
+		listenAddr,
+		router,
+		store,
 	}
 	s.routes()
 	return s
 }
 
-type loggingResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func newLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	return &loggingResponseWriter{w, http.StatusBadGateway}
-}
-
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
-}
-
-func (s *server) routes() {
+func (s *server) routes() {	
 	s.router.Get("/health", makeHTTPHandleFunc(s.handleHealthCheck))
-
+	ws := newWsServer()
+	
 	// Room Handlers
-	s.router.Post("/create-room", s.handleCreateRoom())
-	//router.HandleFunc("/room-state", makeHTTPHandleFunc(s.roomStateHandler)).Methods("GET")
-
-	//router.HandleFunc("/login", makeHTTPHandleFunc(s.authenticateUserHandler)).Methods("GET")
-	//router.HandleFunc("/signup", makeHTTPHandleFunc(s.createAccountHandler)).Methods("POST")
-	//router.HandleFunc("/possible-squares", makeHTTPHandleFunc(s.getPossibleSquares)).Methods("GET")
-
-	//wsServer := NewWebsocketServer()
-	//go wsServer.Run()
-	//router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-	//ServeWsHandler(wsServer, w, r)
-	//})
-
+	s.router.Post("/rooms", s.handleCreateRoom())
+	s.router.Post("/join", s.handleJoinRoom())
+	s.router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		err:= ws.HandleRequest(w, r)
+		if err!=nil{
+			fmt.Println(err.Error())
+		}
+	})
 }
 
 func (s *server) Start() {
@@ -118,10 +86,11 @@ func setHeadersMiddleware(allowedOrigins string) func(http.Handler) http.Handler
 	}
 }
 
-func (s *server) respond(w http.ResponseWriter, r *http.Request, data interface{}, status int) {
+func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
-	if data != nil {
-		err := json.NewEncoder(w).Encode(data)
-		fmt.Println(err)
-	}
+	return json.NewEncoder(w).Encode(v)
+}
+
+func (s *server) handleHealthCheck(w http.ResponseWriter, r *http.Request) error {
+	return WriteJSON(w, http.StatusOK, "health check OK")
 }

@@ -1,149 +1,142 @@
 package game
 
-type VariantType uint8
+import "unicode"
+
+type variantType uint8
 
 const (
-	Custom VariantType = iota
+	Custom variantType = iota
 	DuckChess
-	PoisonedPawn
+	ArcherChess
 	Wormhole
 )
 
-type VariantObjective interface{
-	getPseudoLegalMoves() Moves
-	GetLegalMoves() Moves
-	IsGameOver() bool
-}
 
 type Variant interface{
 	makeMove(Move)
 	unmakeMove(Move)
+	getPseudoLegalMoves(color,bool) []Move
+	GetLegalMoves() []Move
+	IsGameOver() (result,bool)
 }
 
-type CustomVariant struct{
-	Objective Objective
-	Position Position
-	VariantType VariantType
-	recentCapture Piece
+type variant struct{
+	Objective Objective `json:"objective"`
+	position
+	variantType
+	recentCapture piece
 }
 
-type CheckmateVariant struct{
-	CustomVariant
-}
-
-type Moves struct{
-	validMoves []Move
-	attackedSquares map[int]bool
-}
-
-func (v CheckmateVariant) getPseudoLegalMoves() Moves{
-	validMoves := []Move{}
-	attackedSquares := make(map[int]bool)
-	for currentSquareID,piece:=range v.Position.PieceLocations{
-		if(piece.Color == v.Position.Turn){
-			var props PieceProps = v.Position.PieceProps[piece]
-			slideMoves := v.genSlideMoves(&piece,currentSquareID,&props,&attackedSquares)
-			jumpMoves := v.genJumpMoves(&piece,currentSquareID,&props,&attackedSquares)
-			if(v.Position.PieceProps[piece].CanDoubleJump){
-				if _,ok:= v.Position.PieceProps[piece].DoubleJumpSquares[currentSquareID];ok{
-					var doubleJumpMoves []Move = []Move{}
-					for _,mv:=range jumpMoves{
-						if mv.ClassicMoveType == QuietMove{
-							doubleJumpMoves = append(doubleJumpMoves, v.genJumpMoves(&piece,mv.Target,&props,&attackedSquares)...)
-						}
-					}
-					validMoves = append(validMoves, doubleJumpMoves...)
-				}
-			}
-			specialMoves:= v.genSpecialMoves()
-			validMoves = append(validMoves, slideMoves...)
-			jumpMoves = append(jumpMoves, slideMoves...)
-			specialMoves = append(specialMoves, slideMoves...)
-		}
-		
-	}
-	return Moves{validMoves,attackedSquares}
-}
-
-func (v *CustomVariant) getTargetSquare(currentSquareID int, offset MoveOffset) (int,bool){
-	target:= currentSquareID + (v.Position.Dimensions.Ranks * offset.YOffset) + offset.YOffset
-	if target<0 || target >= (v.Position.Dimensions.Ranks*v.Position.Dimensions.Files){
+func (v *variant) getTargetSquare(currentSquareID int, offset moveOffset) (int,bool){
+	row,col:= v.toRowCol(currentSquareID)
+	newRow,newCol := row+offset.yOffset,col+offset.xOffset
+	target:= v.toPos(newRow,newCol)
+	if newRow<0 || newCol<0 || newRow>=v.Ranks || newCol>=v.Files || v.isDisabled(target) {
 		return -1,false
-	}
+	} 
 	return target,true
 }
 
-func (p *Position) isSameColorPiecePresent(sourceSquareID int, targetSquareID int) bool{
-	//assuming both squareIds are vald
-	return p.PieceLocations[sourceSquareID].Color == p.PieceLocations[targetSquareID].Color
-}
-
-func (p *Position) isOpponentPiecePresent(sourceSquareID int,targetSquareID int) bool{
-	//assuming both squareIds are vald
-	return p.PieceLocations[sourceSquareID].Color != p.PieceLocations[targetSquareID].Color
-}
-
-func (p *Position) isNotDisabled(targetSquareID int) bool{
-	_,ok:= p.DisabledSquares[targetSquareID]
-	return ok
-}
-func (p *Position) getClassicMoveType(targetSquareID int) ClassicMoveType{
-	if _,ok:= p.PieceLocations[targetSquareID]; ok{
-		return CaptureMove
-	}
-	return QuietMove
-	
-}
-
-func (v *CustomVariant) genSlideMoves(piece *Piece,currentSquareID int,props *PieceProps,attackedSquares *map[int]bool) []Move{
+func (v variant) getPseudoLegalMoves(color color,kingCaptureAllowed bool) []Move{
 	validMoves := []Move{}
-	for moveOffset:= range props.SlideOffsets{
-		target,valid := v.getTargetSquare(currentSquareID,moveOffset)
+	for currentSquareID,piece:=range v.pieceLocations{
+		if color != piece.color { continue }
+		if piece.pieceType == Pawn{
+			var rowOffset, doubleMoveStartRank int
+			if color == ColorWhite {
+				doubleMoveStartRank = v.Ranks - 2
+				rowOffset = -1
+			} else {
+				doubleMoveStartRank = 1
+				rowOffset = 1
+			}
+			srcRow,srcCol := v.toRowCol(currentSquareID)
+			targetRow := srcRow + rowOffset
+			for i := -1; i <= 1; i++ {
+				//non-capture moves
+				if i == 0 {
+					target1, target2 := v.toPos(targetRow,srcCol), v.toPos(targetRow+rowOffset,srcCol)
+					if _,ok := v.pieceLocations[target1]; !ok && !v.disabledSquares[target1]{
+
+					}
+					if _,ok := v.pieceLocations[target2]; !ok && srcRow == doubleMoveStartRank && !v.disabledSquares[target2]{
+
+					}
+				}
+				//capture moves
+				/*if board.isSquareInBoardRange(targetRow, srcCol+i) && !board.IsEmpty(targetRow, srcCol+i) && !board.isSquareDisabled(targetRow, srcCol+i) && !board.isSameColorPieceAtDest(piece.Color, targetRow, srcCol+i) {
+					
+				}*/
+			}
+		} else{
+			var props pieceProperties = v.pieceProps[unicode.ToLower(piece.notation)]
+			slideMoves := v.genSlideMoves(&piece,currentSquareID,&props,kingCaptureAllowed)
+			jumpMoves := v.genJumpMoves(&piece,currentSquareID,&props,kingCaptureAllowed)
+			specialMoves:= v.genSpecialMoves()
+			validMoves = append(validMoves, slideMoves...)
+			validMoves = append(validMoves, jumpMoves...)
+			validMoves = append(validMoves, specialMoves...)
+		}
+			
+	}
+	return validMoves
+}
+
+func (v *variant) genSlideMoves(piece *piece,currentSquareID int,props *pieceProperties,kingCaptureAllowed bool) []Move{
+	validMoves := []Move{}
+	for _,offset:= range props.SlideOffsets{
+		target,valid := v.getTargetSquare(currentSquareID,offset)
 		for valid{
-			if(!v.Position.isSameColorPiecePresent(currentSquareID,target)){
+			if (!v.isSameColorPiecePresent(currentSquareID,target)){
+				if (v.isOppKingAtTarget(target) && !kingCaptureAllowed){
+					continue
+				}
+				v.position.attackedSquares[target] = true
+				mType:=v.position.getclassicMoveType(target)
 				validMoves = append(validMoves, Move{
 					Source: currentSquareID,
 					Target: target,
-					ClassicMoveType: v.Position.getClassicMoveType(target),
-					PieceType: piece.Piecetype,
-					PieceName: piece.Name,
-					Turn: piece.Color,
+					ClassicMoveType: mType,
+					PieceType: piece.pieceType,
+					PieceNotation: piece.notation,
+					Turn: piece.color,
 				})
+				if mType!=QuietMove{
+					break
+				}
+			} else {
+				break
 			}
-			target,valid = v.getTargetSquare(target,moveOffset)
+			target,valid = v.getTargetSquare(target,offset)
 		}
 	}
 	return validMoves
 }
 
-func (v *CustomVariant) genJumpMoves(piece *Piece,currentSquareID int,props *PieceProps,attackedSquares *map[int]bool) []Move{
+
+func (v *variant) genJumpMoves(piece *piece,currentSquareID int,props *pieceProperties,kingCaptureAllowed bool) []Move{
 	validMoves := []Move{}
-	for moveOffset, allowedJumpMove:= range props.JumpProps{
-		target,valid := v.getTargetSquare(currentSquareID,moveOffset)
-		if( valid && 
-			!v.Position.isSameColorPiecePresent(currentSquareID,target) &&
-			v.Position.isNotDisabled(target)){
-			var moveType ClassicMoveType = NullMove
-			switch allowedJumpMove{
-				case CaptureOnlyJump:
-					if(v.Position.isOpponentPiecePresent(currentSquareID,target)) {moveType = CaptureMove}
-					
-				case QuietOnlyJump:
-					moveType = QuietMove
-				case AllJumps:
-					if(v.Position.isOpponentPiecePresent(currentSquareID,target)){
+	for _, jumpMove:= range props.JumpProps{
+		target,valid := v.getTargetSquare(currentSquareID,jumpMove.Offset)
+		if (valid){
+			if (v.position.isSameColorPiecePresent(currentSquareID,target)){ continue}
+			
+			var moveType classicMoveType = NullMove
+			if (jumpMove.IsCaptureAllowed && v.position.isOpponentPiecePresent(currentSquareID,target)){
+					if (v.position.isOppKingAtTarget(target) && kingCaptureAllowed){
 						moveType = CaptureMove
-					} else {
-						moveType = QuietMove
-					}
+					} else{ continue }
+			} else{
+				moveType = QuietMove
 			}
+			v.position.attackedSquares[target]=true
 			move := Move {
 				Source: currentSquareID,
 				Target: target,
 				ClassicMoveType: moveType,
-				PieceType: piece.Piecetype,
-				PieceName: piece.Name,
-				Turn: piece.Color,
+				PieceType: piece.pieceType,
+				PieceNotation: piece.notation,
+				Turn: piece.color,
 			}
 			validMoves = append(validMoves, move)
 		}
@@ -151,43 +144,123 @@ func (v *CustomVariant) genJumpMoves(piece *Piece,currentSquareID int,props *Pie
 	return validMoves
 }
 
-func (v *CustomVariant) genSpecialMoves() []Move{
+func (v *variant) genSpecialMoves() []Move{
+	//castle and en passant
 	validMoves := []Move{}
 	return validMoves
 }
 
-func (v CheckmateVariant) GetLegalMoves() Moves{
-	pseudoMoves:=v.getPseudoLegalMoves()
-	for _,mv:=range pseudoMoves.validMoves{
-		v.makeMove(mv)
+
+
+func (v variant) makeMove(move Move){
+	switch move.ClassicMoveType{
+	case QuietMove, CaptureMove:
+		if move.ClassicMoveType==CaptureMove{
+			v.recentCapture = v.pieceLocations[move.Target]
+		}
+		v.pieceLocations[move.Target] = v.pieceLocations[move.Source]
+		delete(v.pieceLocations,move.Source)
+	}
+}
+
+func (v variant) unmakeMove(move Move){
+	switch move.ClassicMoveType{
+	case QuietMove, CaptureMove:
+		v.pieceLocations[move.Source] = v.pieceLocations[move.Target]
+		if move.ClassicMoveType==CaptureMove{
+			v.pieceLocations[move.Target] = v.recentCapture
+		}
+	}
+}
+
+
+
+type CheckmateVariant struct{
+	variant
+}
+
+
+func (cv CheckmateVariant) GetLegalMoves() []Move{
+	pseudoMoves:=cv.getPseudoLegalMoves(cv.turn,false)
+	var validMoves []Move = []Move{}
+	for _,mv:=range pseudoMoves{
+		cv.makeMove(mv)
+		cv.position.switchTurn()
 		//check king in check
-		v.unmakeMove(mv)
+		if !cv.isKingUnderCheck(cv.turn){
+			validMoves = append(validMoves,mv)
+		}
+		cv.position.switchTurn()
+		cv.unmakeMove(mv)
 	} 
- 	return Moves{validMoves:[]Move{}}
+ 	return validMoves
 }
 
-
-func (v CustomVariant) makeMove(move Move){
-	switch move.ClassicMoveType{
-	case QuietMove, CaptureMove:
-		if move.ClassicMoveType==CaptureMove{
-			v.recentCapture = v.Position.PieceLocations[move.Target]
-		}
-		v.Position.PieceLocations[move.Target] = v.Position.PieceLocations[move.Source]
-		delete(v.Position.PieceLocations,move.Source)
+func (cv CheckmateVariant) isKingUnderCheck(color color) bool{
+	cv.getPseudoLegalMoves(color,false)
+	var kingPos int
+	if color==ColorWhite{
+		kingPos = cv.kingPos.whiteKingPos
+	}  else {
+		kingPos = cv.kingPos.blackKingPos
 	}
+	_, ok := cv.attackedSquares[kingPos] 
+	return ok
 }
 
-func (v CustomVariant) unmakeMove(move Move){
-	switch move.ClassicMoveType{
-	case QuietMove, CaptureMove:
-		v.Position.PieceLocations[move.Source] = v.Position.PieceLocations[move.Target]
-		if move.ClassicMoveType==CaptureMove{
-			v.Position.PieceLocations[move.Target] = v.recentCapture
-		}
+func (cv CheckmateVariant) IsGameOver() (result,bool){
+	return 0,false
+}
+
+type NCheckVariant struct{
+	variant
+	blackKingCheckCount int
+	whiteKingCheckCount int
+	targetChecks int
+}
+
+func (ncv NCheckVariant) GetLegalMoves() []Move{
+	pseudoMoves:=ncv.getPseudoLegalMoves(ncv.turn,false)
+	for _,mv:=range pseudoMoves{
+		ncv.makeMove(mv)
+		//check king in check
+		ncv.unmakeMove(mv)
+	} 
+	return []Move{}
+}
+
+func (ncv NCheckVariant) IsGameOver() (result,bool){
+	//check if opponents king received nchecks after making the move
+	if ncv.turn == ColorBlack && ncv.whiteKingCheckCount == ncv.targetChecks{
+		return BlackWins, true
+	} else if ncv.blackKingCheckCount == ncv.targetChecks {
+		return WhiteWins,true
 	}
+
+	//check for checkmate
+	return 0, false
 }
 
-func (v CheckmateVariant) IsGameOver()bool{
-	return false
+type AntichessVariant struct{
+	variant
+}
+
+func (av AntichessVariant) GetLegalMoves() []Move{
+	pseudoMoves:= av.getPseudoLegalMoves(av.turn,true)
+	var captureMoves []Move = []Move{}
+	for _,move := range pseudoMoves{
+		if move.ClassicMoveType == CaptureMove{
+			captureMoves = append(captureMoves, move)
+		} 
+	}
+
+	if len(captureMoves)>0{
+		pseudoMoves = captureMoves
+	}
+	return pseudoMoves
+}
+
+func (av AntichessVariant) IsGameOver()(result,bool){
+	
+	return 0,false
 }

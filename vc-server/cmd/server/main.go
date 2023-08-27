@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"fmt"
 	"os"
 	"varchess/internal/logger"
 	"varchess/internal/server"
@@ -13,6 +13,7 @@ import (
 var l = logger.Get()
 
 func main() {
+	fmt.Println("started")
 	err := godotenv.Load(".env")
 	if err != nil {
 		l.Error().Msg("Error loading .env file")
@@ -21,14 +22,14 @@ func main() {
 	if port == "" {
 		port = "5000"
 	}
-
-	var addr = flag.String("addr", ":"+port, "http server address")
+	fmt.Println("running on",port)
+	//var addr = flag.String("addr", ":"+port, "http server address")
 	store, err := store.NewStore()
 	if err != nil {
 		l.Err(err).Msg("error connecting to database")
 	}
 	var allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
-	s := server.NewServer(*addr, store, allowedOrigins)
+	s := server.NewServer("0.0.0.0:5000", store, allowedOrigins)
 	l.Info().Str("port", port).Msgf("Starting Varchess Server")
 	s.Start()
 }

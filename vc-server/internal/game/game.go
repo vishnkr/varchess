@@ -2,46 +2,45 @@ package game
 
 import "encoding/json"
 
-type ClassicMoveType uint8
+type classicMoveType uint8
 
-type Color string
+type color string
 
 type GameObjective uint8
 
-type PieceType int
+type pieceType string
 
-type Result uint8
+type result uint8
 
-type VariantMoveType uint8
+type variantMoveType uint8
 
-type AllowedJumpMoveType uint
+type allowedJumpMoveType uint
 
 const (
-	ColorBlack Color = "black"
-	ColorWhite Color = "white"
+	ColorBlack color = "black"
+	ColorWhite color = "white"
 
-	Pawn PieceType = iota
-	Knight
-	Bishop
-	Rook
-	Queen
-	King
-	Duck
-	CustomPiece
+	Pawn pieceType = "pawn"
+	Knight pieceType = "knight"
+	Bishop pieceType = "bishop"
+	Rook pieceType = "rook"
+	Queen pieceType = "queen"
+	King pieceType = "king"
+	Duck pieceType = "duck"
+	CustomPiece pieceType = "custom"
 
-	ResultInProgress Result = iota
-	ResultWhite
-	ResultBlack
-	ResultDraw
+	WhiteWins result = iota
+	BlackWins
+	Stalemate
 
-	NullMove ClassicMoveType = iota
+	NullMove classicMoveType = iota
 	CastleMove
 	CaptureMove
 	QuietMove
 	EnPassantMove
 	PromotionMove
 
-	DuckPlacement VariantMoveType = iota
+	DuckPlacement variantMoveType = iota
 	Teleport
 
 	Checkmate GameObjective = iota
@@ -50,110 +49,96 @@ const (
 	Targetsquare
 	Capture
 
-	CaptureOnlyJump AllowedJumpMoveType = iota
+	CaptureOnlyJump allowedJumpMoveType = iota
 	QuietOnlyJump
 	AllJumps
 )
 
-type MoveOffset struct{
-	XOffset int
-	YOffset int
+type moveOffset struct{
+	xOffset int
+	yOffset int
 }
 
-type Piece struct{
-	Color Color
-	Name string
-	Piecetype PieceType
+type piece struct{
+	color color
+	notation rune
+	pieceType
 }
 
-type PieceProps struct{
-	SlideOffsets map[MoveOffset]bool
-	CanDoubleJump bool
-	DoubleJumpSquares map[int]bool
-	JumpProps map[MoveOffset]AllowedJumpMoveType
-	PromotionProps PromotionProps
-}
 
-type PromotionProps struct{
-	PromotionSquares []int
-	CanPromoteTo []Piece
-}
-
-type Dimensions struct{
-	Ranks int
-	Files int
-}
-
-type Position struct{
-	PieceLocations map[int]Piece
-	PieceProps map[Piece]PieceProps
-	Turn Color
-	Dimensions Dimensions
-	DisabledSquares map[int]bool
-	CastlingRights uint8
+type dimensions struct{
+	Ranks int 	`json:"ranks"`
+	Files int	`json:"files"`
 }
 
 type Game struct{
 	History []Move
-	Variant Variant
-	Result Result
+	variant Variant
+	Result result
 }
 
 
 type Move struct{
 	Source int `json:"source"`
 	Target int `json:"target"`
-	Turn Color `json:"turn"`
-	PieceType PieceType `json:"pieceType"`
-	PieceName string `json:"pieceName"`
-	ClassicMoveType ClassicMoveType `json:"classicMoveType"`
-	VariantMoveType VariantMoveType `json:"variantMoveType,omitempty"`
+	Turn color `json:"turn"`
+	PieceType pieceType `json:"pieceType"`
+	PieceNotation rune `json:"pieceNotation"`
+	ClassicMoveType classicMoveType `json:"classicMoveType"`
+	VariantMoveType variantMoveType `json:"variantMoveType,omitempty"`
 }
 
 
 type Objective struct{
-	ObjType GameObjective `json:"type"`
+	ObjectiveType GameObjective `json:"type"`
 	ObjectiveProps interface{} `json:"objectiveProps"`
 }
 
 
-func CreateGame(gameConfig string) (*Game,error){
-	var gameConfigMap map[string]interface{};
-	err:= json.Unmarshal([]byte(gameConfig),gameConfigMap)
+func CreateGame(gameConfigString string) (*Game,error){
+	var gameConfig GameConfig
+	err:= json.Unmarshal([]byte(gameConfigString), gameConfig)
 	if err!=nil{
 		return nil,err
 	}
-
-	variant,err := newVariant(gameConfigMap)
+	variant,err := newVariant(gameConfig)
 	if err!=nil{
 		return nil,err
 	}
 	game:= Game{
-		Variant: variant,
+		variant: variant,
 		History: []Move{},
 	}
 	return &game,nil
-
 }
 
-func newPosition(gameConfigMap map[string]interface{}) (Position,error){
-	var position = Position{}
-	return position,nil
-}
-func newVariant(gameConfigMap map[string]interface{}) (Variant,error){
-	var variantType = gameConfigMap["variantType"].(VariantType)
-	var variant Variant
+
+func newVariant(gameConfig GameConfig) (Variant,error){
+	var variantType = gameConfig.VariantType
+	var newVariant Variant
+	position,err := newPosition(gameConfig)
+	if err!=nil{
+		return nil,err
+	}
+	var variant = variant{
+		Objective: gameConfig.Objective,
+		variantType: Custom,
+		position: position,
+	}
 	switch variantType {
 	case Custom:
-		variant = CustomVariant{}
-	case DuckChess:
-		//
-	case PoisonedPawn:
-		//
-	case Wormhole:
-		//
+		switch gameConfig.Objective.ObjectiveType {
+		case Antichess:
+            newVariant = AntichessVariant{variant}
+		case NCheck:
+			newVariant = NCheckVariant{variant:variant,blackKingCheckCount: 0, whiteKingCheckCount: 0,targetChecks: 3}
+		default:
+			newVariant = CheckmateVariant{variant}
+		}
 	default:
-		// Handle unrecognized variantType
+		newVariant = CheckmateVariant{variant}
 	}
-	return variant,nil
+	
+	return newVariant,nil
 }
+
