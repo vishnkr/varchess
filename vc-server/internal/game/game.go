@@ -20,13 +20,13 @@ const (
 	ColorBlack color = "black"
 	ColorWhite color = "white"
 
-	Pawn pieceType = "pawn"
-	Knight pieceType = "knight"
-	Bishop pieceType = "bishop"
-	Rook pieceType = "rook"
-	Queen pieceType = "queen"
-	King pieceType = "king"
-	Duck pieceType = "duck"
+	Pawn        pieceType = "pawn"
+	Knight      pieceType = "knight"
+	Bishop      pieceType = "bishop"
+	Rook        pieceType = "rook"
+	Queen       pieceType = "queen"
+	King        pieceType = "king"
+	Duck        pieceType = "duck"
 	CustomPiece pieceType = "custom"
 
 	WhiteWins result = iota
@@ -54,91 +54,85 @@ const (
 	AllJumps
 )
 
-type moveOffset struct{
+type moveOffset struct {
 	xOffset int
 	yOffset int
 }
 
-type piece struct{
-	color color
+type piece struct {
+	color    color
 	notation rune
 	pieceType
 }
 
-
-type dimensions struct{
-	Ranks int 	`json:"ranks"`
-	Files int	`json:"files"`
+type dimensions struct {
+	Ranks int `json:"ranks"`
+	Files int `json:"files"`
 }
 
-type Game struct{
+type Game struct {
 	History []Move
 	variant Variant
-	Result result
+	Result  result
 }
 
-
-type Move struct{
-	Source int `json:"source"`
-	Target int `json:"target"`
-	Turn color `json:"turn"`
-	PieceType pieceType `json:"pieceType"`
-	PieceNotation rune `json:"pieceNotation"`
+type Move struct {
+	Source          int             `json:"source"`
+	Target          int             `json:"target"`
+	Turn            color           `json:"turn"`
+	PieceType       pieceType       `json:"pieceType"`
+	PieceNotation   rune            `json:"pieceNotation"`
 	ClassicMoveType classicMoveType `json:"classicMoveType"`
 	VariantMoveType variantMoveType `json:"variantMoveType,omitempty"`
 }
 
-
-type Objective struct{
-	ObjectiveType GameObjective `json:"type"`
-	ObjectiveProps interface{} `json:"objectiveProps"`
+type Objective struct {
+	ObjectiveType  GameObjective `json:"type"`
+	ObjectiveProps interface{}   `json:"objectiveProps"`
 }
 
-
-func CreateGame(gameConfigString string) (*Game,error){
+func CreateGame(gameConfigString string) (*Game, error) {
 	var gameConfig GameConfig
-	err:= json.Unmarshal([]byte(gameConfigString), gameConfig)
-	if err!=nil{
-		return nil,err
+	err := json.Unmarshal([]byte(gameConfigString), gameConfig)
+	if err != nil {
+		return nil, err
 	}
-	variant,err := newVariant(gameConfig)
-	if err!=nil{
-		return nil,err
+	variant, err := newVariant(gameConfig)
+	if err != nil {
+		return nil, err
 	}
-	game:= Game{
+	game := Game{
 		variant: variant,
 		History: []Move{},
 	}
-	return &game,nil
+	return &game, nil
 }
 
-
-func newVariant(gameConfig GameConfig) (Variant,error){
+func newVariant(gameConfig GameConfig) (Variant, error) {
 	var variantType = gameConfig.VariantType
 	var newVariant Variant
-	position,err := newPosition(gameConfig)
-	if err!=nil{
-		return nil,err
+	position, err := newPosition(gameConfig)
+	if err != nil {
+		return nil, err
 	}
 	var variant = variant{
-		Objective: gameConfig.Objective,
+		Objective:   gameConfig.Objective,
 		variantType: Custom,
-		position: position,
+		position:    position,
 	}
 	switch variantType {
 	case Custom:
 		switch gameConfig.Objective.ObjectiveType {
 		case Antichess:
-            newVariant = AntichessVariant{variant}
+			newVariant = &AntichessVariant{variant}
 		case NCheck:
-			newVariant = NCheckVariant{variant:variant,blackKingCheckCount: 0, whiteKingCheckCount: 0,targetChecks: 3}
+			newVariant = &NCheckVariant{variant: variant, blackKingCheckCount: 0, whiteKingCheckCount: 0, targetChecks: 3}
 		default:
-			newVariant = CheckmateVariant{variant}
+			newVariant = &CheckmateVariant{variant}
 		}
 	default:
-		newVariant = CheckmateVariant{variant}
+		newVariant = &CheckmateVariant{variant}
 	}
-	
-	return newVariant,nil
-}
 
+	return newVariant, nil
+}
