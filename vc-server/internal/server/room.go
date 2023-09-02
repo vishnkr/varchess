@@ -5,7 +5,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"varchess/internal/game"
+
+	"github.com/olahol/melody"
 )
+
+type room struct {
+	id string
+	game *game.Game
+	members map[*melody.Session]client
+}
+
+type client struct {
+	username string
+}
 
 func generateRandomString(length int) (string, error) {
     bytes := make([]byte, length)
@@ -34,7 +47,11 @@ func (s *server) handleCreateRoom() http.HandlerFunc {
 			return
 		}
 		var response response = response{ RoomId: roomId, AccessToken: accessToken}
-
+		s.rooms[roomId] = &room{
+			id: roomId,
+			game: &game.Game{},
+			members: make(map[*melody.Session]client),
+		}
 		WriteJSON(w,http.StatusOK,response)
 	}
 }

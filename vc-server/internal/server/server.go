@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/olahol/melody"
 )
 
 type ApiError struct {
@@ -23,7 +24,8 @@ type server struct {
 	listenAddr   string
 	router       *chi.Mux
 	store        store.Storage
-	
+	wsManager 	*melody.Melody
+	rooms 		map[string]*room
 }
 
 var l = logger.Get()
@@ -48,25 +50,26 @@ func NewServer(listenAddr string, store store.Storage, allowedOrigins string) *s
 		AllowCredentials: false,
 		MaxAge:           3600,
 	}))
-
+	
 	s := &server{
-		listenAddr,
-		router,
-		store,
+		listenAddr : listenAddr,
+		router: router,
+		store: store,
+		rooms:  make(map[string]*room),
 	}
+	melody := createMelodyForRooms(s)
+	s.wsManager = melody
 	s.routes()
 	return s
 }
 
 func (s *server) routes() {	
 	s.router.Get("/health", makeHTTPHandleFunc(s.handleHealthCheck))
-	ws := newWsServer()
-	
 	// Room Handlers
 	s.router.Post("/rooms", s.handleCreateRoom())
 	s.router.Post("/join", s.handleJoinRoom())
-	s.router.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		err:= ws.HandleRequest(w, r)
+	s.router.HandleFunc("/ws/{roomId}/{username}", func(w http.ResponseWriter, r *http.Request) {
+		err:= s.wsManager.HandleRequest(w, r)
 		if err!=nil{
 			fmt.Println(err.Error())
 		}
