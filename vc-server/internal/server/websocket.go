@@ -39,7 +39,6 @@ func createMelodyForRooms(server *server) *melody.Melody{
 	m:= melody.New()
 	m.HandleMessage(wsMessageHandler(m))
 	m.HandleConnect(func(s *melody.Session){
-
 		roomId := chi.URLParam(s.Request,"roomId")
 		username := chi.URLParam(s.Request,"username")
 		if _,ok := server.rooms[roomId]; ok{
@@ -65,7 +64,6 @@ func createMelodyForRooms(server *server) *melody.Melody{
 			msg,_ := json.Marshal(websocketMessage{Data: websocketError{Message: "Room does not exist"}, Type: Error})
 			s.CloseWithMsg(msg)
 		}
-		
 	})
 	
 	m.HandleDisconnect(func(s *melody.Session){
@@ -98,27 +96,25 @@ func createMelodyForRooms(server *server) *melody.Melody{
 
 func wsMessageHandler(m *melody.Melody) func(s *melody.Session,msg []byte){
 	return func (s *melody.Session,msg []byte){
-		var wsMsg websocketMessage
-		if err := json.Unmarshal(msg, &wsMsg); err != nil {
-            log.Printf("Error unmarshaling JSON: %v", err)
-            return
-        }
-		
-        log.Printf("Received WebSocket message: Type=%s, Data=%s", wsMsg.Type, wsMsg.Data)
-		/*m.BroadcastFilter(msg, func(q *melody.Session) bool {
-		return q.Request.URL.Path == s.Request.URL.Path
-		})*/
-		switch wsMsg.Type{
-		case ChatMessage:
-			roomID, ok := s.Keys["roomId"].(string)
-            if !ok {
-                log.Println("Room ID not found in session keys")
-                return
-            }
-			m.BroadcastFilter(msg, broadcastToRoom(roomID))
-		
-		}
-		
+			var wsMsg websocketMessage
+			if err := json.Unmarshal(msg, &wsMsg); err != nil {
+				log.Printf("Error unmarshaling JSON: %v", err)
+				return
+			}
+			log.Printf("Received WebSocket message: Type=%s, Data=%s", wsMsg.Type, wsMsg.Data)
+			/*m.BroadcastFilter(msg, func(q *melody.Session) bool {
+			return q.Request.URL.Path == s.Request.URL.Path
+			})*/
+			switch wsMsg.Type{
+			case ChatMessage:
+				roomID, ok := s.Keys["roomId"].(string)
+				if !ok {
+					log.Println("Room ID not found in session keys")
+					return
+				}
+				m.BroadcastFilter(msg, broadcastToRoom(roomID))
+			
+			}
 	}
 }
 

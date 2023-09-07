@@ -1,67 +1,56 @@
 <script lang="ts">
-    import { webSocketStore } from '$lib/utils/websocket';
+    import { chatStore, type ChatMessage, MessageType } from '$lib/store/websocket';
     import { onDestroy, onMount } from 'svelte';
-	  import type { ChatMessage } from './types';
+	  
   
     let chatMessages: ChatMessage[] = []; 
     let inputMessage = ''; 
 
     function sendMessage() {
       if (inputMessage.trim() !== '') {
-        const message = {
-          type: 'chat',
-          user: 'UserA', 
-          text: inputMessage.trim(),
+        const message:ChatMessage = {
+          messageType: MessageType.ChatMessage,
+          username: 'UserA', 
+          content: inputMessage.trim(),
         };
-        chatMessages = [...chatMessages, message];
+        //chatMessages = [...chatMessages, message];
         inputMessage = ''; 
       }
     }
-  
-    const unsubscribe = webSocketStore.subscribe((ws) => {
-      if (ws) {
-        ws.addEventListener('message', handleWebSocketMessage);
-      }
-    });
-
+    const unsubscribe = chatStore.subscribe((value)=> {
+      console.log('va',value)
+      chatMessages = value
+    })
+    console.log('sf')
     function handleWebSocketMessage(event:any) {
       const message = event.detail;
       chatMessages = [...chatMessages, message];
-    
+      
     }
 
     onMount(() => {
-      chatMessages = [
-        { type: 'roomUpdate', text: 'UserA has joined the room' },
-        { type: 'chat', user: 'UserA', text: 'Hello, how are you?' },
-        { type: 'chat', user: 'UserA', text: 'I\'m doing great, thanks!' },
-        { type: 'roomUpdate', text: 'UserC has joined the room' },
-        { type: 'chat', user: 'UserC', text: 'Hello, how are you?' },
-        { type: 'chat', user: 'UserA', text: 'I\'m doing great, thanks!' },
-        { type: 'roomUpdate', text: 'UserB has joined the room' },
-        { type: 'chat', user: 'UserB', text: 'Hello, how are you?' },
-        { type: 'chat', user: 'UserA', text: 'I\'m doing great, thanks!' },
-        { type: 'roomUpdate', text: 'UserA has left the room' },
-        { type: 'chat', user: 'UserB', text: 'Hello, how are you?' },
-        { type: 'chat', user: 'UserA', text: 'I\'m doing great, thanks!' },
-      ];
+      /*chatMessages = [
+        { messageType: MessageType.UserJoin, username:'sdf',content: 'UserA has joined the room' },
+        { messageType: MessageType.ChatMessage, username: 'UserA', content: 'Hello, how are you?' },
+        
+      ];*/
     });
     onDestroy(() => {
-      unsubscribe();
+      //unsubscribe();
     });
   </script>
   
   <div class="m-2 bg-white">
     <div class="max-h-60 overflow-y-auto">
       {#each chatMessages as message}
-        {#if message.type === 'roomUpdate'}
-          <div class="flex justify-center">
-            <p class="text-blue-500">{message.text}</p>
-          </div>
-        {:else if message.type === 'chat'}
+        {#if message.messageType === MessageType.ChatMessage}
           <div class="flex pt-2">
-            <p class="pl-4 font-bold text-red-700">{message.user}: </p>
-            <p class="ml-2">{message.text}</p>
+            <p class="pl-4 font-bold text-red-700">{message.username}: </p>
+            <p class="ml-2">{message.content}</p>
+          </div>
+        {:else}
+          <div class="flex justify-center">
+            <p class="text-blue-500">{message.content}</p>
           </div>
         {/if}
       {/each}

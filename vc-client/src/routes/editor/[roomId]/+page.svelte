@@ -1,19 +1,23 @@
 <script lang="ts">
-	import BoardEditor from '$lib/components/editor/BoardEditor.svelte';
+	
 	import pieceSvg from '$lib/assets/svg/piece.svg';
 	import boardSvg from '$lib/assets/svg/board.svg';
+	import { BoardType, type BoardConfig, Color } from '$lib/board/types';
+	import { EditorSubType } from '$lib/components/types';
+	import { onMount } from 'svelte';
+	import {createWebSocket} from '$lib/store/websocket'
+	import { editorSettings } from '$lib/board/stores';
+	import {userStore} from '$lib/store/stores';
+
 	import Tabs from '$lib/components/shared/Tabs.svelte';
-	import type { BoardConfig } from '$lib/board/types';
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
 	import PieceEditor from '$lib/components/editor/PieceEditor.svelte';
+	import BoardEditor from '$lib/components/editor/BoardEditor.svelte';
 	import GameSettings from '$lib/components/editor/GameSettings.svelte';
 	import ExpandableCard from '$lib/components/ExpandableCard.svelte';
 	import Members from '$lib/components/shared/Members.svelte';
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	import Chat from '$lib/components/Chat.svelte';
-	import { onMount } from 'svelte';
-	import { webSocketStore } from '$lib/utils/websocket';
-
 
 	let items = ['Room','Editor'];
 	let activeItem = 'Room';
@@ -25,13 +29,22 @@
 		dimensions: { ranks: 8, files: 8 },
 		editable: true,
 		interactive: false,
-		isFlipped: false
+		isFlipped: false,
+		boardType: BoardType.Editor,
 	};
 
-	let editorSettings = {
-		curPieceSelected: 'p',
-		isDisableToggled: false
-	};
+	let getMovePatternBoardConfig: ()=> BoardConfig = ()=>{
+		const piece = $editorSettings.pieceSelection!;
+		const pieceType = piece.color === Color.WHITE ? piece.pieceType.toUpperCase() : piece.pieceType;
+		return {
+		fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
+		dimensions: { ranks: 9, files: 9 },
+		editable: true,
+		interactive: false,
+		isFlipped: false,
+		boardType: BoardType.MovePatternEditor
+		}
+	}
 
 	const copyToClipboard = () => {
 		navigator.clipboard.writeText(inputValue);
@@ -47,7 +60,11 @@
 	];
 
 	onMount(()=>{
-		const ws = webSocketStore.connect();
+		console.log('connected',$userStore);
+		if ($userStore.currentRoomId && $userStore.username){
+			createWebSocket($userStore.currentRoomId,$userStore.username)
+		}
+		
 	})
 </script>
 
@@ -62,6 +79,7 @@
 					<Tabs {activeItem} {items} on:tabChange={tabChange} />
 				</div>
 				{#if activeItem==="Editor"}
+				<h1 class="text-white">{$editorSettings.editorSubTypeSelected}</h1>
 					<ExpandableCard svg={boardSvg} title="Board Editor">
 						<BoardEditor
 							bind:dimensions={boardConfig.dimensions}
@@ -93,18 +111,24 @@
 						>
 							Share <i class="fa-solid fa-link" />
 						</button>
+						
 					</div>
 					<div>
 						<button class="bg-green-600 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded">Play</button>
 					</div>
-					<Members {actions} />
+					
 					<Chat />
+					<Members {actions} />
 				</div>
 				{/if}
 			</div>
 		</div>
-		<div class=" rounded-md lg:w-7/12 mx-3 my-3 p-3">
+		<div class="rounded-md lg:w-7/12 mx-3 my-3 p-3">
+		{#if $editorSettings.editorSubTypeSelected===EditorSubType.MovePattern}
+			<EditableBoard boardConfig={getMovePatternBoardConfig()} />
+		{:else}
 			<EditableBoard {boardConfig} bind:shift={shiftBoard} bind:clear={clearBoard} />
+		{/if}
 		</div>
 	</div>
 </div>

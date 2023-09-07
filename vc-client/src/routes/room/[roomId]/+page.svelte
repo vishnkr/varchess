@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Board from '$lib/board/Board.svelte';
 	import type { BoardConfig } from '$lib/board/types';
-	import Chat from '$lib/components/room/Chat.svelte';
+	import Chat from '$lib/components/Chat.svelte';
 	import Members from '$lib/components/shared/Members.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 
