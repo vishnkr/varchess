@@ -1,9 +1,11 @@
 import { writable, type Writable } from 'svelte/store';
 import { Color, type EditorSettings, type PiecePresentInfo } from './types';
+import { EditorSubType } from '$lib/components/types';
 
 export const editorSettings: Writable<EditorSettings> = writable({
 	disableSelected: false,
-	pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' }
+	pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' },
+	editorSubTypeSelected: EditorSubType.Board,
 });
 
 function createEditorMaxBoard() {

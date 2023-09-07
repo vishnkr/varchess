@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { Color } from '$lib/board/types';
 	import { editorSettings } from '../../board/stores';
+	import TagInput from '../shared/TagInput.svelte';
+	import { EditorSubType } from '../types';
+	// @ts-ignores
+	import Switch from 'svelte-switch';
+
 	const standardPieces = [
 		{ name: 'Pawn', class: 'p' },
 		{ name: 'King', class: 'k' },
@@ -22,7 +27,20 @@
 	];
 	let color: Color = Color.WHITE;
 	let selectedPiece = { class: 'p', group: 'standard' };
-	export let loggedIn = false;
+	let slideDirections = ["North","East","South","West","North East","North West","South East","South West"]
+	export let loggedIn = true;
+	let setMovePattern = false;
+	const toggleSetMP = () => {
+		setMovePattern = !setMovePattern;
+		editorSettings.update((val) => {
+			const subtype = setMovePattern ? EditorSubType.MovePattern : EditorSubType.Piece;
+			return {
+				...val,
+				editorSubTypeSelected: subtype
+			};
+		});
+	};
+
 	const selectPiece = (pieceClass: string, group: string) => {
 		selectedPiece = { ...selectedPiece, class: pieceClass, group };
 		editorSettings.update((val) => ({
@@ -48,6 +66,7 @@
 <div>
 	<div class="grid grid-rows">
 		<div class="grid grid-rows">
+			{#if !setMovePattern}
 			<div class="grid grid-cols-2">
 				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<div
@@ -105,7 +124,7 @@
 				<button
 					disabled={selectedPiece.group !== 'custom'}
 					class="p-2 m-2 bg-orange-500 text-white text-md rounded-md disabled:bg-slate-600"
-					>Set Move Pattern</button
+					on:click={toggleSetMP} >Set Move Pattern</button
 				>
 				<div class="relative grid grid-cols-1">
 					{#each customPieces as piece}
@@ -149,6 +168,33 @@
 					{/if}
 				</div>
 			</div>
+			{:else}
+			<div class="px-2 m-1.5 py-2 flex flex-col">
+				<h1 class="text-xl font-bold">Set Move Pattern</h1>
+				<div class="flex items-center">
+					<span class="w-4 h-4 inline-block bg-blue-600 rounded-sm"></span>
+					<p class="text-lg font-semibold ml-2">Slide Pattern:</p>
+				</div>
+				<TagInput initialOptions={slideDirections} dropDownText="Select Directions"/>
+				<div class="flex items-center">
+					<span class="w-4 h-4 inline-block bg-red-600 rounded-sm"></span>
+					<p class="text-lg font-semibold ml-2">Jump Pattern:</p>
+				</div>
+				<!-- svelte-ignore a11y-label-has-associated-control -->
+				<label class="relative inline-flex items-center cursor-pointer">
+					<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Select Jump Moves</span>
+					<!-- svelte-ignore missing-declaration -->
+					<Switch checked={false} />
+				</label>
+				<button
+					class="p-2 m-2 bg-green-500 text-white text-md rounded-md hover:bg-slate-400"
+					on:click={toggleSetMP} >Save Pattern</button>
+				<button
+					class="p-2 m-2 bg-red-500 text-white text-md rounded-md hover:bg-slate-400"
+					on:click={toggleSetMP}>Cancel</button>
+			</div>
+			
+			{/if}
 		</div>
-	</div>
+	</div>	
 </div>

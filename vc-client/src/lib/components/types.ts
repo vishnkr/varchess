@@ -1,5 +1,6 @@
-export interface ChatMessage{
-    type: string,
-    user?: string,
-    text: string
-  }
+export enum EditorSubType{
+  Board,
+  Piece,
+  MovePattern,
+  Rule
+}

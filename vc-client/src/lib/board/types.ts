@@ -1,3 +1,5 @@
+import type { EditorSubType } from "$lib/components/types";
+
 export enum Color {
 	BLACK = 'black',
 	WHITE = 'white'
@@ -27,11 +29,17 @@ export type File =
 	| 'o'
 	| 'p';
 export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
-export type BoardType = 'editor' | 'game' | 'move-pattern';
+
+export enum BoardType{
+	Editor,
+	MovePatternEditor,
+	MovePatternView,
+	View,
+	GameBoard
+}
+
 export type SquareNotation = `${File}${Rank}`;
 export type SquareMaps = {
-	//sqToIdMap: { [key: string]: number },
-	//idToSqMap: { [key: number]: SquareNotation },
 	coordToIdMap: CoordinatetoIDMap;
 	squares: Record<SquareIdx, SquareInfo>;
 };
@@ -79,6 +87,7 @@ export interface BoardConfig {
 	//interactive - allowing moves to be made through clicks/drags
 	interactive: boolean;
 	isFlipped?: boolean;
+	boardType: BoardType;
 }
 export enum GameType {
 	CUSTOM,
@@ -87,6 +96,7 @@ export enum GameType {
 export interface EditorSettings {
 	disableSelected: boolean;
 	pieceSelection: IPiece | null;
+	editorSubTypeSelected: EditorSubType;
 }
 /*
 

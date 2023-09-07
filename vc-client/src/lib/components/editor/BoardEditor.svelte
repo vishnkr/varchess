@@ -12,7 +12,7 @@
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
-	export let loggedIn = false;
+	export let loggedIn = true;
 	// @ts-ignore
 	function handleChange(e) {
 		const { checked } = e.detail;

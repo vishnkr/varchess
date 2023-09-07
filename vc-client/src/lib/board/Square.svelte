@@ -11,6 +11,7 @@
 	export let color: SquareColor;
 	export let piece: IPiece | null = null;
 	export let disabled: boolean;
+	export let boardId: string = "board";
 	export const mode: BoardType = 'game';
 
 	function getPieceClass(piece: IPiece) {
@@ -100,7 +101,7 @@
 	class={`relative`}
 	style="--x:{squareData.gridX}; --y:{squareData.gridY};"
 	data-square-color={color}
-	id={`s-${squareData.squareIndex}`}
+	id={`${boardId}-s-${squareData.squareIndex}`}
 	bind:this={squareEl}
 	on:dragover={handleDragOver}
 	on:drop={onDrop}
@@ -117,7 +118,7 @@
 				piece ? getPieceClass(piece) : ''
 			}`}
 			draggable={interactive}
-			id={`p-${squareData.squareIndex}`}
+			id={`${boardId}-p-${squareData.squareIndex}`}
 			bind:this={pieceEl}
 			on:dragstart={handleDragStart}
 			on:dragend={handleDragEnd}

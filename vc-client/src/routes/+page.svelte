@@ -2,8 +2,9 @@
 	import { generateUsername, handleKeyDown } from '$lib/utils';
 	import Modal from '$lib/components/shared/Modal.svelte';
 	import { goto } from '$app/navigation';
-	import type { BoardConfig } from '$lib/board/types';
+	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Board from '$lib/board/Board.svelte';
+	import { userStore } from '$lib/store/stores';
 
 	function routeToPage(route: string, replaceState: boolean) {
 		goto(`/${route}`, { replaceState });
@@ -17,10 +18,11 @@
 	};
 	const baseUrl: string = import.meta.env.VITE_SERVER_BASE;
 	export let boardConfig: BoardConfig = {
-		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDDN.B/R.BQ1BKN1',
+		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
 		dimensions: { ranks: 7, files: 9 },
 		editable: false,
-		interactive: true
+		interactive: true,
+		boardType: BoardType.View
 	};
 	const cardData = [
 		{
@@ -53,7 +55,7 @@
 	async function handleSubmit() {
 		if (username?.length == 0) {
 		}
-		const response = await fetch(`${baseUrl}/room`, {
+		const response = await fetch(`${baseUrl}/rooms`, {
 			method: 'POST',
 			headers: {
 			'Content-Type': 'application/json'
@@ -63,7 +65,10 @@
 		if (response.ok){
 			
 			const data = await response.json();
-			if(data.roomId) goto(`/editor/${data.roomId}`)
+			if(data.roomId) {
+				userStore.set({username:username,currentRoomId:data.roomId})
+				goto(`/editor/${data.roomId}`)
+			}
 		}
 		showModal = false;
 

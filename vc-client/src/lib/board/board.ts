@@ -30,7 +30,7 @@ export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean) =
 		'o',
 		'p'
 	].slice(0, dimensions.files);
-	const rows = Array.from({ length: dimensions.ranks }, (_, i) => dimensions.ranks - 1 - i);
+	const rows = Array.from({ length: dimensions.ranks }, (_, i) => i);
 
 	//const sqToIdMap: { [key: string]: number } = {};
 	//const idToSqMap: { [key: number]: SquareNotation } = {};
@@ -44,19 +44,19 @@ export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean) =
 			//idToSqMap[squareIndex] = squareNotation;
 			coordToIdMap[`${row}:${column}`] = squareIndex;
 			squares[squareIndex] = {
-				gridX: isFlipped ? dimensions.ranks - row : row + 1,
+				gridX: isFlipped ?  dimensions.ranks - row : row + 1,
 				gridY: colIdx + 1,
 				squareIndex,
 				squareNotation: (isFlipped
-					? `${column}${row + 1}`
-					: `${column}${dimensions.ranks - row}`) as SquareNotation,
+					? `${column}${dimensions.ranks - row}`
+					: `${column}${row + 1}`) as SquareNotation,
 				row,
 				column: colIdx
 			};
 			squareIndex++;
 		});
 	}
-
+	//console.log(squares)
 	return { /*sqToIdMap,idToSqMap,*/ coordToIdMap, squares };
 };
 
@@ -69,11 +69,11 @@ export const updatePiecePositionsFromMaxBoard = (
 	for (let row = 0; row < dimensions.ranks; row++) {
 		for (let col = 0; col < dimensions.files; col++) {
 			if (maxBoardState[row][col].isPiecePresent) {
-				piecePositions[(dimensions.ranks - row - 1) * dimensions.files + col] = maxBoardState[row][
+				piecePositions[row * dimensions.files + col] = maxBoardState[row][
 					col
 				].piece as IPiece;
 			} else if (maxBoardState[row][col].disabled) {
-				disabled[(dimensions.ranks - row - 1) * dimensions.files + col] = true;
+				disabled[row * dimensions.files + col] = true;
 			}
 		}
 	}

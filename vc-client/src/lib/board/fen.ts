@@ -79,10 +79,11 @@ export const convertFenToPosition = (
 	dimensions.files = colCount;
 	const newPiecePositions: PiecePositions = {};
 	const total = dimensions.files * dimensions.ranks;
-	for (let idx = 0; idx < total; idx++) {
+	/*for (let idx = 0; idx < total; idx++) {
 		newPiecePositions[total - 1 - idx] = position.piecePositions[idx];
 	}
-	position.piecePositions = newPiecePositions;
+	
+	position.piecePositions = newPiecePositions;*/
 	return { dimensions, position, maxBoardState };
 };
 

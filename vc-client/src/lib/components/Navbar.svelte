@@ -15,7 +15,7 @@
 			<div class="flex justify-between">
 				<div class="flex space-x-4">
 					<div>
-						<a class=" flex" href="/">
+						<a class=" flex" target="_self" href="/">
 							<img src="/logo.svg" alt="logo" class="md:w-40 ml-3 w-32" />
 						</a>
 					</div>

@@ -19,6 +19,8 @@
 		({ position, maxBoardState } = convertedPos);
 	}
 	editorMaxBoard.set(maxBoardState);
+
+	export let customBoardId = "board";
 	function updateBoardState() {
 		boardConfig.dimensions = boardConfig.dimensions;
 		let squareMaps = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
@@ -94,4 +96,4 @@
 	};
 </script>
 
-<Board {boardConfig} {position} {squares} />
+<Board {customBoardId} {boardConfig} {position} {squares} />
