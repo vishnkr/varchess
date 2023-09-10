@@ -1,10 +1,10 @@
 package server
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
+	"math/rand"
 	"net/http"
+	"time"
 	"varchess/internal/game"
 
 	"github.com/olahol/melody"
@@ -20,12 +20,16 @@ type client struct {
 	username string
 }
 
-func generateRandomString(length int) (string, error) {
-    bytes := make([]byte, length)
-    if _, err := rand.Read(bytes); err != nil {
-        return "", err
-    }
-    return base64.URLEncoding.EncodeToString(bytes)[:length], nil
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+func generateRandomString(length int) string {
+   b := make([]byte, length)
+   for i := range b {
+      b[i] = charset[seededRand.Intn(len(charset))]
+   }
+   return string(b)
 }
 
 func (s *server) handleCreateRoom() http.HandlerFunc {
@@ -36,16 +40,8 @@ func (s *server) handleCreateRoom() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		roomId,err := generateRandomString(8)
-		if err!=nil{
-			WriteJSON(w,http.StatusBadRequest,err)
-			return
-		}
-		accessToken,err := generateRandomString(32)
-		if err!=nil{
-			WriteJSON(w,http.StatusBadRequest,err)
-			return
-		}
+		roomId := generateRandomString(8)
+		accessToken := generateRandomString(32)
 		var response response = response{ RoomId: roomId, AccessToken: accessToken}
 		s.rooms[roomId] = &room{
 			id: roomId,

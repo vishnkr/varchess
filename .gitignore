@@ -1,7 +1,8 @@
-vc-frontend/node_modules/
+vc-client/node_modules/
 .gitignore
 .DS_Store
-vc-frontend/.DS_store
+vc-client/.DS_store
+vc-server/vc-server
 .vscode
 */.env
 */*.log

@@ -41,10 +41,17 @@ func createMelodyForRooms(server *server) *melody.Melody{
 	m.HandleConnect(func(s *melody.Session){
 		roomId := chi.URLParam(s.Request,"roomId")
 		username := chi.URLParam(s.Request,"username")
-		if _,ok := server.rooms[roomId]; ok{
+		if room,ok := server.rooms[roomId]; ok{
 			server.rooms[roomId].members[s] = client{username:username}
+			isHost := false
+			if len(room.members)==1{
+				isHost=true
+			}
 			data := map[string]interface{}{
                 "username": username,
+				"id": len(room.members),
+				"isHost": isHost,
+				"role": "Viewer",
             }
             message := websocketMessage{
                 Type: UserJoin,
@@ -55,7 +62,8 @@ func createMelodyForRooms(server *server) *melody.Melody{
                 log.Printf("Error marshaling WebSocket message: %v", err)
                 return
             }
-            m.BroadcastFilter(msgBytes, broadcastToRoom(roomId))
+			s.Write(msgBytes)
+            m.BroadcastFilter(msgBytes, broadcastToRoomExceptSender(roomId,s))
 			s.Keys = make(map[string]interface{})
 			s.Keys["roomId"] = roomId
 			s.Keys["username"] = username 
@@ -82,7 +90,8 @@ func createMelodyForRooms(server *server) *melody.Melody{
 					log.Printf("Error marshaling WebSocket message: %v", err)
 					return
 				}
-				m.BroadcastFilter(msgBytes, broadcastToRoom(roomId))
+				s.Write(msgBytes)
+            	m.BroadcastFilter(msgBytes, broadcastToRoomExceptSender(roomId,s))
 				if len(room.members)==0{
 					delete(server.rooms,roomId)
 					fmt.Println("deleted room",roomId,server.rooms)
@@ -122,5 +131,12 @@ func broadcastToRoom(roomID string) func(q *melody.Session) bool {
     return func(q *melody.Session) bool {
         otherRoomID, ok := q.Keys["roomId"].(string)
         return ok && roomID == otherRoomID
+    }
+}
+
+func broadcastToRoomExceptSender(roomID string,sender *melody.Session) func(q *melody.Session) bool {
+    return func(q *melody.Session) bool {
+        otherRoomID, ok := q.Keys["roomId"].(string)
+        return ok && roomID == otherRoomID && q!=sender
     }
 }

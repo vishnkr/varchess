@@ -80,14 +80,14 @@ func (s *server) Start() {
 	l.Fatal().Err(http.ListenAndServe(s.listenAddr, requestLogger(s.router))).Msg("Varchess Server closed")
 }
 
-func setHeadersMiddleware(allowedOrigins string) func(http.Handler) http.Handler {
+/*func setHeadersMiddleware(allowedOrigins string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", allowedOrigins)
 			next.ServeHTTP(w, r)
 		})
 	}
-}
+}*/
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
