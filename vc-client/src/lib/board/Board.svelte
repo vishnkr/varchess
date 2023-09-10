@@ -19,13 +19,12 @@
 	};
 </script>
 
-<div class="relative w-full flex justify-center">
+<div id="wrapper">
 	<div
 		id={customBoardId}
 		style={`--size: ${Math.max(boardConfig.dimensions.ranks, boardConfig.dimensions.files)}`}
-		class={`relative w-full max-w-[700px] mx-auto justify-center border border-solid border-[var(--default-dark-square)] bg-[hsla(0, 10%, 94%, 0.7)] shadow-[0px 14px 28px rgba(0, 0, 0, 0.25), 0px 10px 10px rgba(0, 0, 0, 0.22)] select-none ${boardConfig.editable ? 'cursor-pointer' : null}`}
+		class={`${boardConfig.editable ? 'cursor-pointer' : null}`}
 	>
-		<div class="grid grid-cols-[var(--size),1fr] grid-rows-[var(--size),1fr]">
 			{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
 				<Square
 					boardId={customBoardId}
@@ -37,6 +36,29 @@
 					disabled={position.disabled[idx] ?? false}
 				/>
 			{/each}
-		</div>
 	</div>
 </div>
+
+<style>
+	#board {
+		display: grid;
+		width: 100%;
+		max-width: 700px;
+		justify-items: center;
+		grid-template-columns: repeat(var(--size), 1fr);
+		grid-template-rows: repeat(var(--size), 1fr);
+		border: 1px solid var(--default-dark-square);
+		background-color: hsla(0, 10%, 94%, 0.7);
+		user-select: none;
+		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+		touch-action: none;
+		border-collapse: collapse;
+		box-sizing: border-box;
+	}
+	#wrapper {
+		position: relative;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+	}
+</style>

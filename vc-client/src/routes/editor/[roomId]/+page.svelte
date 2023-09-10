@@ -5,9 +5,8 @@
 	import { BoardType, type BoardConfig, Color } from '$lib/board/types';
 	import { EditorSubType } from '$lib/components/types';
 	import { onMount } from 'svelte';
-	import {createWebSocket} from '$lib/store/websocket'
 	import { editorSettings } from '$lib/board/stores';
-	import {userStore} from '$lib/store/stores';
+	import {me,roomId,createWebSocket} from '$lib/store/stores';
 
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
@@ -18,10 +17,12 @@
 	import Members from '$lib/components/shared/Members.svelte';
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	import Chat from '$lib/components/Chat.svelte';
+	import { page } from '$app/stores';
+	import { displayAlert } from '$lib/store/alert';
 
 	let items = ['Room','Editor'];
 	let activeItem = 'Room';
-	let inputValue = 'localhost:5sfds137';
+	let shareUrl = `${$page.url.origin}/join/${$roomId}`;
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 
 	export let boardConfig: BoardConfig = {
@@ -37,17 +38,17 @@
 		const piece = $editorSettings.pieceSelection!;
 		const pieceType = piece.color === Color.WHITE ? piece.pieceType.toUpperCase() : piece.pieceType;
 		return {
-		fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
-		dimensions: { ranks: 9, files: 9 },
-		editable: true,
-		interactive: false,
-		isFlipped: false,
-		boardType: BoardType.MovePatternEditor
+			fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
+			dimensions: { ranks: 9, files: 9 },
+			editable: true,
+			interactive: false,
+			isFlipped: false,
+			boardType: BoardType.MovePatternEditor
 		}
 	}
 
 	const copyToClipboard = () => {
-		navigator.clipboard.writeText(inputValue);
+		navigator.clipboard.writeText(shareUrl);
 	};
 
 	let clearBoard: () => void;
@@ -60,9 +61,13 @@
 	];
 
 	onMount(()=>{
-		console.log('connected',$userStore);
-		if ($userStore.currentRoomId && $userStore.username){
-			createWebSocket($userStore.currentRoomId,$userStore.username)
+		if ($roomId && $me.username){
+			try {
+				createWebSocket($roomId,$me.username)
+			} catch (e:any){
+				displayAlert(e.message || 'An error occurred','DANGER',6000)
+			}
+			
 		}
 		
 	})
@@ -79,7 +84,6 @@
 					<Tabs {activeItem} {items} on:tabChange={tabChange} />
 				</div>
 				{#if activeItem==="Editor"}
-				<h1 class="text-white">{$editorSettings.editorSubTypeSelected}</h1>
 					<ExpandableCard svg={boardSvg} title="Board Editor">
 						<BoardEditor
 							bind:dimensions={boardConfig.dimensions}
@@ -101,7 +105,7 @@
 					<div class="flex mb-5 justify-center">
 						<input
 							class="border border-gray-300 px-4 py-2 text-white rounded-l max-w-64"
-							bind:value={inputValue}
+							bind:value={shareUrl}
 							disabled
 						/>
 						
@@ -109,7 +113,7 @@
 							class="bg-blue-600 hover:bg-blue-800 text-white font-semibold py-2 px-2"
 							on:click={copyToClipboard}
 						>
-							Share <i class="fa-solid fa-link" />
+							Copy <i class="fa-solid fa-link" />
 						</button>
 						
 					</div>
@@ -118,7 +122,7 @@
 					</div>
 					
 					<Chat />
-					<Members {actions} />
+					<Members />
 				</div>
 				{/if}
 			</div>

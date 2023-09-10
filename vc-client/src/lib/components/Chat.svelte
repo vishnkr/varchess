@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { chatStore, type ChatMessage, MessageType } from '$lib/store/websocket';
+    import { chats,me, wsStore, type ChatMessage, MessageType } from '$lib/store/stores';
     import { onDestroy, onMount } from 'svelte';
 	  
   
@@ -8,24 +8,24 @@
 
     function sendMessage() {
       if (inputMessage.trim() !== '') {
-        const message:ChatMessage = {
-          messageType: MessageType.ChatMessage,
-          username: 'UserA', 
-          content: inputMessage.trim(),
+        const message = {
+          type: "ChatMessage",
+          data:{
+            username: $me.username, 
+            content: inputMessage.trim()
+          }
         };
-        //chatMessages = [...chatMessages, message];
+        $wsStore?.send(JSON.stringify(message))
         inputMessage = ''; 
       }
     }
-    const unsubscribe = chatStore.subscribe((value)=> {
-      console.log('va',value)
+
+    const unsubscribe = chats.subscribe((value)=> {
       chatMessages = value
     })
-    console.log('sf')
     function handleWebSocketMessage(event:any) {
       const message = event.detail;
       chatMessages = [...chatMessages, message];
-      
     }
 
     onMount(() => {
@@ -36,7 +36,7 @@
       ];*/
     });
     onDestroy(() => {
-      //unsubscribe();
+      unsubscribe();
     });
   </script>
   
@@ -57,7 +57,7 @@
     </div>
   
     <div class="p-2 w-full flex">
-        <input class="border border-gray-300 px-4 py-2 text-white rounded-l flex-grow" type="text" bind:value={inputMessage} placeholder="Type a message..." />
+        <input class="border border-gray-300 px-4 py-2 rounded-l flex-grow" type="text" bind:value={inputMessage} placeholder="Type a message..." />
         <button class="bg-blue-600 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-r" on:click={sendMessage}>Send</button>
       </div>
       

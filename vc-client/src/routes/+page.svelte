@@ -4,11 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Board from '$lib/board/Board.svelte';
-	import { userStore } from '$lib/store/stores';
-
-	function routeToPage(route: string, replaceState: boolean) {
-		goto(`/${route}`, { replaceState });
-	}
+	import { me, roomId } from '$lib/store/stores';
+	import { displayAlert } from '$lib/store/alert';
 
 	let showModal = false;
 	let username = generateUsername();
@@ -55,23 +52,30 @@
 	async function handleSubmit() {
 		if (username?.length == 0) {
 		}
-		const response = await fetch(`${baseUrl}/rooms`, {
-			method: 'POST',
-			headers: {
-			'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({username}) 
-      	});
-		if (response.ok){
-			
-			const data = await response.json();
-			if(data.roomId) {
-				userStore.set({username:username,currentRoomId:data.roomId})
-				goto(`/editor/${data.roomId}`)
-			}
-		}
 		showModal = false;
+		try{
+			const response = await fetch(`${baseUrl}/rooms`, {
+				method: 'POST',
+				headers: {
+				'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({username}) 
+			});
+			if (response.ok){
 
+					const data = await response.json();
+					if(data.roomId) {
+						me.set({id:0,isHost:true,role:0,username:username})
+						roomId.set(data.roomId)
+						goto(`/editor/${data.roomId}`)
+					} 			
+				
+			} else {
+						displayAlert('Unable to create room!','DANGER',6000)
+			}
+		} catch(e:any){
+			displayAlert(e.message,'DANGER',7000)
+		}
 		
 	}
 </script>

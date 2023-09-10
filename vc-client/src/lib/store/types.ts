@@ -35,8 +35,3 @@ export interface EditorState{
         disableChat: boolean
     }
 }
-
-export interface userInfo{
-	username: string,
-	currentRoomId?:string,
-}
