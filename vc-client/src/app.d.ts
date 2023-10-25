@@ -2,9 +2,10 @@
 // for information about these interfaces
 declare global {
 	namespace App {
+		type PocketBase = import('pocketbase').default;
 		interface Locals {
-			supabase: SupabaseClient;
-			getSession(): Promise<Session | null>;
+			pb?: PocketBase;
+			user?: Record<string, T> | null;
 		}
 		interface PageData {
 			session: Session | null;

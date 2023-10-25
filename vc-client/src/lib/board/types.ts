@@ -31,10 +31,15 @@ export type File =
 export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
 
 export enum BoardType{
+	// Editor: clicks on squares adds/removes pieces/walls
 	Editor,
+	// MovePatternEditor: clicks on squares adds jump patterns and used to display selected slide pattern
 	MovePatternEditor,
+	// MovePatternView: View only board with piece and colored move pattern squares
 	MovePatternView,
+	// View: View only board to view current game state
 	View,
+	// GameBoard: Playable board, can trigger websocket messages for move validation
 	GameBoard
 }
 

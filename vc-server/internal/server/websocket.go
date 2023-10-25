@@ -39,19 +39,26 @@ func createMelodyForRooms(server *server) *melody.Melody{
 	m:= melody.New()
 	m.HandleMessage(wsMessageHandler(m))
 	m.HandleConnect(func(s *melody.Session){
+		member:= member{
+			Session: s,
+			IsHost: false,
+		}
 		roomId := chi.URLParam(s.Request,"roomId")
 		username := chi.URLParam(s.Request,"username")
 		if room,ok := server.rooms[roomId]; ok{
-			server.rooms[roomId].members[s] = client{username:username}
-			isHost := false
-			if len(room.members)==1{
-				isHost=true
+			if len(room.members)==0{
+				member.IsHost=true
 			}
+			s.Keys = make(map[string]interface{})
+			s.Keys["roomId"] = roomId
+			s.Keys["username"] = username 
+			server.rooms[roomId].members =  append(server.rooms[roomId].members,member)
 			data := map[string]interface{}{
                 "username": username,
 				"id": len(room.members),
-				"isHost": isHost,
+				"isHost": member.IsHost,
 				"role": "Viewer",
+				"members":room.getRoomMembers(),
             }
             message := websocketMessage{
                 Type: UserJoin,
@@ -62,22 +69,26 @@ func createMelodyForRooms(server *server) *melody.Melody{
                 log.Printf("Error marshaling WebSocket message: %v", err)
                 return
             }
-			s.Write(msgBytes)
-            m.BroadcastFilter(msgBytes, broadcastToRoomExceptSender(roomId,s))
-			s.Keys = make(map[string]interface{})
-			s.Keys["roomId"] = roomId
-			s.Keys["username"] = username 
+			
+			for _,member:= range server.rooms[roomId].members{
+				member.Session.Write(msgBytes)
+			}
+			
 		} else {
 			//writeWebSocketResponse(s,Error,websocketError{Message: "Room does not exist"})
 			msg,_ := json.Marshal(websocketMessage{Data: websocketError{Message: "Room does not exist"}, Type: Error})
 			s.CloseWithMsg(msg)
 		}
 	})
-	
-	m.HandleDisconnect(func(s *melody.Session){
+	disconnectHandler := func(s *melody.Session){
 		if roomId,ok := s.Keys["roomId"].(string); ok{
 			if room,exists := server.rooms[roomId]; exists{
-				delete(room.members,s)
+				for i := len(server.rooms[roomId].members) - 1; i >= 0; i-- {
+					if server.rooms[roomId].members[i].Session == s {
+						server.rooms[roomId].members = append(server.rooms[roomId].members[:i], server.rooms[roomId].members[i+1:]...)
+					}
+				}
+			
 				data := map[string]interface{}{
 					"username": s.Keys["username"],
 				}
@@ -90,8 +101,9 @@ func createMelodyForRooms(server *server) *melody.Melody{
 					log.Printf("Error marshaling WebSocket message: %v", err)
 					return
 				}
-				s.Write(msgBytes)
-            	m.BroadcastFilter(msgBytes, broadcastToRoomExceptSender(roomId,s))
+				for _,member:= range server.rooms[roomId].members{
+					member.Session.Write(msgBytes)
+				}
 				if len(room.members)==0{
 					delete(server.rooms,roomId)
 					fmt.Println("deleted room",roomId,server.rooms)
@@ -99,7 +111,9 @@ func createMelodyForRooms(server *server) *melody.Melody{
 			}
 		}
 		
-	})
+	}
+
+	m.HandleDisconnect(disconnectHandler)
 	return m
 }
 
@@ -127,7 +141,7 @@ func wsMessageHandler(m *melody.Melody) func(s *melody.Session,msg []byte){
 	}
 }
 
-func broadcastToRoom(roomID string) func(q *melody.Session) bool {
+func broadcastToRoom(roomID string) func(q *melody.Session) bool{
     return func(q *melody.Session) bool {
         otherRoomID, ok := q.Keys["roomId"].(string)
         return ok && roomID == otherRoomID
@@ -137,6 +151,6 @@ func broadcastToRoom(roomID string) func(q *melody.Session) bool {
 func broadcastToRoomExceptSender(roomID string,sender *melody.Session) func(q *melody.Session) bool {
     return func(q *melody.Session) bool {
         otherRoomID, ok := q.Keys["roomId"].(string)
-        return ok && roomID == otherRoomID && q!=sender
+        return ok && roomID == otherRoomID && q.Request.URL!=sender.Request.URL
     }
 }

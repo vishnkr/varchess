@@ -12,17 +12,15 @@
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
 	import PieceEditor from '$lib/components/editor/PieceEditor.svelte';
 	import BoardEditor from '$lib/components/editor/BoardEditor.svelte';
-	import GameSettings from '$lib/components/editor/GameSettings.svelte';
 	import ExpandableCard from '$lib/components/ExpandableCard.svelte';
 	import Members from '$lib/components/shared/Members.svelte';
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	import Chat from '$lib/components/Chat.svelte';
-	import { page } from '$app/stores';
 	import { displayAlert } from '$lib/store/alert';
+	import { browser } from '$app/environment';
 
 	let items = ['Room','Editor'];
 	let activeItem = 'Room';
-	let shareUrl = `${$page.url.origin}/join/${$roomId}`;
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 
 	export let boardConfig: BoardConfig = {
@@ -48,7 +46,9 @@
 	}
 
 	const copyToClipboard = () => {
-		navigator.clipboard.writeText(shareUrl);
+		if($roomId){
+			navigator.clipboard.writeText($roomId);
+		}
 	};
 
 	let clearBoard: () => void;
@@ -60,28 +60,21 @@
 		{ type: 'Set as Black', handler: () => {} }
 	];
 
-	onMount(()=>{
-		if ($roomId && $me.username){
-			try {
-				createWebSocket($roomId,$me.username)
-			} catch (e:any){
-				displayAlert(e.message || 'An error occurred','DANGER',6000)
-			}
-			
-		}
-		
-	})
+	function exitRoom(){
+		if (browser) { window.location.href = '/home'; }
+	}
 </script>
 
 <svelte:head>
 	<title>Editor - Varchess</title>
 </svelte:head>
-<div class="font-inter text-zinc-90 flex-grow">
+<div class="font-inter flex-grow">
 	<div class="flex-1 flex m-4 lg:flex-row flex-col">
-		<div class="bg-zinc-700 rounded-md lg:w-5/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
+		<div class="text-black rounded-md lg:w-5/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
 			<div class="border-b border-gray-200 dark:border-gray-700 flex flex-col text-center">
 				<div class="flex justify-center">
 					<Tabs {activeItem} {items} on:tabChange={tabChange} />
+					
 				</div>
 				{#if activeItem==="Editor"}
 					<ExpandableCard svg={boardSvg} title="Board Editor">
@@ -97,15 +90,22 @@
 					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rules Editor">
 						<RulesEditor />
 					</ExpandableCard>
-					<ExpandableCard iconClass="fa-solid fa-gear fa-lg" title="Game Settings">
-						<GameSettings />
-					</ExpandableCard>
 				{:else if activeItem === "Room"}
+				
 				<div class="flex flex-col justify-center">
+					<div class="m-2">
+						<button class="bg-red-600 hover:bg-red-800 text-white rounded-md font-semibold py-2 px-2 mx-3" on:click={exitRoom}>
+							Leave Room
+						</button>
+						<button class="bg-orange-600 hover:bg-orange-800 text-white rounded-md font-semibold py-2 px-2 mx-3" on:click={exitRoom}>
+							Save Template
+						</button>
+					</div>
 					<div class="flex mb-5 justify-center">
+						
 						<input
 							class="border border-gray-300 px-4 py-2 text-white rounded-l max-w-64"
-							bind:value={shareUrl}
+							value={`Room Code : ${$roomId}`}
 							disabled
 						/>
 						

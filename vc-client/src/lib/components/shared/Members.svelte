@@ -27,7 +27,7 @@ import { me, members, type Member, Role  } from '$lib/store/stores';
 
 <div class="bg-zinc-900 flex flex-col rounded py-2 my-2">
   <h4 class="font-semibold text-center text-xl text-white">Members</h4>
-  <div class="min-h-[20em] overflow-y-auto bg-white">
+  <div class="max-h-[20em] overflow-y-auto bg-white">
     {#each membersList as member (member.id)}
       <div class="flex justify-between items-center py-1 px-2 border-b border-gray-300">
 		{#if member.isHost}
@@ -44,7 +44,7 @@ import { me, members, type Member, Role  } from '$lib/store/stores';
         <div class="flex space-x-2">
           {#if member.role!=Role.Black}
 		  <div
-            class="bg-black text-white py-1 px-2 rounded-md cursor-pointer"
+            class="bg-black text-white hover:bg-gray-500 py-1 px-2 rounded-md cursor-pointer"
             on:click={() => handleAction(member.id, 'SetBlack')}
           >
             Set Black
@@ -52,15 +52,15 @@ import { me, members, type Member, Role  } from '$lib/store/stores';
 		  {/if}
 		  {#if member.role!=Role.White}
           <div
-            class="bg-white text-black py-1 px-2 rounded-md cursor-pointer"
+            class="bg-white text-black hover:bg-gray-500 hover:text-white border border-black py-1 px-2 rounded-md cursor-pointer"
             on:click={() => handleAction(member.id, 'SetWhite')}
           >
             Set White
           </div>
 		  {/if}
-		  {#if $me.isHost}
+		  {#if false}
           <div
-            class="bg-red-500 text-white py-1 px-2 rounded-md cursor-pointer"
+            class="bg-red-500 text-white hover:bg-gray-500 py-1 px-2 rounded-md cursor-pointer"
             on:click={() => handleAction(member.id, 'RemoveUser')}
           >
             Remove

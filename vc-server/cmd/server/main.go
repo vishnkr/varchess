@@ -5,7 +5,6 @@ import (
 	"os"
 	"varchess/internal/logger"
 	"varchess/internal/server"
-	"varchess/internal/store"
 
 	"github.com/joho/godotenv"
 )
@@ -24,12 +23,12 @@ func main() {
 	}
 	fmt.Println("running on",port)
 	//var addr = flag.String("addr", ":"+port, "http server address")
-	store, err := store.NewStore()
+	/*store, err := store.NewStore()
 	if err != nil {
 		l.Err(err).Msg("error connecting to database")
-	}
+	}*/
 	var allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
-	s := server.NewServer("0.0.0.0:5000", store, allowedOrigins)
+	s := server.NewServer("0.0.0.0:5000", allowedOrigins)
 	l.Info().Str("port", port).Msgf("Starting Varchess Server")
 	s.Start()
 }

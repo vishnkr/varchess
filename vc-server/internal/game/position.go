@@ -31,7 +31,7 @@ type position struct {
 	pieceLocations map[int]piece
 	//pieceProps stores move patterns for custom pieces
 	pieceProps map[rune]pieceProperties
-	turn       color
+	turn       Color
 	dimensions
 	disabledSquares map[int]bool
 	castlingRights
@@ -148,7 +148,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 					id += 1
 					continue
 				}
-				var color color
+				var color Color
 				if unicode.IsUpper(char) {
 					color = ColorWhite
 				} else {
@@ -203,7 +203,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 	return position, nil
 }
 
-func (p *position) getOpponentColor() color {
+func (p *position) getOpponentColor() Color {
 	if p.turn == ColorBlack {
 		return ColorWhite
 	}

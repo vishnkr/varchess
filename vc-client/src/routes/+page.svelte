@@ -5,7 +5,7 @@
 	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Board from '$lib/board/Board.svelte';
 	import { me, roomId } from '$lib/store/stores';
-	import { displayAlert } from '$lib/store/alert';
+	import { displayAlert, getErrorMessage } from '$lib/store/alert';
 
 	let showModal = false;
 	let username = generateUsername();
@@ -34,7 +34,7 @@
 		},
 		{
 			title: 'Chess with Walls',
-			description: 'Disable squares to remove access to certain squares on the board',
+			description: 'Use walls to remove access to certain squares on the board',
 			bg: 'bg-red-600'
 		},
 		{
@@ -65,16 +65,17 @@
 
 					const data = await response.json();
 					if(data.roomId) {
-						me.set({id:0,isHost:true,role:0,username:username})
+						me.set({username:username})
 						roomId.set(data.roomId)
 						goto(`/editor/${data.roomId}`)
 					} 			
 				
 			} else {
-						displayAlert('Unable to create room!','DANGER',6000)
+						displayAlert('Unable to create room. Please try again later.','DANGER',6000)
 			}
-		} catch(e:any){
-			displayAlert(e.message,'DANGER',7000)
+		} catch(e){
+			displayAlert(getErrorMessage(e),'DANGER',7000)
+			//displayAlert(e.message,'DANGER',7000)
 		}
 		
 	}
@@ -100,10 +101,10 @@
 								</span>
 							</h1>
 							<p class="mt-8 text-2xl text-center leading-8 text-white">Create. Customize. Play</p>
-								<div class="mt-10 flex items-center justify-center gap-x-6" on:click={()=>setShowModal(true)}>
-									<span class="btn-custom-1">
+								<div class="mt-10 flex items-center justify-center gap-x-6">
+									<a href="/login"><span class="btn-custom-1">
 										Play now!
-									</span>
+									</span></a>
 								</div>
 						</div>
 						<div class="flex-1">

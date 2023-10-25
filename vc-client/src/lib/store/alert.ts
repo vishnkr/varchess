@@ -9,7 +9,7 @@ export const ALERT_TYPE = {
 export const alertMessage = writable('');
 export const alertType = writable('');
 
-export const displayAlert = (message:string, type =ALERT_TYPE.INFO, resetTime:number) =>{
+export const displayAlert = (message:string, type =ALERT_TYPE.INFO, resetTime?:number) =>{
     alertMessage.set(message);
     alertType.set(type);
     if (resetTime){
@@ -18,3 +18,7 @@ export const displayAlert = (message:string, type =ALERT_TYPE.INFO, resetTime:nu
         }, resetTime);
     }
 }
+export function getErrorMessage(error: unknown) {
+    if (error instanceof Error) return error.message
+    return String(error)
+  }

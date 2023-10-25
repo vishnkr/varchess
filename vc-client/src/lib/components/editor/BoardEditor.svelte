@@ -98,7 +98,7 @@
 	<div class="flex items-center">
 		<span class="p-3  text-md font-medium text-gray-900 dark:text-gray-300">Theme: </span>
 		<select
-			class="appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
+			class="bg-white appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
 			bind:value={boardTheme}
 			on:change={updateColors}
 		>

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"varchess/internal/logger"
-	"varchess/internal/store"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,7 +22,6 @@ type apiFunction func(http.ResponseWriter, *http.Request) error
 type server struct {
 	listenAddr   string
 	router       *chi.Mux
-	store        store.Storage
 	wsManager 	*melody.Melody
 	rooms 		map[string]*room
 }
@@ -38,7 +36,7 @@ func makeHTTPHandleFunc(f apiFunction) http.HandlerFunc {
 	}
 }
 
-func NewServer(listenAddr string, store store.Storage, allowedOrigins string) *server {
+func NewServer(listenAddr string, allowedOrigins string) *server {
 	router := chi.NewRouter()
 	router.Use(middleware.Recoverer)
 	router.Use(AllowOptions)
@@ -54,7 +52,6 @@ func NewServer(listenAddr string, store store.Storage, allowedOrigins string) *s
 	s := &server{
 		listenAddr : listenAddr,
 		router: router,
-		store: store,
 		rooms:  make(map[string]*room),
 	}
 	melody := createMelodyForRooms(s)
@@ -67,7 +64,7 @@ func (s *server) routes() {
 	s.router.Get("/health", makeHTTPHandleFunc(s.handleHealthCheck))
 	// Room Handlers
 	s.router.Post("/rooms", s.handleCreateRoom())
-	s.router.Post("/join", s.handleJoinRoom())
+	s.router.Post("/room-state", s.handleGetRoomState())
 	s.router.HandleFunc("/ws/{roomId}/{username}", func(w http.ResponseWriter, r *http.Request) {
 		err:= s.wsManager.HandleRequest(w, r)
 		if err!=nil{

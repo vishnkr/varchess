@@ -26,7 +26,7 @@
 		<h3 class="font-bold md:text-md sm:text-lg">Select Variant Type</h3>
 		<div class="relative inline-block">
 			<select
-				class="appearance-none border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none 
+				class="bg-white appearance-none border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none 
                     cursor-pointer focus:ring focus:border-blue-500"
 				bind:value={ruleSelections.variantType}
 			>

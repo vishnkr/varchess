@@ -14,7 +14,7 @@ const (
 type Variant interface {
 	makeMove(Move)
 	unmakeMove(Move)
-	getPseudoLegalMoves(color, bool) []Move
+	getPseudoLegalMoves(Color, bool) []Move
 	GetLegalMoves() []Move
 	PerformMove(Move) (result,bool)
 }
@@ -140,7 +140,7 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 	return validMoves
 }
 
-func (v variant) isCastleAllowed(color color,kingPos int,isKingside bool) bool{
+func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) bool{
 	curRow,_ := v.toRowCol(kingPos)
 	var rookPos, dx,i int
 	
@@ -167,7 +167,7 @@ func (v variant) isCastleAllowed(color color,kingPos int,isKingside bool) bool{
 	return true
 }
 
-func (v variant) getPseudoLegalMoves(color color, kingCaptureAllowed bool) []Move {
+func (v variant) getPseudoLegalMoves(color Color, kingCaptureAllowed bool) []Move {
 	validMoves := []Move{}
 	for currentSquareID, piece := range v.pieceLocations {
 		if color != piece.color {
@@ -306,7 +306,7 @@ func (cv *CheckmateVariant) GetLegalMoves() []Move {
 	return validMoves
 }
 
-func (cv *CheckmateVariant) isKingUnderCheck(color color) bool {
+func (cv *CheckmateVariant) isKingUnderCheck(color Color) bool {
 	cv.getPseudoLegalMoves(cv.getOpponentColor(), false)
 	var kingPos int
 	if color == ColorWhite {
@@ -364,7 +364,7 @@ func (ncv *NCheckVariant) GetLegalMoves() []Move {
 	return []Move{}
 }
 
-func (ncv *NCheckVariant) isKingUnderCheck(color color) bool {
+func (ncv *NCheckVariant) isKingUnderCheck(color Color) bool {
 	ncv.getPseudoLegalMoves(ncv.getOpponentColor(), false)
 	var kingPos int
 	if color == ColorWhite {

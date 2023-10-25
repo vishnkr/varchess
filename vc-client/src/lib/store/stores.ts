@@ -1,4 +1,6 @@
 import { writable, type Writable } from 'svelte/store';
+import { Objective, type BoardEditorState, type PieceEditorState, type RuleEditorState, VariantType } from './types';
+import type { RecordAuthResponse, RecordModel } from 'pocketbase';
 
 const serverUrl = import.meta.env.VITE_ENVIRONMENT === 'production' ? import.meta.env.VITE_SERVER_BASE : 'localhost:5000';
 
@@ -24,27 +26,19 @@ export interface ChatMessage{
 export interface Member{
 	id:number,
 	username: string,
-	role: Role,
-	isHost: boolean
+	role?: Role,
+	isHost?: boolean
+  userData?: RecordAuthResponse<RecordModel>
 }
 
-function createUserStore(){
-    const {subscribe, set, update} = writable<Member>({
-        username: '',
-        id:0,
-        role:Role.Viewer,
-        isHost: false,
-    })
-    return {
-        subscribe,
-        set,
-        update
-    }
+export interface User{
+  username?:string,
+  userData?: RecordAuthResponse<RecordModel>
 }
 
 const roomId = writable<string|null>(null);
 const members = writable<Member[]>([]);
-const me = createUserStore();
+const me = writable<User|null>({});
 
 
 function newChatStore(){
@@ -77,12 +71,10 @@ function createWebSocket(roomId:string, username:string) {
       const ws = new WebSocket(`ws://${serverUrl}/ws/${roomId}/${username}`);
   
       ws.onmessage = function (event) {
-        // Handle WebSocket messages here
         const { type, data } = JSON.parse(event.data);
-        //console.log('got ws data', event.data, type, data, event);
         switch (type) {
           case 'UserJoin':
-            //console.log('join', data);
+            console.log('got join',data.username)
             chats.userJoin(data.username);
             members.update((value) => [
               ...value,
@@ -91,6 +83,7 @@ function createWebSocket(roomId:string, username:string) {
                 username: data.username,
                 isHost: data.isHost,
                 role: Role[data.role as keyof typeof Role],
+                
               },
             ]);
             break;
@@ -115,8 +108,35 @@ function createWebSocket(roomId:string, username:string) {
         wsStore.set(ws);
         resolve(ws);
       };
+      ws.onclose = function(){
+        wsStore.set(null);
+        resolve(ws);
+      }
     });
   }
   
 
-export { createWebSocket, members, roomId, chats, me};
+const boardEditor = writable<BoardEditorState>({
+  ranks:8,
+  files:8,
+  theme: "standard"
+})
+const pieceEditor = writable<PieceEditorState>({
+  movePatterns: []
+})
+
+const ruleEditor = writable<RuleEditorState>({
+  variantType: VariantType.Standard,
+  objective: Objective.Checkmate
+})
+
+export { 
+  createWebSocket, 
+  members, 
+  roomId, 
+  chats, 
+  me, 
+  boardEditor, 
+  pieceEditor, 
+  ruleEditor
+};

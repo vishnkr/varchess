@@ -1,20 +1,26 @@
-interface BoardEditorState {
+export interface BoardEditorState {
 	ranks: number;
 	files: number;
 	theme: string;
 }
 
-enum VariantType{
-	Standard,
-	DuckChess,
-	ArcherChess,
-	Wormhole
+export enum VariantType{
+	Standard = "Standard",
+	DuckChess = "Duck",
+	ArcherChess = "Archer",
+	Wormhole = "Wormhole"
 }
 
 
-interface RuleEditorState{
+export enum Objective{
+	Checkmate,
+	Antichess,
+	NCheck,
+}
+
+export interface RuleEditorState{
 	variantType: VariantType,
-	
+	objective: Objective
 }
 
 interface MovePattern{
@@ -22,7 +28,7 @@ interface MovePattern{
 	jumpOffsets?: number[][],
 }
 
-interface PieceEditorState{
+export interface PieceEditorState{
 	movePatterns: MovePattern[]
 }
 

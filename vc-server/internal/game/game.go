@@ -4,7 +4,7 @@ import "encoding/json"
 
 type classicMoveType uint8
 
-type color string
+type Color string
 
 type GameObjective uint8
 
@@ -17,8 +17,8 @@ type variantMoveType uint8
 type allowedJumpMoveType uint
 
 const (
-	ColorBlack color = "black"
-	ColorWhite color = "white"
+	ColorBlack Color = "black"
+	ColorWhite Color = "white"
 
 	Pawn        pieceType = "pawn"
 	Knight      pieceType = "knight"
@@ -60,7 +60,7 @@ type moveOffset struct {
 }
 
 type piece struct {
-	color    color
+	color    Color
 	notation rune
 	pieceType
 }
@@ -79,7 +79,7 @@ type Game struct {
 type Move struct {
 	Source          int             `json:"source"`
 	Target          int             `json:"target"`
-	Turn            color           `json:"turn"`
+	Turn            Color           `json:"turn"`
 	PieceType       pieceType       `json:"pieceType"`
 	PieceNotation   rune            `json:"pieceNotation"`
 	ClassicMoveType classicMoveType `json:"classicMoveType"`
@@ -91,9 +91,9 @@ type Objective struct {
 	ObjectiveProps interface{}   `json:"objectiveProps"`
 }
 
-func CreateGame(gameConfigString string) (*Game, error) {
+func CreateGame(gameConfigJSON string) (*Game, error) {
 	var gameConfig GameConfig
-	err := json.Unmarshal([]byte(gameConfigString), gameConfig)
+	err := json.Unmarshal([]byte(gameConfigJSON), gameConfig)
 	if err != nil {
 		return nil, err
 	}
