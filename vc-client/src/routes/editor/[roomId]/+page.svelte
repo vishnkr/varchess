@@ -4,9 +4,8 @@
 	import boardSvg from '$lib/assets/svg/board.svg';
 	import { BoardType, type BoardConfig, Color } from '$lib/board/types';
 	import { EditorSubType } from '$lib/components/types';
-	import { onMount } from 'svelte';
-	import { editorSettings } from '$lib/board/stores';
-	import {me,roomId,createWebSocket} from '$lib/store/stores';
+	import { editorSettings } from '$lib/store/editor';
+	import {roomId} from '$lib/store/stores';
 
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
@@ -18,6 +17,7 @@
 	import Chat from '$lib/components/Chat.svelte';
 	import { displayAlert } from '$lib/store/alert';
 	import { browser } from '$app/environment';
+	import MpEditBoard from '$lib/board/MPEditBoard.svelte';
 
 	let items = ['Room','Editor'];
 	let activeItem = 'Room';
@@ -32,18 +32,7 @@
 		boardType: BoardType.Editor,
 	};
 
-	let getMovePatternBoardConfig: ()=> BoardConfig = ()=>{
-		const piece = $editorSettings.pieceSelection!;
-		const pieceType = piece.color === Color.WHITE ? piece.pieceType.toUpperCase() : piece.pieceType;
-		return {
-			fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
-			dimensions: { ranks: 9, files: 9 },
-			editable: true,
-			interactive: false,
-			isFlipped: false,
-			boardType: BoardType.MovePatternEditor
-		}
-	}
+	
 
 	const copyToClipboard = () => {
 		if($roomId){
@@ -129,7 +118,7 @@
 		</div>
 		<div class="rounded-md lg:w-7/12 mx-3 my-3 p-3">
 		{#if $editorSettings.editorSubTypeSelected===EditorSubType.MovePattern}
-			<EditableBoard boardConfig={getMovePatternBoardConfig()} />
+			<MpEditBoard />
 		{:else}
 			<EditableBoard {boardConfig} bind:shift={shiftBoard} bind:clear={clearBoard} />
 		{/if}

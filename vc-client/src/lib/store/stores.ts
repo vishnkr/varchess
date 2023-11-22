@@ -1,5 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
-import { Objective, type BoardEditorState, type PieceEditorState, type RuleEditorState, VariantType } from './types';
+import { Objective, type BoardEditorState, type RuleEditorState, VariantType } from './types';
 import type { RecordAuthResponse, RecordModel } from 'pocketbase';
 
 const serverUrl = import.meta.env.VITE_ENVIRONMENT === 'production' ? import.meta.env.VITE_SERVER_BASE : 'localhost:5000';
@@ -74,7 +74,6 @@ function createWebSocket(roomId:string, username:string) {
         const { type, data } = JSON.parse(event.data);
         switch (type) {
           case 'UserJoin':
-            console.log('got join',data.username)
             chats.userJoin(data.username);
             members.update((value) => [
               ...value,
@@ -116,15 +115,6 @@ function createWebSocket(roomId:string, username:string) {
   }
   
 
-const boardEditor = writable<BoardEditorState>({
-  ranks:8,
-  files:8,
-  theme: "standard"
-})
-const pieceEditor = writable<PieceEditorState>({
-  movePatterns: []
-})
-
 const ruleEditor = writable<RuleEditorState>({
   variantType: VariantType.Standard,
   objective: Objective.Checkmate
@@ -136,7 +126,5 @@ export {
   roomId, 
   chats, 
   me, 
-  boardEditor, 
-  pieceEditor, 
   ruleEditor
 };

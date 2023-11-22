@@ -6,7 +6,7 @@
 	import { generateSquareMaps, updatePiecePositionsFromMaxBoard } from './board';
 	import { convertFenToPosition, createEmptyMaxBoardState } from './fen';
 	import Board from './Board.svelte';
-	import { editorMaxBoard } from './stores';
+	import { editorMaxBoard } from './board';
 	import { onDestroy } from 'svelte';
 
 	export let boardConfig: BoardConfig;
@@ -96,4 +96,4 @@
 	};
 </script>
 
-<Board {customBoardId} {boardConfig} {position} {squares} />
+<Board customBoardId="board" {boardConfig} {position} {squares} />

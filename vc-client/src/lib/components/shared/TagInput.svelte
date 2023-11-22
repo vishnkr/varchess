@@ -1,21 +1,44 @@
 <script lang="ts">
+	import { editorSettings } from "$lib/store/editor";
+	import { pieceEditor } from "$lib/store/editor";
+
     let selectedOption = "";
     let tagList :string[]= [];
-    export let initialOptions: string[];
+    
     export let dropDownText: string;
+    export let slideDirections: Record<string,number[]>;
+    export let initialOptions: string[] = Object.keys(slideDirections);
     let options = [...initialOptions];
+
+    const addSlide = (offset:number[])=>{
+      const pieceType = $editorSettings.pieceSelection?.pieceType;
+      if(pieceType){
+        pieceEditor.addSlidePattern(pieceType,offset)
+      }
+	  } 
+    const removeSlide = (offset:number[])=>{
+      const pieceType = $editorSettings.pieceSelection?.pieceType;
+      if(pieceType){
+        pieceEditor.removeSlidePattern(pieceType,offset)
+      }
+    }
+
     function addTag() {
       if (selectedOption !== "" && !tagList.includes(selectedOption)) {
         tagList = [...tagList, selectedOption];
         options = initialOptions.filter((option) => !tagList.includes(option));
+        addSlide(slideDirections[selectedOption])
         selectedOption = "";
       }
+      
     }
   
     function removeTag(tag:string) {
       tagList = tagList.filter((item) => item !== tag);
       options = initialOptions.filter((option) => !tagList.includes(option));
+      removeSlide(slideDirections[tag])
     }
+
   </script>
   
   <div class="flex space-x-4 mb-4">

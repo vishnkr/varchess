@@ -18,18 +18,22 @@ export enum Objective{
 	NCheck,
 }
 
+export enum MoveType{
+	Jump,
+	Slide
+}
 export interface RuleEditorState{
 	variantType: VariantType,
 	objective: Objective
 }
 
 interface MovePattern{
-	slideOffsets?: number[][],
-	jumpOffsets?: number[][],
+	slideOffsets: number[][],
+	jumpOffsets: number[][],
 }
 
 export interface PieceEditorState{
-	movePatterns: MovePattern[]
+	movePatterns: Record<string,MovePattern>
 }
 
 export interface EditorState{

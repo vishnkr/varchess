@@ -51,9 +51,9 @@ export type SquareMaps = {
 
 export const SQUARE_COLORS = ['light', 'dark'] as const;
 export type SquareColor = typeof SQUARE_COLORS[number];
-export function getSquareColor(row: number, col: number, isFlipped?: boolean): SquareColor {
+export function getSquareColor(row: number, col: number, isFlipped?: boolean,overrideColorType?:string): SquareColor {
 	const idx = row + col;
-	return idx % 2 === 1 ? 'dark' : 'light';
+	return overrideColorType ?? idx % 2 === 1 ? 'dark' : 'light';
 }
 
 export interface Dimensions {
@@ -99,7 +99,7 @@ export enum GameType {
 	PREDEFINED
 }
 export interface EditorSettings {
-	disableSelected: boolean;
+	isWallSelectorOn: boolean;
 	pieceSelection: IPiece | null;
 	editorSubTypeSelected: EditorSubType;
 }

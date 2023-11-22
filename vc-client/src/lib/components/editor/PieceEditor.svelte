@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Color } from '$lib/board/types';
-	import { editorSettings } from '../../board/stores';
+	import { pieceEditor, editorSettings } from '$lib/store/editor';
 	import TagInput from '../shared/TagInput.svelte';
 	import { EditorSubType } from '../types';
 	// @ts-ignores
@@ -27,8 +27,7 @@
 	];
 	let color: Color = Color.WHITE;
 	let selectedPiece = { class: 'p', group: 'standard' };
-	let slideDirections = ["North","East","South","West","North East","North West","South East","South West"]
-	export let loggedIn = true;
+	let slideDirections = {"North":[-1,0],"East":[0,1],"South":[1,0],"West":[0,-1],"North East":[-1,1],"North West":[-1,-1],"South East":[1,1],"South West":[1,-1]}
 	let setMovePattern = false;
 	const toggleSetMP = () => {
 		setMovePattern = !setMovePattern;
@@ -40,6 +39,11 @@
 			};
 		});
 	};
+
+	const cancel = () =>{
+		pieceEditor.deletePiecePattern(selectedPiece.class)
+		toggleSetMP()
+	}
 
 	const selectPiece = (pieceClass: string, group: string) => {
 		selectedPiece = { ...selectedPiece, class: pieceClass, group };
@@ -157,15 +161,6 @@
 							/>
 						</div>
 					{/each}
-					{#if !loggedIn}
-						<div
-							class="absolute inset-0 flex flex-col bg-black opacity-70 rounded items-center justify-center"
-						>
-							<!-- Content for the overlay div -->
-							<i class="fa-solid fa-lock" style="color: #ffffff;" />
-							<p class="text-white md:text-2xl text-lg px-2">Login to add custom pieces</p>
-						</div>
-					{/if}
 				</div>
 			</div>
 			{:else}
@@ -175,7 +170,10 @@
 					<span class="w-4 h-4 inline-block bg-blue-600 rounded-sm"></span>
 					<p class="text-lg font-semibold ml-2">Slide Pattern:</p>
 				</div>
-				<TagInput initialOptions={slideDirections} dropDownText="Select Directions"/>
+				<TagInput 
+					{slideDirections} 
+					dropDownText="Select Directions"
+				/>
 				<div class="flex items-center">
 					<span class="w-4 h-4 inline-block bg-red-600 rounded-sm"></span>
 					<p class="text-lg font-semibold ml-2">Jump Pattern:</p>
@@ -191,7 +189,7 @@
 					on:click={toggleSetMP} >Save Pattern</button>
 				<button
 					class="p-2 m-2 bg-red-500 text-white text-md rounded-md hover:bg-slate-400"
-					on:click={toggleSetMP}>Cancel</button>
+					on:click={cancel}>Cancel</button>
 			</div>
 			
 			{/if}

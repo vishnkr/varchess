@@ -1,3 +1,4 @@
+import { writable } from 'svelte/store';
 import type {
 	CoordinatetoIDMap,
 	Dimensions,
@@ -79,3 +80,21 @@ export const updatePiecePositionsFromMaxBoard = (
 	}
 	return { piecePositions, disabled };
 };
+
+function createEditorMaxBoard() {
+	const { subscribe, set, update } = writable<PiecePresentInfo[][]>([[]]);
+
+	return {
+		subscribe,
+		set,
+		updatePieceInfo: (rowIndex: number, colIndex: number, newValue: PiecePresentInfo) => {
+			update((maxBoard: PiecePresentInfo[][]) => {
+				const updatedMaxBoard = [...maxBoard];
+				updatedMaxBoard[rowIndex][colIndex] = newValue;
+				return updatedMaxBoard;
+			});
+		}
+	};
+}
+
+export const editorMaxBoard = createEditorMaxBoard();

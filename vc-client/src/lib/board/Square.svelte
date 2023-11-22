@@ -1,8 +1,9 @@
 <script lang="ts">
 	import './board-styles.css';
-	import type { BoardType, IPiece, SquareColor, SquareInfo } from './types';
+	import { BoardType, type IPiece, type SquareColor, type SquareInfo } from './types';
 	import wall from '$lib/assets/svg/wall.svg';
-	import { editorSettings, editorMaxBoard } from './stores';
+	import { editorMaxBoard } from './board';
+	import { pieceEditor,editorSettings } from '$lib/store/editor';
 
 	export let squareData: SquareInfo;
 	export let editable: boolean;
@@ -10,10 +11,10 @@
 
 	export let color: SquareColor;
 	export let piece: IPiece | null = null;
-	export let disabled: boolean;
+	export let disabled: boolean = false;
 	export let boardId: string = "board";
-	export const mode: BoardType = 'game';
-
+	export let boardType: BoardType = BoardType.GameBoard;
+	export let nonPieceSvg: string| null = null;
 	function getPieceClass(piece: IPiece) {
 		return piece.color.charAt(0).toLowerCase() + piece.pieceType.charAt(0).toLowerCase();
 	}
@@ -57,8 +58,8 @@
 
 	function handleClick(e: MouseEvent) {
 		e.preventDefault();
-		if (editable) {
-			if ($editorSettings.disableSelected) {
+		if (boardType===BoardType.Editor) {
+			if ($editorSettings.isWallSelectorOn) {
 				disabled = !disabled;
 				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 					isPiecePresent: false,
@@ -72,7 +73,21 @@
 						piece: piece ? null : $editorSettings.pieceSelection
 					});
 			}
-		}
+		} else if (boardType===BoardType.MovePatternEditor){
+			if(piece){return}
+			let selectedPiece = $editorSettings.pieceSelection
+			let jumpOffset = [squareData.row-4,squareData.column-4]
+			if (selectedPiece){
+				const isJumpOffsetPresent = $pieceEditor.movePatterns[selectedPiece.pieceType] && $pieceEditor.movePatterns[selectedPiece.pieceType].jumpOffsets.some(
+					(o) => o[0] === jumpOffset[0] && o[1] === jumpOffset[1] );
+				if(isJumpOffsetPresent){
+					pieceEditor.removeJumpPattern(selectedPiece.pieceType,jumpOffset)
+				} else {
+					pieceEditor.addJumpPattern(selectedPiece.pieceType,jumpOffset)
+				}
+				
+			}
+		} 
 	}
 
 	const isViewableOnly = () => !editable && !interactive;
@@ -94,6 +109,9 @@
 		dragOver = false;
 		hover = false;
 	}
+	let pieceEditorStore = null;
+	$: pieceEditorStore = $pieceEditor
+	
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -114,9 +132,7 @@
 >
 	{#if piece}
 		<div
-			class={`absolute bg-piece ${interactive ? 'draggable' : null} w-full h-full ${
-				piece ? getPieceClass(piece) : ''
-			}`}
+			class={`absolute bg-piece ${interactive ? 'draggable' : null} w-full h-full ${getPieceClass(piece)}`}
 			draggable={interactive}
 			id={`${boardId}-p-${squareData.squareIndex}`}
 			bind:this={pieceEl}
@@ -127,6 +143,11 @@
 		<div class="absolute inset-0 flex items-center justify-center bg-red-400">
 			<img draggable={false} src={wall} alt="disabled" class="w-full h-full" />
 		</div>
+	{:else if nonPieceSvg}
+		<div class="absolute inset-0 flex items-center justify-center ">
+			<img draggable={false} src={nonPieceSvg} alt="disabled" class="w-full h-full" />
+		</div>
+		<slot />
 	{:else}
 		<slot />
 	{/if}

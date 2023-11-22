@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { getSquareColor, type Position } from './types';
+	import { BoardType, getSquareColor, type Position } from './types';
 	import Square from './Square.svelte';
+	import slide from '$lib/assets/svg/slide.svg'
+	import jump from '$lib/assets/svg/jump.svg'
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
-
+	import { MoveType } from '$lib/store/types';
 	export let boardConfig: BoardConfig;
 	export let squares = generateSquareMaps(
 		boardConfig.dimensions,
@@ -17,6 +19,7 @@
 		piecePositions: {},
 		disabled: {}
 	};
+	export let mpSquares : Record<number,MoveType>|null = null;
 </script>
 
 <div id="wrapper">
@@ -26,6 +29,17 @@
 		class={`${boardConfig.editable ? 'cursor-pointer' : null}`}
 	>
 			{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
+				{#if boardConfig.boardType == BoardType.MovePatternEditor && mpSquares && mpSquares[idx]!==undefined}
+					<Square 
+						boardId={customBoardId} 
+						editable={false} 
+						interactive={false}
+						squareData={squares[idx]}
+						color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
+						boardType={boardConfig.boardType}
+						nonPieceSvg={mpSquares[idx]=== MoveType.Slide ? slide : jump}
+					 />
+				{:else}
 				<Square
 					boardId={customBoardId}
 					editable={boardConfig.editable}
@@ -34,7 +48,11 @@
 					color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
 					piece={position.piecePositions[idx] ?? null}
 					disabled={position.disabled[idx] ?? false}
+					boardType={boardConfig.boardType}
 				/>
+				{/if}
+
+				
 			{/each}
 	</div>
 </div>

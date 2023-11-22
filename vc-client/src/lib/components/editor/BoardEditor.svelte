@@ -8,7 +8,7 @@
 
 	// @ts-ignore
 	import Switch from 'svelte-switch';
-	import { editorSettings } from '../../board/stores';
+	import { editorSettings } from '../../store/editor';
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
@@ -17,7 +17,7 @@
 	function handleChange(e) {
 		const { checked } = e.detail;
 		checkedValue = checked;
-		editorSettings.update((val) => ({ ...val, disableSelected: checked }));
+		editorSettings.update((val) => ({ ...val, isWallSelectorOn: checked }));
 	}
 	let maxDimension = loggedIn ? 16 : 8;
 	let boardTheme = "Default";
@@ -92,7 +92,7 @@
 	</div>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="relative inline-flex items-center cursor-pointer">
-		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Disable Squares</span>
+		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Toggle Wall Selector</span>
 		<Switch on:change={handleChange} checked={checkedValue} />
 	</label>
 	<div class="flex items-center">
