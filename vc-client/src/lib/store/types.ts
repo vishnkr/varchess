@@ -1,3 +1,5 @@
+import type { Color } from "$lib/board/types";
+
 export interface BoardEditorState {
 	ranks: number;
 	files: number;
@@ -32,8 +34,14 @@ interface MovePattern{
 	jumpOffsets: number[][],
 }
 
+export type PieceSelection = {
+	pieceType: string,
+	color: Color,
+	group: string,
+}
 export interface PieceEditorState{
 	movePatterns: Record<string,MovePattern>
+	pieceSelection: PieceSelection
 }
 
 export interface EditorState{

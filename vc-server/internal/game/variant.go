@@ -2,13 +2,13 @@ package game
 
 import "unicode"
 
-type variantType uint8
+type variantType string
 
 const (
-	Custom variantType = iota
-	DuckChess
-	ArcherChess
-	Wormhole
+	Custom variantType = "Custom"
+	DuckChess variantType = "DuckChess"
+	ArcherChess variantType = "ArcherChess"
+	Wormhole variantType = "Wormhole"
 )
 
 type Variant interface {
@@ -31,7 +31,7 @@ type variant struct {
 
 func (v *variant) getTargetSquare(currentSquareID int, offset moveOffset) (int, bool) {
 	row, col := v.toRowCol(currentSquareID)
-	newRow, newCol := row+offset.yOffset, col+offset.xOffset
+	newRow, newCol := row+offset.y, col+offset.x
 	target := v.toPos(newRow, newCol)
 	if newRow < 0 || newCol < 0 || newRow >= v.Ranks || newCol >= v.Files || v.isDisabled(target) {
 		return -1, false
@@ -437,7 +437,19 @@ func (av *AntichessVariant) PerformMove(move Move)(result, bool){
 }
 
 func (av *AntichessVariant) checkGameOver() (result, bool) {
-	av.possibleLegalMoves = av.GetLegalMoves()
-	
+	var whitePieceCount int = 0
+	var blackPieceCount int = 0
+	for _,piece := range av.position.pieceLocations{
+		if piece.color==ColorBlack{
+			blackPieceCount+=1
+		} else{
+			whitePieceCount+=1
+		}
+	}
+	if whitePieceCount == 0{
+		return WhiteWins,true
+	} else if blackPieceCount == 0{
+		return BlackWins,true
+	}
 	return 0, false
 }

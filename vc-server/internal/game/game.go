@@ -1,6 +1,9 @@
 package game
 
-import "encoding/json"
+import (
+	"bytes"
+	"encoding/json"
+)
 
 type classicMoveType uint8
 
@@ -55,8 +58,8 @@ const (
 )
 
 type moveOffset struct {
-	xOffset int
-	yOffset int
+	x int
+	y int
 }
 
 type piece struct {
@@ -87,8 +90,8 @@ type Move struct {
 }
 
 type Objective struct {
-	ObjectiveType  GameObjective `json:"type"`
-	ObjectiveProps interface{}   `json:"objectiveProps"`
+	ObjectiveType  GameObjective `json:"objectiveType"`
+	ObjectiveProps interface{}   `json:"objectiveProps,omitempty"`
 }
 
 func CreateGame(gameConfigJSON string) (*Game, error) {
@@ -135,4 +138,32 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 	}
 
 	return newVariant, nil
+}
+
+func (v *variant) getGameConfig()(GameConfig,error){
+	gameConfig := GameConfig{VariantType: v.variantType,Objective: v.Objective}
+	gameConfig.Position = v.getPosition()
+	return gameConfig,nil
+}
+
+func (v *variant) getPosition() Position{
+	position := Position{Dimensions: v.dimensions,PieceProps: v.pieceProps}
+	var fen bytes.Buffer
+	for i:=0;i<v.dimensions.Files;i++{
+		for j:=0;j<v.dimensions.Ranks;j++{
+			id:= v.toPos(i,j)
+			if piece,ok := v.position.pieceLocations[id]; ok{
+				fen.WriteRune(piece.notation)
+			} else if _, ok:= v.position.disabledSquares[id];ok{
+				fen.WriteString(".")
+			}
+		}
+		if (i!=v.dimensions.Files-1){fen.WriteString("/")}
+	}
+	if v.turn == ColorWhite{
+		fen.WriteString(" w")
+	} else { fen.WriteString(" b")}
+	fen.WriteString(" KQkq - 0 1")
+	position.Fen = fen.String()
+	return position
 }

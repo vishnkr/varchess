@@ -37,6 +37,7 @@ type position struct {
 	castlingRights
 	attackedSquares map[int]bool
 	additionalProps AdditionalProps
+	promotionProps promotionProps
 }
 
 type JumpMove struct {
@@ -50,7 +51,7 @@ type pieceProperties struct {
 	JumpProps    []JumpMove   `json:"jumpProps,omitempty"`
 }
 
-type gameConfigPosition struct {
+type Position struct {
 	Dimensions dimensions               `json:"dimensions"`
 	Fen        string                   `json:"fen"`
 	PieceProps map[rune]pieceProperties `json:"pieceProps,omitempty"`
@@ -58,63 +59,66 @@ type gameConfigPosition struct {
 
 type GameConfig struct {
 	VariantType        variantType `json:"variantType"`
-	gameConfigPosition `json:"position"`
+	Position 		   Position `json:"position"`
 	Objective          Objective `json:"objective"`
 }
 
 func (p *position) addStandardPieceProps() {
 	diagonals := []moveOffset{
-		{xOffset: -1, yOffset: -1},
-		{xOffset: 1, yOffset: -1},
-		{xOffset: 1, yOffset: 1},
-		{xOffset: -1, yOffset: 1},
+		{x: -1, y: -1},
+		{x: 1, y: -1},
+		{x: 1, y: 1},
+		{x: -1, y: 1},
 	}
 	nonDiagonals := []moveOffset{
-		{xOffset: -1, yOffset: 0},
-		{xOffset: 1, yOffset: 0},
-		{xOffset: 0, yOffset: 1},
-		{xOffset: 0, yOffset: -1},
+		{x: -1, y: 0},
+		{x: 1, y: 0},
+		{x: 0, y: 1},
+		{x: 0, y: -1},
 	}
 	props := map[rune]pieceProperties{
-		'q': pieceProperties{
+		'q': {
 			Name:         "Queen",
 			SlideOffsets: append(nonDiagonals, diagonals...),
 		},
-		'b': pieceProperties{
+		'b': {
 			Name:         "Bishop",
 			SlideOffsets: diagonals,
 		},
-		'r': pieceProperties{
+		'r': {
 			Name:         "Rook",
 			SlideOffsets: nonDiagonals,
 		},
-		'n': pieceProperties{
+		'n': {
 			Name: "Knight",
 			JumpProps: []JumpMove{
-				JumpMove{moveOffset{xOffset: -2, yOffset: 1}, true},
-				JumpMove{moveOffset{xOffset: -2, yOffset: -1}, true},
-				JumpMove{moveOffset{xOffset: 2, yOffset: 1}, true},
-				JumpMove{moveOffset{xOffset: 2, yOffset: -1}, true},
-				JumpMove{moveOffset{xOffset: 1, yOffset: -2}, true},
-				JumpMove{moveOffset{xOffset: 1, yOffset: 2}, true},
-				JumpMove{moveOffset{xOffset: -1, yOffset: 2}, true},
-				JumpMove{moveOffset{xOffset: -1, yOffset: -2}, true},
+				{moveOffset{x: -2, y: 1}, true},
+				{moveOffset{x: -2, y: -1}, true},
+				{moveOffset{x: 2, y: 1}, true},
+				{moveOffset{x: 2, y: -1}, true},
+				{moveOffset{x: 1, y: -2}, true},
+				{moveOffset{x: 1, y: 2}, true},
+				{moveOffset{x: -1, y: 2}, true},
+				{moveOffset{x: -1, y: -2}, true},
 			},
 		}}
 	p.pieceProps = props
 }
 func newPosition(gameConfig GameConfig) (position, error) {
-	boardData := strings.Split(gameConfig.Fen, " ")
+	boardData := strings.Split(gameConfig.Position.Fen, " ")
 	rowsData := strings.Split(boardData[0], "/")
 	var standardPieceMap = map[rune]pieceType{'p': Pawn, 'k': King, 'n': Knight, 'q': Queen, 'r': Rook, 'b': Bishop}
 	position := position{
 		pieceLocations: make(map[int]piece),
-		dimensions:     gameConfig.Dimensions,
+		dimensions:     gameConfig.Position.Dimensions,
 		additionalProps: AdditionalProps{
 			blackKingMoved:     false,
 			whiteKingMoved:     false,
 			kingCaptureAllowed: false,
 		},
+	}
+	if gameConfig.Objective.ObjectiveType == Antichess{
+		position.additionalProps.kingCaptureAllowed = true
 	}
 	var col, id int = 0, 0
 	var colEnd int = 0
@@ -161,7 +165,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 						notation:  pieceRune,
 						pieceType: CustomPiece,
 					}
-					position.pieceProps[pieceRune] = gameConfig.PieceProps[pieceRune]
+					position.pieceProps[pieceRune] = gameConfig.Position.PieceProps[pieceRune]
 				} else {
 					piece := piece{
 						color:     color,

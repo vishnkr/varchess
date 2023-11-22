@@ -12,6 +12,7 @@ COPY go.sum .
 RUN go mod download
 COPY . .
 
-EXPOSE 5000 8090
+EXPOSE 5000 
+EXPOSE 8080
 RUN chmod +x entry.sh
 CMD ["./entry.sh"]
