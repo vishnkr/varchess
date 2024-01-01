@@ -5,9 +5,9 @@ OUTPUT_BINARY="vc-server"
 
 # Build the Go server
 #GOOS=$TARGET_OS GOARCH=$TARGET_ARCH
-if go build -o $OUTPUT_BINARY ./cmd/server; then
+if go build -o $OUTPUT_BINARY ./cmd; then
     echo "Build completed!"
-    ./$OUTPUT_BINARY & ./pb/pocketbase serve "--http=0.0.0.0:8080"
+    ./$OUTPUT_BINARY
 else
     echo "Build failed. Check the build errors."
 fi

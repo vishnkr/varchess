@@ -1,4 +1,4 @@
-package game
+package chesscore
 
 import (
 	"bytes"
@@ -40,6 +40,7 @@ const (
 	CastleMove
 	CaptureMove
 	QuietMove
+	DoublePawnPush
 	EnPassantMove
 	PromotionMove
 
@@ -87,6 +88,7 @@ type Move struct {
 	PieceNotation   rune            `json:"pieceNotation"`
 	ClassicMoveType classicMoveType `json:"classicMoveType"`
 	VariantMoveType variantMoveType `json:"variantMoveType,omitempty"`
+	AdditionalData interface{} 		`json:"additionalData,omitempty"`
 }
 
 type Objective struct {
@@ -154,7 +156,7 @@ func (v *variant) getPosition() Position{
 			id:= v.toPos(i,j)
 			if piece,ok := v.position.pieceLocations[id]; ok{
 				fen.WriteRune(piece.notation)
-			} else if _, ok:= v.position.disabledSquares[id];ok{
+			} else if _, ok:= v.position.wallSquares[id];ok{
 				fen.WriteString(".")
 			}
 		}
@@ -167,3 +169,7 @@ func (v *variant) getPosition() Position{
 	position.Fen = fen.String()
 	return position
 }
+
+/*func (g *Game) PerformMove(Move) (error){
+
+}*/

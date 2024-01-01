@@ -1,4 +1,4 @@
-package game
+package chesscore
 
 import "unicode"
 
@@ -23,17 +23,23 @@ type variant struct {
 	Objective Objective `json:"objective"`
 	position
 	variantType
-	recentCapture piece
+	recentCapture recentCaptureInfo
 	possibleLegalMoves []Move
 	gameResult result
 	isGameOverBool bool
+}
+
+type recentCaptureInfo struct{
+	piece
+	squareId int
+	moveType classicMoveType
 }
 
 func (v *variant) getTargetSquare(currentSquareID int, offset moveOffset) (int, bool) {
 	row, col := v.toRowCol(currentSquareID)
 	newRow, newCol := row+offset.y, col+offset.x
 	target := v.toPos(newRow, newCol)
-	if newRow < 0 || newCol < 0 || newRow >= v.Ranks || newCol >= v.Files || v.isDisabled(target) {
+	if newRow < 0 || newCol < 0 || newRow >= v.Ranks || newCol >= v.Files || v.isWall(target) {
 		return -1, false
 	}
 	return target, true
@@ -55,7 +61,9 @@ func (v variant) genPawnMoves(piece piece, currentSquareID int) []Move{
 		//non-capture moves
 		if i == 0 {
 			target1, target2 := v.toPos(targetRow, srcCol), v.toPos(targetRow+rowOffset, srcCol)
-			if _, ok := v.pieceLocations[target1]; !ok && !v.disabledSquares[target1] {
+			_, ok1 := v.pieceLocations[target1]
+			_, ok2 := v.pieceLocations[target2]
+			if !ok1 && !v.wallSquares[target1] {
 				validMoves = append(validMoves, Move{
 					Source:          currentSquareID,
 					Target:          target1,
@@ -65,11 +73,11 @@ func (v variant) genPawnMoves(piece piece, currentSquareID int) []Move{
 					Turn:            piece.color,
 				})
 			}
-			if _, ok := v.pieceLocations[target2]; !ok && srcRow == doubleMoveStartRank && !v.disabledSquares[target2] {
+			if !ok1 && !v.wallSquares[target1] && !ok2 && srcRow == doubleMoveStartRank && !v.wallSquares[target2] {
 				validMoves = append(validMoves, Move{
 					Source:          currentSquareID,
 					Target:          target2,
-					ClassicMoveType: QuietMove,
+					ClassicMoveType: DoublePawnPush,
 					PieceType:       Pawn,
 					PieceNotation:   piece.notation,
 					Turn:            piece.color,
@@ -78,16 +86,28 @@ func (v variant) genPawnMoves(piece piece, currentSquareID int) []Move{
 		} else {
 			//capture moves
 			target := v.toPos(targetRow, srcCol+i)
-			if v.isOpponentPiecePresent(currentSquareID, target) && (!v.isOppKingAtTarget(target) || (v.isOppKingAtTarget(target) && v.additionalProps.kingCaptureAllowed)) {
-				validMoves = append(validMoves, Move{
-					Source:          currentSquareID,
-					Target:          target,
-					ClassicMoveType: CaptureMove,
-					PieceType:       Pawn,
-					PieceNotation:   piece.notation,
-					Turn:            piece.color,
+			if v.isOpponentPiecePresent(currentSquareID, target) {
+				if (!v.isOppKingAtTarget(target) || (v.isOppKingAtTarget(target) && v.additionalProps.kingCaptureAllowed)) {
+					validMoves = append(validMoves, Move{
+						Source:          currentSquareID,
+						Target:          target,
+						ClassicMoveType: CaptureMove,
+						PieceType:       Pawn,
+						PieceNotation:   piece.notation,
+						Turn:            piece.color,
+					})
+				}
+			} else if (v.isEmpty(target) && v.epSquare == target){
+				validMoves = append(validMoves,Move{
+					Source: currentSquareID,
+					Target: target,
+					ClassicMoveType: EnPassantMove,
+					PieceType: Pawn,
+					PieceNotation: piece.notation,
+					Turn: piece.color,
 				})
 			}
+
 		}
 	}
 	return validMoves
@@ -102,7 +122,7 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 			if (row == 0 && col == 0) || (target<0 || target>=v.Ranks*v.Files) {
 				continue
 			}
-			if !v.isSameColorPiecePresent(currentSquareId, target) && !v.isDisabled(target) {
+			if !v.isSameColorPiecePresent(currentSquareId, target) && !v.isWall(target) {
 				targetPiece, ok := v.pieceLocations[target]
 				if !ok {
 					validMoves = append(validMoves, Move{
@@ -131,40 +151,61 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 		validQueenSide = v.whiteQueenSide
 		kingPos = v.additionalProps.whiteKingPos
 	}
-	if validKingside && v.isCastleAllowed(piece.color,kingPos,true) {
-		validMoves = append(validMoves, Move{Source: kingPos, Target: v.toPos(curRow, curCol-2), Turn:piece.color, ClassicMoveType: CastleMove, PieceType: King})
+	kCastleAllowed,kRookPos := v.isCastleAllowed(piece.color,kingPos,false)
+	if validKingside && kCastleAllowed {
+		validMoves = append(validMoves, Move{
+			Source: kingPos, 
+			Target: v.toPos(curRow, curCol-2), 
+			Turn:piece.color, 
+			ClassicMoveType: CastleMove,
+			PieceType: King,
+			AdditionalData: map[string][]int{"rookPos":kRookPos},
+		})
 	}
-	if validQueenSide && v.isCastleAllowed(piece.color,kingPos,false) {
-		validMoves = append(validMoves, Move{Source: v.toPos(curRow, curCol), Target: v.toPos(curRow, curCol+2), Turn:piece.color, ClassicMoveType: CastleMove, PieceType: King})
+	qCastleAllowed,qRookPos := v.isCastleAllowed(piece.color,kingPos,false)
+	if validQueenSide && qCastleAllowed {
+		validMoves = append(validMoves, Move{
+			Source: v.toPos(curRow, curCol), 
+			Target: v.toPos(curRow, curCol+2), 
+			Turn:piece.color, 
+			ClassicMoveType: CastleMove, 
+			PieceType: King,
+			AdditionalData: map[string][]int{"rookPos":qRookPos},
+		})
 	}
 	return validMoves
 }
 
-func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) bool{
+// returns if castle is valid(bool) and rook src/target if it is (int)
+func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) (bool,[]int){
 	curRow,_ := v.toRowCol(kingPos)
-	var rookPos, dx,i int
-	
+	var rookSrc, rookTarget, dx,i int
+	if v.Objective.ObjectiveType == Antichess{
+		return false,[]int{-1,-1}
+	}
 	if isKingside{
-		rookPos,dx = v.toPos(curRow,v.Files-1),1
+		rookSrc,dx = v.toPos(curRow,v.Files-1),1
 		i = kingPos+dx
-		if piece,ok := v.pieceLocations[rookPos]; ok && piece.color == color && piece.pieceType == Rook{
-			for i<rookPos{
-				if _,notEmpty := v.pieceLocations[i]; notEmpty || v.isDisabled(i){ return false}
+		rookTarget = i
+		if piece,ok := v.pieceLocations[rookSrc]; ok && piece.color == color && piece.pieceType == Rook{
+			for i<rookSrc{
+				if !v.isEmpty(i) || v.isWall(i){ return false,[]int{-1,-1}}
 				i+=dx
 			}
 			
 		}
 	} else { 
-		rookPos,dx = v.toPos(curRow,0),-1
+		rookSrc,dx = v.toPos(curRow,0),-1
 		i = kingPos+dx
-		if piece,ok := v.pieceLocations[rookPos]; ok && piece.color == color && piece.pieceType == Rook{
-			for i>rookPos{
-				if _,notEmpty := v.pieceLocations[i]; notEmpty || v.isDisabled(i){ return false}
+		rookTarget = i
+		if piece,ok := v.pieceLocations[rookSrc]; ok && piece.color == color && piece.pieceType == Rook{
+			for i>rookSrc{
+				if !v.isEmpty(i) || v.isWall(i){ return false,[]int{-1,-1}}
 				i+=dx
 			}
 		}
 	}
-	return true
+	return true,[]int{rookSrc,rookTarget}
 }
 
 func (v variant) getPseudoLegalMoves(color Color, kingCaptureAllowed bool) []Move {
@@ -220,15 +261,14 @@ func (v *variant) genSlideMoves(piece *piece, currentSquareID int, props *pieceP
 
 func (v *variant) genJumpMoves(piece *piece, currentSquareID int, props *pieceProperties) []Move{
 	validMoves := []Move{}
-	for _, jumpMove := range props.JumpProps {
-		target, valid := v.getTargetSquare(currentSquareID, jumpMove.Offset)
+	for _, jumpMove := range props.JumpOffsets {
+		target, valid := v.getTargetSquare(currentSquareID, jumpMove)
 		if valid {
 			if v.position.isSameColorPiecePresent(currentSquareID, target) {
 				continue
 			}
-
 			var moveType classicMoveType = NullMove
-			if jumpMove.IsCaptureAllowed && v.position.isOpponentPiecePresent(currentSquareID, target) {
+			if  v.position.isOpponentPiecePresent(currentSquareID, target) {
 				if !v.position.isOppKingAtTarget(target) || (!v.position.isOppKingAtTarget(target) && v.additionalProps.kingCaptureAllowed) {
 					moveType = CaptureMove
 				}
@@ -252,9 +292,13 @@ func (v *variant) genJumpMoves(piece *piece, currentSquareID int, props *piecePr
 
 func (v *variant) makeMove(move Move) {
 	switch move.ClassicMoveType {
-	case QuietMove, CaptureMove:
+	case QuietMove, CaptureMove, DoublePawnPush:
 		if move.ClassicMoveType == CaptureMove {
-			v.recentCapture = v.pieceLocations[move.Target]
+			v.recentCapture = recentCaptureInfo{
+				piece: v.pieceLocations[move.Target],
+				squareId: move.Target,
+				moveType: move.ClassicMoveType,
+			}
 		}
 		if move.PieceType==King{
 			if move.Turn == ColorBlack{
@@ -265,12 +309,30 @@ func (v *variant) makeMove(move Move) {
 		}
 		v.pieceLocations[move.Target] = v.pieceLocations[move.Source]
 		delete(v.pieceLocations, move.Source)
+	case EnPassantMove:
+		v.pieceLocations[move.Target] = v.pieceLocations[move.Source]
+		v.recentCapture = recentCaptureInfo{
+			piece: v.pieceLocations[v.epSquare],
+			squareId: v.epSquare,
+			moveType: move.ClassicMoveType,
+		}
+		delete(v.pieceLocations,v.epSquare)
+		v.epSquare = -1
+	case CastleMove:
+		additionalData, ok := move.AdditionalData.(map[string][]int)
+		if ok {
+			rookPos := additionalData["rookPos"]
+			v.pieceLocations[move.Target] = v.pieceLocations[move.Source]
+			v.pieceLocations[rookPos[1]] = v.pieceLocations[rookPos[0]]
+			delete(v.pieceLocations,rookPos[0])
+			delete(v.pieceLocations,move.Source)
+		}
 	}
 }
 
 func (v *variant) unmakeMove(move Move) {
 	switch move.ClassicMoveType {
-	case QuietMove, CaptureMove:
+	case QuietMove, CaptureMove, DoublePawnPush:
 		v.pieceLocations[move.Source] = v.pieceLocations[move.Target]
 		if move.PieceType==King{
 			if move.Turn == ColorBlack{
@@ -280,8 +342,21 @@ func (v *variant) unmakeMove(move Move) {
 			}
 		}
 		if move.ClassicMoveType == CaptureMove {
-			v.pieceLocations[move.Target] = v.recentCapture
+			v.pieceLocations[v.recentCapture.squareId] = v.recentCapture.piece
 		} else { delete(v.pieceLocations,move.Target)}
+	case EnPassantMove:
+		v.pieceLocations[v.recentCapture.squareId] = v.recentCapture.piece
+		v.pieceLocations[move.Source] = v.pieceLocations[move.Target]
+		delete(v.pieceLocations,move.Target)
+	case CastleMove:
+		additionalData, ok := move.AdditionalData.(map[string][]int)
+		if ok {
+			rookPos := additionalData["rookPos"]
+			v.pieceLocations[move.Source] = v.pieceLocations[move.Target]
+			v.pieceLocations[rookPos[0]] = v.pieceLocations[rookPos[1]]
+			delete(v.pieceLocations,rookPos[1])
+			delete(v.pieceLocations,move.Target)
+		}
 	}
 }
 
@@ -347,6 +422,7 @@ func (cv *CheckmateVariant) PerformMove(move Move)(result, bool){
 	return res,over
 }
 
+// ------------ N-Check -------------------
 type NCheckVariant struct {
 	variant
 	blackKingCheckCount int
@@ -358,7 +434,7 @@ func (ncv *NCheckVariant) GetLegalMoves() []Move {
 	pseudoMoves := ncv.getPseudoLegalMoves(ncv.turn, false)
 	for _, mv := range pseudoMoves {
 		ncv.makeMove(mv)
-		//check king in check
+		//check if king is in check
 		ncv.unmakeMove(mv)
 	}
 	return []Move{}
@@ -406,7 +482,7 @@ func (ncv *NCheckVariant) PerformMove(move Move)(result, bool){
 	return res,over
 }
 
-//Antichess
+// ------------ Antichess -------------------
 type AntichessVariant struct {
 	variant
 }
@@ -415,7 +491,7 @@ func (av *AntichessVariant) GetLegalMoves() []Move {
 	pseudoMoves := av.getPseudoLegalMoves(av.turn, true)
 	var captureMoves []Move = []Move{}
 	for _, move := range pseudoMoves {
-		if move.ClassicMoveType == CaptureMove {
+		if move.ClassicMoveType == CaptureMove || move.ClassicMoveType == EnPassantMove {
 			captureMoves = append(captureMoves, move)
 		}
 	}
@@ -451,5 +527,31 @@ func (av *AntichessVariant) checkGameOver() (result, bool) {
 	} else if blackPieceCount == 0{
 		return BlackWins,true
 	}
-	return 0, false
+	legalMoves := av.GetLegalMoves()
+	if len(legalMoves)==0{
+		return Stalemate,true
+	}
+	return av.checkStalemate()
+}
+
+func (av *AntichessVariant) checkStalemate() (result,bool){
+	darkBlackBishops,lightBlackBishops,lightWhiteBishops, darkWhiteBishops :=0,0,0,0
+	for pos,piece := range av.pieceLocations{
+		if piece.pieceType!=Bishop{
+			continue
+		}
+		if piece.color==ColorBlack{
+			if pos%2==0{
+				darkBlackBishops+=1
+			} else { lightBlackBishops+=1}
+		} else { 
+			if pos%2==0{
+				darkWhiteBishops+=1
+			} else{ lightWhiteBishops+=1}
+		}
+	}
+	if (darkBlackBishops!=0 && darkWhiteBishops!=0) || (lightBlackBishops!=0 && lightWhiteBishops!=0){
+		return 0, false
+	} 
+	return Stalemate,true
 }

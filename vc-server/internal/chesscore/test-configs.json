@@ -4,8 +4,8 @@
         "position":{
             "turn":"white",
             "dimensions":{
-                "ranks":"9",
-                "files":"9"
+                "ranks":9,
+                "files":9
             },
             "pieceLocations": {
                 "black":{
@@ -17,8 +17,8 @@
                 }
             },
             "pieceProps": {
-                "ninja": {
-                    "slideOffsets": [{"xOffset":0, "yOffset":-1},{"xOffset":1, "yOffset":1},{"xOffset":1, "yOffset":-1}]
+                "i": {
+                    "slideOffsets": [{"x":0, "y":-1},{"x":1, "y":1},{"x":1, "y":-1}]
                 }
             },
             "disabledSquares": [12,15,16,25]
@@ -47,18 +47,18 @@
             },
             "pieceProps": {
                 "zebra": {
-                    "slideOffsets": [{"xOffset":0, "yOffset":-1},{"xOffset":1, "yOffset":1},{"xOffset":1, "yOffset":-1}],
+                    "slideOffsets": [{"x":0, "y":-1},{"x":1, "y":1},{"x":1, "y":-1}],
                     "jumpProps": [
                         {
-                            "offset":{"xOffset":1,"yOffset":-2},
+                            "offset":{"x":1,"y":-2},
                             "isCaptureAllowed":"true"
                         },
                         {
-                            "offset":{"xOffset":11,"yOffset":0},
+                            "offset":{"x":11,"y":0},
                             "isCaptureAllowed":"false"
                         },
                         {
-                            "offset":{"xOffset":1,"yOffset":-3},
+                            "offset":{"x":1,"y":-3},
                             "isCaptureAllowed":"true"
                         }
                     ],

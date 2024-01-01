@@ -1,4 +1,4 @@
-package game
+package chesscore
 
 import (
 	"strconv"
@@ -16,7 +16,7 @@ type castlingRights struct {
 
 type promotionProps struct {
 	promotionSquares      map[int]bool
-	allowedPromotionTypes map[pieceType]bool
+	allowedPromotionTypes []pieceType
 }
 
 type AdditionalProps struct {
@@ -33,22 +33,23 @@ type position struct {
 	pieceProps map[rune]pieceProperties
 	turn       Color
 	dimensions
-	disabledSquares map[int]bool
+	wallSquares map[int]bool
 	castlingRights
 	attackedSquares map[int]bool
 	additionalProps AdditionalProps
 	promotionProps promotionProps
+	epSquare int
 }
 
-type JumpMove struct {
+/*type JumpMove struct {
 	Offset           moveOffset `json:"offset"`
 	IsCaptureAllowed bool       `json:"isCaptureAllowed"`
-}
+}*/
 
 type pieceProperties struct {
 	Name         string       `json:"name"`
 	SlideOffsets []moveOffset `json:"slideOffsets,omitempty"`
-	JumpProps    []JumpMove   `json:"jumpProps,omitempty"`
+	JumpOffsets    []moveOffset   `json:"jumpOffset,omitempty"`
 }
 
 type Position struct {
@@ -91,15 +92,15 @@ func (p *position) addStandardPieceProps() {
 		},
 		'n': {
 			Name: "Knight",
-			JumpProps: []JumpMove{
-				{moveOffset{x: -2, y: 1}, true},
-				{moveOffset{x: -2, y: -1}, true},
-				{moveOffset{x: 2, y: 1}, true},
-				{moveOffset{x: 2, y: -1}, true},
-				{moveOffset{x: 1, y: -2}, true},
-				{moveOffset{x: 1, y: 2}, true},
-				{moveOffset{x: -1, y: 2}, true},
-				{moveOffset{x: -1, y: -2}, true},
+			JumpOffsets: []moveOffset{
+				{x: -2, y: 1},
+				{x: -2, y: -1},
+				{x: 2, y: 1},
+				{x: 2, y: -1},
+				{x: 1, y: -2},
+				{x: 1, y: 2},
+				{x: -1, y: 2},
+				{x: -1, y: -2},
 			},
 		}}
 	p.pieceProps = props
@@ -147,7 +148,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 				}
 			} else {
 				if char == '.' {
-					position.disabledSquares[id] = true
+					position.wallSquares[id] = true
 					col++
 					id += 1
 					continue
@@ -202,6 +203,10 @@ func newPosition(gameConfig GameConfig) (position, error) {
 		if strings.Contains(boardData[2], "Q") {
 			position.castlingRights.whiteQueenSide = true
 		}
+		sqId,err:= strconv.Atoi(boardData[3]); 
+		if err!=nil {
+			position.epSquare = -1
+		} else { position.epSquare = sqId}
 	}
 	position.attackedSquares = map[int]bool{}
 	return position, nil
@@ -237,9 +242,14 @@ func (p *position) isOpponentPiecePresent(sourceSquareID int, targetSquareID int
 	return false
 }
 
-func (p *position) isDisabled(targetSquareID int) bool {
-	_, ok := p.disabledSquares[targetSquareID]
+func (p *position) isWall(targetSquareID int) bool {
+	_, ok := p.wallSquares[targetSquareID]
 	return ok
+}
+
+func (p *position) isEmpty(targetSquareID int) bool{
+	_, ok := p.pieceLocations[targetSquareID]
+	return !ok
 }
 func (p *position) getclassicMoveType(targetSquareID int) classicMoveType {
 	if _, ok := p.pieceLocations[targetSquareID]; ok {
