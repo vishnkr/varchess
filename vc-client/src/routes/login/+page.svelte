@@ -3,9 +3,10 @@
 	import { browser } from '$app/environment';
     import type { PageData } from './$types';
 	import LoginBtn from "$lib/components/LoginBtn.svelte";
-
+	import Github from "$lib/icons/Github.svelte";
+	import Google from "$lib/icons/Google.svelte";
 	export let data: PageData;
-	function gotoGithubAuthProvider() {
+	/*function gotoGithubAuthProvider() {
         if (browser) {
             document.cookie = `state=${data?.githubAuthProviderState}`;
 			document.cookie = `provider=github`;
@@ -18,20 +19,32 @@
 			document.cookie = `provider=google`;
         }
         window.location.href = data.googleAuthProviderRedirect || '';
-    }
+    }*/
 	
 </script>
 
-<div class="flex flex-col items-center h-full w-full ">
+<div class="flex flex-col items-center h-full w-full">
 	<h2 class="mt-2 text-center text-3xl text-white font-bold tracking-tight">
-		Login to your account
+	  Sign in to your account
 	</h2>
-	<p class="text-center mt-1 text-white">
-		Or <a href="/register" class="hover:text-blue-800 text-orange-600 font-medium hover:cursor-pointer hover:underline"
-			>register</a
-		> if you don't already have an account.
-	</p>
-	<form action="?/login" method="POST" use:enhance class="flex flex-col items-center space-y-2 w-full pt-4">
+  
+	<div class="w-full max-w-md pt-4 flex flex-col space-y-4">
+		<a href="/login/github">
+		  <button class="flex items-center justify-center p-2 w-full bg-white rounded-full">
+			<Github class="mr-2 h-6 w-6" />
+			<span>Continue with GitHub</span>
+		  </button>
+		</a>
+		<a href="/login/google">
+		  <button class="flex items-center justify-center p-2 w-full bg-white rounded-full">
+			<Google class="mr-2 h-6 w-6" />
+			<span>Continue with Google</span>
+		  </button>
+		</a>
+	  </div>
+	  
+  
+	<!-- 	<form action="?/login" method="POST" use:enhance class="flex flex-col items-center space-y-2 w-full pt-4">
 		<div class="form-control w-full max-w-md">
 			<label for="username" class="label font-medium pb-1">
 				<span class="label-text text-white">Email</span>
@@ -62,11 +75,7 @@
         <div class="flex-grow border-t-2"></div>
         <div class="px-2">OR</div>
         <div class="flex-grow border-t-2"></div>
-    </div>
-	<div class="w-full max-w-md pt-4">
-		<LoginBtn on:click={gotoGithubAuthProvider} provider="github" label="Continue with GitHub"/>
-	</div>
-	<div class="w-full max-w-md pt-4">
 		<LoginBtn on:click={gotoGoogleAuthProvider} provider="google" label="Continue with Google"/>
-	</div>
-</div>
+    </div> -->
+  
+  </div>
