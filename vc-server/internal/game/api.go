@@ -37,7 +37,7 @@ func (api *API) RegisterHandlers(r chi.Router){
 			r.Route("/{id}",func(r chi.Router){
 				r.Get("/",api.HandleGetGame)
 			})
-			r.Post("/",api.HandleCreateGame)
+			r.Post("/save",api.HandleCreateGame)
 		})
 	})
 }

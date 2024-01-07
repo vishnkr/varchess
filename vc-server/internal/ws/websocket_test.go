@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,6 +18,7 @@ func TestHandleWebSocket(t *testing.T) {
 	//roomId:= "345345"
 	//username:= "Test"
 	wsUrl := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
+	log.Println(wsUrl)
 	t.Run("can establish a connection", func(t *testing.T) {
 	c, _, err := websocket.DefaultDialer.Dial(wsUrl, nil)
 	assert.NoError(t, err)
@@ -26,6 +28,7 @@ func TestHandleWebSocket(t *testing.T) {
 
 
 func TestWebSocketClientConnect(t *testing.T) {
+	//ws := NewWebSocket()
 	mux := http.NewServeMux()
 	//mux.HandleFunc("/ws", HandleWSConnection)
 	server := httptest.NewServer(mux)

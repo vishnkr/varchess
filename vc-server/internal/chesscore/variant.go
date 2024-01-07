@@ -1,6 +1,8 @@
 package chesscore
 
-import "unicode"
+import (
+	"strings"
+)
 
 type variantType string
 
@@ -39,7 +41,7 @@ func (v *variant) getTargetSquare(currentSquareID int, offset moveOffset) (int, 
 	row, col := v.toRowCol(currentSquareID)
 	newRow, newCol := row+offset.y, col+offset.x
 	target := v.toPos(newRow, newCol)
-	if newRow < 0 || newCol < 0 || newRow >= v.Ranks || newCol >= v.Files || v.isWall(target) {
+	if newRow < 0 || newCol < 0 || newRow >= v.dimensions.Ranks || newCol >= v.dimensions.Files || v.isWall(target) {
 		return -1, false
 	}
 	return target, true
@@ -49,7 +51,7 @@ func (v variant) genPawnMoves(piece piece, currentSquareID int) []Move{
 	validMoves := []Move{}
 	var rowOffset, doubleMoveStartRank int
 	if piece.color == ColorWhite {
-		doubleMoveStartRank = v.Ranks - 2
+		doubleMoveStartRank = v.dimensions.Ranks - 2
 		rowOffset = -1
 	} else {
 		doubleMoveStartRank = 1
@@ -119,7 +121,7 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 	for row := -1; row <= 1; row += 1 {
 		for col := -1; col <= 1; col += 1 {
 			target := v.toPos(curRow+row, curCol+col)
-			if (row == 0 && col == 0) || (target<0 || target>=v.Ranks*v.Files) {
+			if (row == 0 && col == 0) || (target<0 || target>=v.dimensions.Ranks*v.dimensions.Files) {
 				continue
 			}
 			if !v.isSameColorPiecePresent(currentSquareId, target) && !v.isWall(target) {
@@ -180,11 +182,11 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) (bool,[]int){
 	curRow,_ := v.toRowCol(kingPos)
 	var rookSrc, rookTarget, dx,i int
-	if v.Objective.ObjectiveType == Antichess{
+	if v.Objective.Type == Antichess{
 		return false,[]int{-1,-1}
 	}
 	if isKingside{
-		rookSrc,dx = v.toPos(curRow,v.Files-1),1
+		rookSrc,dx = v.toPos(curRow,v.dimensions.Files-1),1
 		i = kingPos+dx
 		rookTarget = i
 		if piece,ok := v.pieceLocations[rookSrc]; ok && piece.color == color && piece.pieceType == Rook{
@@ -219,7 +221,7 @@ func (v variant) getPseudoLegalMoves(color Color, kingCaptureAllowed bool) []Mov
 		} else if piece.pieceType == King {
 			validMoves = append(validMoves,v.genKingMoves(piece, currentSquareID)...)
 		} else {
-			var props pieceProperties = v.pieceProps[unicode.ToLower(piece.notation)]
+			var props PieceProperties = v.pieceProps[strings.ToLower(piece.notation)]
 			validMoves = append(validMoves, v.genSlideMoves(&piece, currentSquareID, &props)...)
 			validMoves = append(validMoves, v.genJumpMoves(&piece, currentSquareID, &props)...)
 		}
@@ -227,7 +229,7 @@ func (v variant) getPseudoLegalMoves(color Color, kingCaptureAllowed bool) []Mov
 	return validMoves
 }
 
-func (v *variant) genSlideMoves(piece *piece, currentSquareID int, props *pieceProperties) []Move{
+func (v *variant) genSlideMoves(piece *piece, currentSquareID int, props *PieceProperties) []Move{
 	validMoves := []Move{}
 	for _, offset := range props.SlideOffsets {
 		target, valid := v.getTargetSquare(currentSquareID, offset)
@@ -259,7 +261,7 @@ func (v *variant) genSlideMoves(piece *piece, currentSquareID int, props *pieceP
 	return validMoves
 }
 
-func (v *variant) genJumpMoves(piece *piece, currentSquareID int, props *pieceProperties) []Move{
+func (v *variant) genJumpMoves(piece *piece, currentSquareID int, props *PieceProperties) []Move{
 	validMoves := []Move{}
 	for _, jumpMove := range props.JumpOffsets {
 		target, valid := v.getTargetSquare(currentSquareID, jumpMove)

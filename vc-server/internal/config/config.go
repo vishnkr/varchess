@@ -15,12 +15,14 @@ const (
 	dbName = "DB_NAME"
 	dbPassword = "DB_PASSWORD"
 
+	serverHost = "SERVER_HOST"
 	serverPort = "SERVER_PORT"
 	envKey = "ENVIRONMENT"
 	
 )
 
 type Config struct{
+	ServerHost string
 	ServerPort string
 	DB DBConfig
 }

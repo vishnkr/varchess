@@ -21,7 +21,7 @@ const (
 	writeWait = 10 * time.Second
 	pongWait = 60 * time.Second
 	pingPeriod = (pongWait * 9) / 10
-	maxMessageSize = 512
+	maxMessageSize = 1024
 )
 
 var (
@@ -87,8 +87,13 @@ func (c *Client) writePump(){
 
 func (c *Client) unregisterAll() {
 	for _, hub := range c.hubs {
-	 hub.unregister <- c
+		log.Println("unregistering",hub.gameId)
+	 	hub.unregister <- c
 	}
+}
+
+func (c *Client) broadcastToMembers(gameId string,data []byte){
+	c.ws.gameHubs[gameId].broadcast <- data
 }
 
 func handleMessage(c *Client, msg []byte) {

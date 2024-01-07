@@ -1,10 +1,13 @@
 package ws
 
-import "varchess/internal/chesscore"
+import (
+	"varchess/internal/chesscore"
+)
+
 
 type gameHub struct {
  gameId string
- gameState chesscore.Game
+ game *chesscore.Game
  clients map[*Client]bool
  broadcast chan []byte
  register chan *Client

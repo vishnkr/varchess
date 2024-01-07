@@ -1,36 +1,25 @@
 [
     {
-        "variantType":"Custom",
+        "variant_type":"Custom",
         "position":{
-            "turn":"white",
             "dimensions":{
-                "ranks":9,
-                "files":9
+                "ranks":8,
+                "files":8
             },
-            "pieceLocations": {
-                "black":{
-                    "pawn":[34,48],
-                    "king": [9]
-                },"white":{
-                    "knight":[58],
-                    "king":[1]
-                }
-            },
-            "pieceProps": {
+            "fen":" rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "piece_props": {
                 "i": {
                     "slideOffsets": [{"x":0, "y":-1},{"x":1, "y":1},{"x":1, "y":-1}]
                 }
-            },
-            "disabledSquares": [12,15,16,25]
+            }
         },
         "objective":{
             "type":"checkmate"
         }
     },
     {
-        "variantType":"Custom",
+        "variant_type":"Custom",
         "position":{
-            "turn":"black",
             "dimensions":{
                 "ranks":"14",
                 "files":"6"

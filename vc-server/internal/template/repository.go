@@ -24,6 +24,13 @@ type repository struct {
 	q  *db.Queries
 }
 
+func NewRepository(conn *db.Database) *repository{
+	return &repository{
+		db:conn,
+		q:db.New(conn),
+	}
+}
+
 func (r *repository) CreateTemplate(ctx context.Context, template Template) error{
 	arg := db.CreateTemplateParams{
 		TemplateName: template.TemplateName,

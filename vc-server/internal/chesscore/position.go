@@ -30,9 +30,9 @@ type AdditionalProps struct {
 type position struct {
 	pieceLocations map[int]piece
 	//pieceProps stores move patterns for custom pieces
-	pieceProps map[rune]pieceProperties
+	pieceProps map[string]PieceProperties
 	turn       Color
-	dimensions
+	dimensions Dimensions
 	wallSquares map[int]bool
 	castlingRights
 	attackedSquares map[int]bool
@@ -46,20 +46,20 @@ type position struct {
 	IsCaptureAllowed bool       `json:"isCaptureAllowed"`
 }*/
 
-type pieceProperties struct {
+type PieceProperties struct {
 	Name         string       `json:"name"`
-	SlideOffsets []moveOffset `json:"slideOffsets,omitempty"`
-	JumpOffsets    []moveOffset   `json:"jumpOffset,omitempty"`
+	SlideOffsets []moveOffset `json:"slide_offsets,omitempty"`
+	JumpOffsets    []moveOffset   `json:"jump_offsets,omitempty"`
 }
 
 type Position struct {
-	Dimensions dimensions               `json:"dimensions"`
+	Dimensions Dimensions               `json:"dimensions"`
 	Fen        string                   `json:"fen"`
-	PieceProps map[rune]pieceProperties `json:"pieceProps,omitempty"`
+	PieceProps map[string]PieceProperties `json:"piece_props,omitempty"`
 }
 
 type GameConfig struct {
-	VariantType        variantType `json:"variantType"`
+	VariantType        variantType `json:"variant_type"`
 	Position 		   Position `json:"position"`
 	Objective          Objective `json:"objective"`
 }
@@ -77,20 +77,20 @@ func (p *position) addStandardPieceProps() {
 		{x: 0, y: 1},
 		{x: 0, y: -1},
 	}
-	props := map[rune]pieceProperties{
-		'q': {
+	props := map[string]PieceProperties{
+		"q": {
 			Name:         "Queen",
 			SlideOffsets: append(nonDiagonals, diagonals...),
 		},
-		'b': {
+		"b": {
 			Name:         "Bishop",
 			SlideOffsets: diagonals,
 		},
-		'r': {
+		"r": {
 			Name:         "Rook",
 			SlideOffsets: nonDiagonals,
 		},
-		'n': {
+		"n": {
 			Name: "Knight",
 			JumpOffsets: []moveOffset{
 				{x: -2, y: 1},
@@ -108,7 +108,7 @@ func (p *position) addStandardPieceProps() {
 func newPosition(gameConfig GameConfig) (position, error) {
 	boardData := strings.Split(gameConfig.Position.Fen, " ")
 	rowsData := strings.Split(boardData[0], "/")
-	var standardPieceMap = map[rune]pieceType{'p': Pawn, 'k': King, 'n': Knight, 'q': Queen, 'r': Rook, 'b': Bishop}
+	var standardPieceMap = map[string]pieceType{"p": Pawn,"k": King, "n": Knight, "q": Queen, "r": Rook, "b": Bishop}
 	position := position{
 		pieceLocations: make(map[int]piece),
 		dimensions:     gameConfig.Position.Dimensions,
@@ -118,7 +118,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 			kingCaptureAllowed: false,
 		},
 	}
-	if gameConfig.Objective.ObjectiveType == Antichess{
+	if gameConfig.Objective.Type == Antichess{
 		position.additionalProps.kingCaptureAllowed = true
 	}
 	var col, id int = 0, 0
@@ -129,7 +129,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 		col = 0
 		secDigit = 0
 		for index, char := range row {
-			if unicode.IsNumber(rune(char)) {
+			if unicode.IsNumber(char) {
 				if index+1 < len(row) && unicode.IsNumber(rune(row[index+1])) {
 					secDigit, _ = strconv.Atoi(string(char))
 				} else {
@@ -159,19 +159,20 @@ func newPosition(gameConfig GameConfig) (position, error) {
 				} else {
 					color = ColorBlack
 				}
-				pieceRune := unicode.ToLower(char)
-				if !isStandardPiece(pieceRune) {
+				pieceChar := string(char)
+				
+				if !isStandardPiece(pieceChar) {
 					position.pieceLocations[id] = piece{
 						color:     color,
-						notation:  pieceRune,
+						notation:  pieceChar,
 						pieceType: CustomPiece,
 					}
-					position.pieceProps[pieceRune] = gameConfig.Position.PieceProps[pieceRune]
+					position.pieceProps[pieceChar] = gameConfig.Position.PieceProps[pieceChar]
 				} else {
 					piece := piece{
 						color:     color,
-						notation:  pieceRune,
-						pieceType: standardPieceMap[pieceRune],
+						notation:  pieceChar,
+						pieceType: standardPieceMap[pieceChar],
 					}
 					position.pieceLocations[id] = piece
 					if piece.pieceType == King {
@@ -262,17 +263,17 @@ func (p *position) getclassicMoveType(targetSquareID int) classicMoveType {
 func (p *position) switchTurn() { p.turn = p.getOpponentColor() }
 
 func (p *position) toRowCol(squareId int) (int, int) {
-	return squareId / p.Files, squareId % p.Files
+	return squareId / p.dimensions.Files, squareId % p.dimensions.Files
 }
 
 func (p *position) toPos(row int, col int) int {
-	return row*p.Files + col
+	return row*p.dimensions.Files + col
 }
 
-func isStandardPiece(pieceName rune) bool {
-	pieces := []rune{'p', 'k', 'n', 'b', 'r', 'q'}
+func isStandardPiece(piece string) bool {
+	pieces := []string{"p", "k", "n", "b", "r", "q"}
 	for _, p := range pieces {
-		if p == pieceName {
+		if p == piece {
 			return true
 		}
 	}

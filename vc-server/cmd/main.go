@@ -10,8 +10,10 @@ import (
 	"time"
 	"varchess/internal/config"
 	"varchess/internal/db"
+	"varchess/internal/game"
 	"varchess/internal/logger"
 	mw "varchess/internal/middleware"
+	"varchess/internal/template"
 	"varchess/internal/utils"
 	"varchess/internal/ws"
 
@@ -34,11 +36,19 @@ func main(){
 	defer conn.Close()
 	router := chi.NewRouter()
 	server := http.Server{
-		Addr: cfg.ServerPort,
+		Addr: cfg.ServerHost + ":" + cfg.ServerPort,
 		Handler: serverHandler(router,l,conn),
 	}
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Could not start server: %s", err)
+		}
+	}()
+
 	<-stop
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -51,7 +61,11 @@ func main(){
 func serverHandler(r chi.Router, l zerolog.Logger, db *db.Database) chi.Router{
 	r.Use(mw.Cors())
 	r.Use(mw.RequestLogger(l))
-	websocket:= ws.NewWebSocket()
+	gameRepository := game.NewRepository(db)
+	gameService := game.NewService(gameRepository)
+	templateRepository := template.NewRepository(db)
+	templateService := template.NewService(templateRepository)
+	websocket:= ws.NewWebSocket(gameService,templateService)
 	websocket.RegisterHandlers(r)
 	r.Get("/health",func (w http.ResponseWriter, _ *http.Request) {
 		utils.WriteStatus(w, http.StatusOK, struct {

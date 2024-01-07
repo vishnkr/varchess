@@ -1,6 +1,9 @@
 package ws
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"varchess/internal/chesscore"
+)
 
 
 
@@ -25,7 +28,7 @@ type Request struct {
    
 type Response struct {
 	Event        eventType `json:"event"`
-	Success      bool   `json:"sucess"`
+	Success      bool   `json:"success"`
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
@@ -34,8 +37,24 @@ type RequestConnectUser struct {
 	Params ParamsUserConnect `json:"params"`
 }
 type ParamsUserConnect struct{
-	GameID string `json:"game_id"`
+	Type string `json:"connect_type"` // Create or Join
 	SessionID string `json:"session_id"`
+	ParamsUserConnectCreate
+	ParamsUserConnectJoin
+}
+
+type ParamsUserConnectCreate struct{
+	GameConfig chesscore.GameConfig `json:"game_config"`
+}
+
+type ParamsUserConnectJoin struct{
+	GameID string `json:"game_id"`
+}
+
+type ParamsChat struct{
+	GameID string `json:"game_id"`
+	User string `json:"username"`
+	Message string `json:"message"`
 }
 
 type ResultUserConnect struct {

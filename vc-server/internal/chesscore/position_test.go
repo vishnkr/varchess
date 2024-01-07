@@ -19,10 +19,10 @@ func TestCastlingRights(t *testing.T) {
 	gameConfig := GameConfig{
 		VariantType: Custom,
 		Position: Position{
-			Dimensions: dimensions{Ranks: 8, Files: 8},
+			Dimensions: Dimensions{Ranks: 8, Files: 8},
 			Fen:       "n3r3/8/7p/8/8/8/8/R1B1K2R w Kq - 0 1", //"rnbkqbnr/pppppppp/q7/8/8/8/1PPPPPPP/RNBKQBNR w Qkq - 0 1",
 		},
-		Objective: Objective{ObjectiveType: Antichess},
+		Objective: Objective{Type: Antichess},
 	}
 
 	position, err := newPosition(gameConfig)
@@ -43,16 +43,16 @@ func TestCustomPieceMoves(t *testing.T) {
 		gameConfig := GameConfig{
 			VariantType: Custom,
 			Position: Position{
-				Dimensions: dimensions{Ranks: 8, Files: 8},
+				Dimensions: Dimensions{Ranks: 8, Files: 8},
 				Fen:       "n3r3/7a/p7/8/8/8/3k4/3R4 b - - 0 1", //"rnbkqbnr/pppppppp/q7/8/8/8/1PPPPPPP/RNBKQBNR w Qkq - 0 1",
-				PieceProps: map[rune]pieceProperties{
-					'a':{
+				PieceProps: map[string]PieceProperties{
+					"a":{
 						Name: "testPiece",
 						JumpOffsets: []moveOffset{{x: -2,y: 2},{x:-1,y:1},{x:3,y:-1},{x:1,y:-2}},
 					},
 				},
 			},
-			Objective: Objective{ObjectiveType: Checkmate},
+			Objective: Objective{Type: Checkmate},
 		}
 
 		v,err :=newVariant(gameConfig)
@@ -68,10 +68,10 @@ func TestAntichessEP(t *testing.T){
 	gc := GameConfig{
 		VariantType: Custom,
 		Position: Position{
-			Dimensions: dimensions{Ranks: 8, Files: 8},
+			Dimensions: Dimensions{Ranks: 8, Files: 8},
 			Fen:       "rnbqkbnr/ppp1ppp1/7p/3pP3/8/8/7R/8 w KQkq 19 0 1",
 		},
-		Objective: Objective{ObjectiveType: Antichess},
+		Objective: Objective{Type: Antichess},
 	}
 	v, _ := newVariant(gc)
 	moves := v.getPseudoLegalMoves(ColorWhite, false)
@@ -85,10 +85,10 @@ func TestMovegenPrint(t *testing.T){
 	gameConfig := GameConfig{
 		VariantType: Custom,
 		Position: Position{
-			Dimensions: dimensions{Ranks: 8, Files: 8},
+			Dimensions: Dimensions{Ranks: 8, Files: 8},
 			Fen:       "n3r3/2B5/7p/8/8/8/8/R4K1R b Ke - 0 1",
 		},
-		Objective: Objective{ObjectiveType: Antichess},
+		Objective: Objective{Type: Antichess},
 	}
 	v, _ := newVariant(gameConfig)
 	moves := v.getPseudoLegalMoves(ColorBlack, false)

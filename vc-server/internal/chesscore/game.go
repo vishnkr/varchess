@@ -2,14 +2,13 @@ package chesscore
 
 import (
 	"bytes"
-	"encoding/json"
 )
 
 type classicMoveType uint8
 
 type Color string
 
-type GameObjective uint8
+type GameObjective string
 
 type pieceType string
 
@@ -47,11 +46,11 @@ const (
 	DuckPlacement variantMoveType = iota
 	Teleport
 
-	Checkmate GameObjective = iota
-	NCheck
-	Antichess
-	Targetsquare
-	Capture
+	Checkmate GameObjective = "checkmate"
+	NCheck GameObjective = "ncheck"
+	Antichess GameObjective = "antichess"
+	Targetsquare GameObjective = "target"
+	Capture GameObjective = "capture"
 
 	CaptureOnlyJump allowedJumpMoveType = iota
 	QuietOnlyJump
@@ -65,11 +64,11 @@ type moveOffset struct {
 
 type piece struct {
 	color    Color
-	notation rune
+	notation string
 	pieceType
 }
 
-type dimensions struct {
+type Dimensions struct {
 	Ranks int `json:"ranks"`
 	Files int `json:"files"`
 }
@@ -84,24 +83,24 @@ type Move struct {
 	Source          int             `json:"source"`
 	Target          int             `json:"target"`
 	Turn            Color           `json:"turn"`
-	PieceType       pieceType       `json:"pieceType"`
-	PieceNotation   rune            `json:"pieceNotation"`
-	ClassicMoveType classicMoveType `json:"classicMoveType"`
-	VariantMoveType variantMoveType `json:"variantMoveType,omitempty"`
-	AdditionalData interface{} 		`json:"additionalData,omitempty"`
+	PieceType       pieceType       `json:"piece_type"`
+	PieceNotation   string            `json:"piece_notation"`
+	ClassicMoveType classicMoveType `json:"classic_move_type"`
+	VariantMoveType variantMoveType `json:"variant_move_type,omitempty"`
+	AdditionalData interface{} 		`json:"additional_data,omitempty"`
 }
 
 type Objective struct {
-	ObjectiveType  GameObjective `json:"objectiveType"`
-	ObjectiveProps interface{}   `json:"objectiveProps,omitempty"`
+	Type  GameObjective `json:"type"`
+	ObjectiveProps interface{}   `json:"objective_props,omitempty"`
 }
 
-func CreateGame(gameConfigJSON string) (*Game, error) {
-	var gameConfig GameConfig
+func CreateGame(gameConfig GameConfig) (*Game, error) {
+	/*var gameConfig GameConfig
 	err := json.Unmarshal([]byte(gameConfigJSON), gameConfig)
 	if err != nil {
 		return nil, err
-	}
+	}*/
 	variant, err := newVariant(gameConfig)
 	if err != nil {
 		return nil, err
@@ -127,7 +126,7 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 	}
 	switch variantType {
 	case Custom:
-		switch gameConfig.Objective.ObjectiveType {
+		switch gameConfig.Objective.Type {
 		case Antichess:
 			newVariant = &AntichessVariant{variant}
 		case NCheck:
@@ -148,6 +147,10 @@ func (v *variant) getGameConfig()(GameConfig,error){
 	return gameConfig,nil
 }
 
+func IsValidConfig (config GameConfig) (bool,error){
+	return true,nil
+}
+
 func (v *variant) getPosition() Position{
 	position := Position{Dimensions: v.dimensions,PieceProps: v.pieceProps}
 	var fen bytes.Buffer
@@ -155,7 +158,7 @@ func (v *variant) getPosition() Position{
 		for j:=0;j<v.dimensions.Ranks;j++{
 			id:= v.toPos(i,j)
 			if piece,ok := v.position.pieceLocations[id]; ok{
-				fen.WriteRune(piece.notation)
+				fen.WriteString(piece.notation)
 			} else if _, ok:= v.position.wallSquares[id];ok{
 				fen.WriteString(".")
 			}

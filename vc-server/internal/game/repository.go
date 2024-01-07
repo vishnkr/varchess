@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"varchess/internal/db"
+
+	"github.com/google/uuid"
 )
 
 type Game struct {
-	ID           int32 	`json:"id"`
+	ID           uuid.UUID 	`json:"id"`
 	CurrentState string	`json:"current_state"`
 	GameTemplate string `json:"game_template"`
 	Player1       string `json:"player1"`
@@ -44,3 +46,5 @@ func (r *repository) CreateGame(ctx context.Context, game Game) error{
 	return nil
 }
 
+func (r *repository) UpdateGame(ctx context.Context, game Game) error{ return nil}
+func (r *repository) DeleteGame(ctx context.Context, gameID int32) error{ return nil }
