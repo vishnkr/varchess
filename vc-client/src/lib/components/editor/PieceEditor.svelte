@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Color } from '$lib/board/types';
-	import { pieceEditor, editorSettings } from '$lib/store/editor';
+	import { editorSubTypeSelected, pieceEditor } from '$lib/store/editor';
 	import TagInput from '../shared/TagInput.svelte';
 	import { EditorSubType } from '../types';
 	// @ts-ignores
@@ -31,13 +31,7 @@
 	let setMovePattern = false;
 	const toggleSetMP = () => {
 		setMovePattern = !setMovePattern;
-		editorSettings.update((val) => {
-			const subtype = setMovePattern ? EditorSubType.MovePattern : EditorSubType.Piece;
-			return {
-				...val,
-				editorSubTypeSelected: subtype
-			};
-		});
+		editorSubTypeSelected.update((val) => setMovePattern ? EditorSubType.MovePattern : EditorSubType.Piece);
 	};
 
 	const cancel = () =>{
@@ -47,24 +41,16 @@
 
 	const selectPiece = (pieceClass: string, group: string) => {
 		selectedPiece = { ...selectedPiece, class: pieceClass, group };
-		editorSettings.update((val) => ({
+		pieceEditor.update((val) => ({
 			...val,
 			pieceSelection: {
 				pieceType: pieceClass,
-				color
+				color,
+				group
 			}
 		}));
 	};
-	const updateColor = (newColor: Color) => {
-		color = newColor;
-		editorSettings.update((val) => ({
-			...val,
-			pieceSelection: {
-				pieceType: selectedPiece.class,
-				color
-			}
-		}));
-	};
+	const updateColor = (newColor: Color) => pieceEditor.updateColor(newColor);
 </script>
 
 <div>
@@ -134,9 +120,8 @@
 					{#each customPieces as piece}
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<div
-							class="flex flex-cols items-center rounded-md bg-gray-300 border border-gray-200 dark:border-gray-700 
-						cursor-pointer my-1 
-						"
+							class="flex flex-cols items-center rounded-md
+							 bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer my-1"
 							on:click={() => selectPiece(piece.class, 'custom')}
 						>
 							<div class="w-2/3">

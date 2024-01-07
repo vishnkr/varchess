@@ -1,11 +1,11 @@
-import type { BoardEditorState, PieceEditorState } from './types';
-import { writable, type Writable } from 'svelte/store';
+import { type BoardEditorState, type PieceEditorState, VariantType, Objective, type RuleEditorState } from './types';
+import { writable } from 'svelte/store';
 import { EditorSubType } from '$lib/components/types';
-import { type EditorSettings, Color } from '$lib/board/types';
+import {  Color,type Position } from '$lib/board/types';
 
 function newPieceEditorStore(){
     const { subscribe, set, update } = writable<PieceEditorState>(
-      { movePatterns: {}, pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' }}
+      { movePatterns:{}, pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' }}
       )
     const addJumpPattern= (piece:string,offset:number[])=>{
       update((editorState)=>{
@@ -80,7 +80,12 @@ function newPieceEditorStore(){
             return {...editorState,movePatterns:newMovePatterns}
         })
     }
-
+    const updateColor = (color: Color) => {
+      update((editorState) => ({
+        ...editorState,
+        pieceSelection: { ...editorState.pieceSelection, color },
+      }));
+    };
     return{
       subscribe,
       set,
@@ -90,6 +95,7 @@ function newPieceEditorStore(){
       addSlidePattern,
       removeSlidePattern,
       deletePiecePattern,
+      updateColor,
     }
   }
 
@@ -97,7 +103,8 @@ function newBoardEditorStore(){
   const {set, update,subscribe}= writable<BoardEditorState>({
     ranks:8,
     files:8,
-    theme: "standard"
+    theme: "standard",
+    isWallSelectorOn: false,
   })
 
   return {
@@ -107,15 +114,22 @@ function newBoardEditorStore(){
   }
 }
 
+function newRuleStore(){
+  const {set, update,subscribe}= writable<RuleEditorState>({
+    variantType: VariantType.Custom,
+    objective: Objective.Checkmate
+  });
+  return {set, subscribe, update}
+}
+
+function newPositionStore(){
+  const {set, update, subscribe} = writable<Position>({piecePositions:{},walls:{}})
+  return { set, update, subscribe}
+}
 
 
-
-export const editorSettings: Writable<EditorSettings> = writable({
-	isWallSelectorOn: false,
-	pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' },
-	editorSubTypeSelected: EditorSubType.Board,
-});
-
-
-export const pieceEditor = newPieceEditorStore()
-export const boardEditor = newBoardEditorStore()
+export const editorSubTypeSelected = writable<EditorSubType>(EditorSubType.Board);
+export const pieceEditor = newPieceEditorStore();
+export const boardEditor = newBoardEditorStore();
+export const positionStore = newPositionStore();
+export const ruleEditor = newRuleStore();

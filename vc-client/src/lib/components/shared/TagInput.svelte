@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { editorSettings } from "$lib/store/editor";
 	import { pieceEditor } from "$lib/store/editor";
 
     let selectedOption = "";
@@ -11,13 +10,13 @@
     let options = [...initialOptions];
 
     const addSlide = (offset:number[])=>{
-      const pieceType = $editorSettings.pieceSelection?.pieceType;
+      const pieceType = $pieceEditor.pieceSelection?.pieceType;
       if(pieceType){
         pieceEditor.addSlidePattern(pieceType,offset)
       }
 	  } 
     const removeSlide = (offset:number[])=>{
-      const pieceType = $editorSettings.pieceSelection?.pieceType;
+      const pieceType = $pieceEditor.pieceSelection?.pieceType;
       if(pieceType){
         pieceEditor.removeSlidePattern(pieceType,offset)
       }
