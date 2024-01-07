@@ -4,17 +4,15 @@
 	import { onMount } from 'svelte'
 	import "../app.css"
 	import { me, type User } from '$lib/store/stores';
+	import { github } from '@lucia-auth/oauth/providers';
 	
 	export let data;
-	let user:Record<string, any>|undefined;
-	let isLoggedIn:boolean;
-	let username:string;
-	$: {
-		({ user, isLoggedIn } = data);
-		username = user?.username || '';
-	}
-	
 
+	let userId: string|undefined;
+	let username:string|undefined;
+	$: {
+		({ userId, username } = data);	
+	}
 	let isOpen = false;
 
 	function toggleDropdown() {
@@ -48,12 +46,9 @@
 					</div>
 				</div>
 				<div class="hidden md:flex items-center space-x-1" />
-				{#if !isLoggedIn}
+				{#if !userId}
 				<div class="text-white md:flex items-center justify-end">
-					<a href="/guide" class="block py-2 px-4 md:text-lg text-sm hover:bg-gray-800  cursor-pointer">Guide</a>
-					
 					<a href="/login" class="block py-2 px-4 md:text-lg text-sm hover:bg-gray-800  cursor-pointer">Log in</a>
-					
 				</div>
 				{:else}
 					<div class="text-white md:flex items-center justify-end relative">

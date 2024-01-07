@@ -72,16 +72,16 @@ export interface SquareInfo {
 export type Coordinate = [number, number];
 
 export type PiecePositions = Record<SquareIdx, IPiece>;
-export type DisabledSquares = Record<SquareIdx, boolean>;
+export type Walls = Record<SquareIdx, boolean>;
 export interface Position {
 	piecePositions: PiecePositions;
-	disabled: DisabledSquares;
+	walls: Walls;
 }
 
 export interface PiecePresentInfo {
 	isPiecePresent: boolean;
 	piece?: IPiece | null;
-	disabled?: boolean;
+	wall?: boolean;
 }
 export type CoordinatetoIDMap = Record<string, SquareIdx>;
 export interface BoardConfig {
@@ -99,7 +99,6 @@ export enum GameType {
 	PREDEFINED
 }
 export interface EditorSettings {
-	isWallSelectorOn: boolean;
 	pieceSelection: IPiece | null;
 	editorSubTypeSelected: EditorSubType;
 }

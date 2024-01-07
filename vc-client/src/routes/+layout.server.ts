@@ -1,14 +1,15 @@
+import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export type OutputType = { user: object; isLoggedIn: boolean };
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	const user = locals.user
-	if (user){
-		return {user, isLoggedIn:true};
-	}
-	return {
-		user: undefined,
-		isLoggedIn:false
+	const session = await locals.auth.validate();
+
+	if (session){
+		return {
+			userId: session.user.userId,
+			username: session.user.username
+		};
 	}
 }

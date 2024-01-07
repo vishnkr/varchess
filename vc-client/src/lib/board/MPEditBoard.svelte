@@ -1,11 +1,11 @@
 <script lang="ts">
-import { pieceEditor,editorSettings } from '$lib/store/editor';
+import { pieceEditor } from '$lib/store/editor';
 import { MoveType } from '$lib/store/types';
 import Board from './Board.svelte';
 import { BoardType, type BoardConfig, Color } from './types';
 
 let getMovePatternBoardConfig: ()=> BoardConfig = ()=>{
-		const piece = $editorSettings.pieceSelection!;
+		const piece = $pieceEditor.pieceSelection!;
 		const pieceType = piece.color === Color.WHITE ? piece.pieceType.toUpperCase() : piece.pieceType;
 		return {
 			fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
@@ -17,7 +17,7 @@ let getMovePatternBoardConfig: ()=> BoardConfig = ()=>{
 		}
 }
     let center = 4;
-    const piece = $editorSettings.pieceSelection;
+    const piece = $pieceEditor.pieceSelection;
     let movePatterns = null;
     let mpSquares: Record<number,MoveType> = {};
 

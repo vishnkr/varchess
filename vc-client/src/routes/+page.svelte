@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { generateUsername, handleKeyDown } from '$lib/utils';
 	import Modal from '$lib/components/shared/Modal.svelte';
 	import { goto } from '$app/navigation';
 	import { BoardType, type BoardConfig } from '$lib/board/types';
@@ -7,13 +6,6 @@
 	import { me, roomId } from '$lib/store/stores';
 	import { displayAlert, getErrorMessage } from '$lib/store/alert';
 
-	let showModal = false;
-	let username = generateUsername();
-	const setShowModal = (val: boolean) => {
-		showModal = val;
-		username = generateUsername();
-	};
-	const baseUrl: string = import.meta.env.VITE_SERVER_BASE;
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
 		dimensions: { ranks: 7, files: 9 },
@@ -49,36 +41,6 @@
 		}
 	];
 
-	async function handleSubmit() {
-		if (username?.length == 0) {
-		}
-		showModal = false;
-		try{
-			const response = await fetch(`${baseUrl}/rooms`, {
-				method: 'POST',
-				headers: {
-				'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({username}) 
-			});
-			if (response.ok){
-
-					const data = await response.json();
-					if(data.roomId) {
-						me.set({username:username})
-						roomId.set(data.roomId)
-						goto(`/editor/${data.roomId}`)
-					} 			
-				
-			} else {
-						displayAlert('Unable to create room. Please try again later.','DANGER',6000)
-			}
-		} catch(e){
-			displayAlert(getErrorMessage(e),'DANGER',7000)
-			//displayAlert(e.message,'DANGER',7000)
-		}
-		
-	}
 </script>
 
 <svelte:head>
@@ -131,44 +93,5 @@
 			</div>
 		{/each}
 	</div>
-	<Modal isOpen={showModal} on:close={() => setShowModal(false)}>
-		<div class="text-white bg-[#1d2a35] py-3">
-			<div class="text-center px-3 py-1">
-				<h3>Create a room now to play with friends!</h3>
-				<p>
-					NOTE: Game templates can be downloaded for future use
-				</p>
-			</div>
-			<form on:submit|preventDefault={handleSubmit}>
-				<div class="grid grid-cols-1 grid-rows-2">
-					<div class="flex justify-center items-center">
-						<div class="p-1 items-center">
-							<label for="username">
-								Your username
-								<input
-									type="text"
-									bind:value={username}
-									class="rounded-md border bg-slate-600 text-white border-gray-300 px-4 py-2 focus:border-blue-300 outline-none"
-									name="username"
-								/>
-							</label>
-						</div>
-					</div>
-					<div class="flex justify-center items-center">
-						<div>
-							<button type="submit" class="flex items-center justify-center gap-x-6">
-								<!-- svelte-ignore a11y-click-events-have-key-events -->
-								<span
-									class="btn-custom-1"
-									on:keydown={(e) => handleKeyDown(e, handleSubmit)}
-								>
-									Create Room
-								</span>
-							</button>
-						</div>
-					</div>
-				</div>
-			</form>
-		</div>
-	</Modal>
+	
 </section>

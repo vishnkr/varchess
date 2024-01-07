@@ -11,14 +11,15 @@
 
 	export let boardConfig: BoardConfig;
 	boardConfig = { ...boardConfig, interactive: false, editable: true };
+	
 	let { squares } = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
 	const convertedPos = convertFenToPosition(boardConfig.fen);
-	let position: Position = { piecePositions: {}, disabled: {} };
+	let position: Position = { piecePositions: {}, walls: {} };
 	let maxBoardState: PiecePresentInfo[][] = $editorMaxBoard;
-	if (convertedPos) {
+	if ($editorMaxBoard.every(row => row.length === 0) && convertedPos) {
 		({ position, maxBoardState } = convertedPos);
+		editorMaxBoard.set(maxBoardState);
 	}
-	editorMaxBoard.set(maxBoardState);
 
 	export let customBoardId = "board";
 	function updateBoardState() {

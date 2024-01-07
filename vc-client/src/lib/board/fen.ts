@@ -21,7 +21,7 @@ export const convertFenToPosition = (
 	const fenSplit = fen.split(' ');
 	const ranks = fenSplit[0].split('/');
 	const rankCount = ranks.length;
-	const position: Position = { piecePositions: {}, disabled: {} };
+	const position: Position = { piecePositions: {}, walls: {} };
 	dimensions.ranks = rankCount;
 	if (rankCount > 16) {
 		return undefined;
@@ -40,8 +40,8 @@ export const convertFenToPosition = (
 		while (j < ranks[i].length) {
 			char = ranks[i].charAt(j);
 			if (char === '.') {
-				maxBoardState[i][col] = { isPiecePresent: false, disabled: true };
-				position.disabled[idx] = true;
+				maxBoardState[i][col] = { isPiecePresent: false, wall: true };
+				position.walls[idx] = true;
 				colCount += 1;
 				idx += 1;
 				col += 1;

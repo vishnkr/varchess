@@ -17,7 +17,7 @@
 	export let customBoardId = "board";
 	export let position: Position = convertFenToPosition(boardConfig.fen)?.position ?? {
 		piecePositions: {},
-		disabled: {}
+		walls: {}
 	};
 	export let mpSquares : Record<number,MoveType>|null = null;
 </script>
@@ -47,7 +47,7 @@
 					squareData={squares[idx]}
 					color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
 					piece={position.piecePositions[idx] ?? null}
-					disabled={position.disabled[idx] ?? false}
+					wall={position.walls[idx] ?? false}
 					boardType={boardConfig.boardType}
 				/>
 				{/if}

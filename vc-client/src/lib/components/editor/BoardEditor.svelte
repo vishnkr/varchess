@@ -8,7 +8,7 @@
 
 	// @ts-ignore
 	import Switch from 'svelte-switch';
-	import { editorSettings } from '../../store/editor';
+	import {boardEditor } from '../../store/editor';
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
@@ -17,7 +17,7 @@
 	function handleChange(e) {
 		const { checked } = e.detail;
 		checkedValue = checked;
-		editorSettings.update((val) => ({ ...val, isWallSelectorOn: checked }));
+		boardEditor.update((val) => ({ ...val, isWallSelectorOn: checked }));
 	}
 	let maxDimension = loggedIn ? 16 : 8;
 	let boardTheme = "Default";

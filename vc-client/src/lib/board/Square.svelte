@@ -1,17 +1,16 @@
 <script lang="ts">
 	import './board-styles.css';
 	import { BoardType, type IPiece, type SquareColor, type SquareInfo } from './types';
-	import wall from '$lib/assets/svg/wall.svg';
 	import { editorMaxBoard } from './board';
-	import { pieceEditor,editorSettings } from '$lib/store/editor';
-
+	import { pieceEditor, boardEditor } from '$lib/store/editor';
+	import wallSvg from '$lib/assets/svg/wall.svg'
 	export let squareData: SquareInfo;
 	export let editable: boolean;
 	export let interactive: boolean;
 
 	export let color: SquareColor;
 	export let piece: IPiece | null = null;
-	export let disabled: boolean = false;
+	export let wall: boolean = false;
 	export let boardId: string = "board";
 	export let boardType: BoardType = BoardType.GameBoard;
 	export let nonPieceSvg: string| null = null;
@@ -37,7 +36,7 @@
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
-		if (!piece && !disabled && interactive) {
+		if (!piece && !wall && interactive) {
 			dragOver = true;
 		}
 	}
@@ -45,7 +44,7 @@
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		const data = e.dataTransfer?.getData('dragInfo');
-		if (data && !disabled && interactive) {
+		if (data && !wall && interactive) {
 			var obj = JSON.parse(data);
 			piece = obj.piece;
 			dragOver = false;
@@ -59,23 +58,24 @@
 	function handleClick(e: MouseEvent) {
 		e.preventDefault();
 		if (boardType===BoardType.Editor) {
-			if ($editorSettings.isWallSelectorOn) {
-				disabled = !disabled;
+			if ($boardEditor.isWallSelectorOn) {
+				console.log('clicking wall')
+				wall = !wall;
 				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 					isPiecePresent: false,
-					disabled,
+					wall,
 					piece: null
 				});
 			} else {
-				if ($editorSettings.pieceSelection)
+				if ($pieceEditor.pieceSelection)
 					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 						isPiecePresent: piece ? false : true,
-						piece: piece ? null : $editorSettings.pieceSelection
+						piece: piece ? null : $pieceEditor.pieceSelection
 					});
 			}
 		} else if (boardType===BoardType.MovePatternEditor){
 			if(piece){return}
-			let selectedPiece = $editorSettings.pieceSelection
+			let selectedPiece = $pieceEditor.pieceSelection
 			let jumpOffset = [squareData.row-4,squareData.column-4]
 			if (selectedPiece){
 				const isJumpOffsetPresent = $pieceEditor.movePatterns[selectedPiece.pieceType] && $pieceEditor.movePatterns[selectedPiece.pieceType].jumpOffsets.some(
@@ -139,13 +139,15 @@
 			on:dragstart={handleDragStart}
 			on:dragend={handleDragEnd}
 		/>
-	{:else if disabled}
+	{:else if wall}
 		<div class="absolute inset-0 flex items-center justify-center bg-red-400">
-			<img draggable={false} src={wall} alt="disabled" class="w-full h-full" />
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<img draggable={false} src={wallSvg} class="w-full h-full" />
 		</div>
 	{:else if nonPieceSvg}
 		<div class="absolute inset-0 flex items-center justify-center ">
-			<img draggable={false} src={nonPieceSvg} alt="disabled" class="w-full h-full" />
+			<!-- svelte-ignore a11y-missing-attribute -->
+			<img draggable={false} src={nonPieceSvg} class="w-full h-full" />
 		</div>
 		<slot />
 	{:else}

@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import type {
 	CoordinatetoIDMap,
 	Dimensions,
-	DisabledSquares,
+	Walls,
 	IPiece,
 	Position,
 	PiecePresentInfo,
@@ -66,24 +66,24 @@ export const updatePiecePositionsFromMaxBoard = (
 	dimensions: Dimensions
 ): Position => {
 	const piecePositions: PiecePositions = {};
-	const disabled: DisabledSquares = {};
+	const walls: Walls = {};
 	for (let row = 0; row < dimensions.ranks; row++) {
 		for (let col = 0; col < dimensions.files; col++) {
 			if (maxBoardState[row][col].isPiecePresent) {
 				piecePositions[row * dimensions.files + col] = maxBoardState[row][
 					col
 				].piece as IPiece;
-			} else if (maxBoardState[row][col].disabled) {
-				disabled[row * dimensions.files + col] = true;
+			} else if (maxBoardState[row][col].wall) {
+				walls[row * dimensions.files + col] = true;
 			}
 		}
 	}
-	return { piecePositions, disabled };
+	return { piecePositions, walls };
 };
 
 function createEditorMaxBoard() {
 	const { subscribe, set, update } = writable<PiecePresentInfo[][]>([[]]);
-
+	
 	return {
 		subscribe,
 		set,

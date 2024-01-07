@@ -4,10 +4,11 @@ export interface BoardEditorState {
 	ranks: number;
 	files: number;
 	theme: string;
+	isWallSelectorOn: boolean;
 }
 
 export enum VariantType{
-	Standard = "Standard",
+	Custom = "Custom",
 	DuckChess = "Duck",
 	ArcherChess = "Archer",
 	Wormhole = "Wormhole"

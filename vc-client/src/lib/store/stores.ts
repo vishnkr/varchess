@@ -1,8 +1,5 @@
-import { writable, type Writable } from 'svelte/store';
-import { Objective, type BoardEditorState, type RuleEditorState, VariantType } from './types';
-import type { RecordAuthResponse, RecordModel } from 'pocketbase';
-
-const serverUrl = import.meta.env.VITE_ENVIRONMENT === 'production' ? import.meta.env.VITE_SERVER_BASE : 'localhost:5000';
+import { writable} from 'svelte/store';
+import { Objective, type RuleEditorState, VariantType } from './types';
 
 export enum Role{
 	Viewer,
@@ -28,12 +25,10 @@ export interface Member{
 	username: string,
 	role?: Role,
 	isHost?: boolean
-  userData?: RecordAuthResponse<RecordModel>
 }
 
 export interface User{
   username?:string,
-  userData?: RecordAuthResponse<RecordModel>
 }
 
 const roomId = writable<string|null>(null);
@@ -63,65 +58,27 @@ function newChatStore(){
 	}
 }
 
-export const wsStore : Writable<WebSocket|null> = writable(null);
 const chats = newChatStore();
 
-function createWebSocket(roomId:string, username:string) {
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`ws://${serverUrl}/ws/${roomId}/${username}`);
-  
-      ws.onmessage = function (event) {
-        const { type, data } = JSON.parse(event.data);
-        switch (type) {
-          case 'UserJoin':
-            chats.userJoin(data.username);
-            members.update((value) => [
-              ...value,
-              {
-                id: data.id,
-                username: data.username,
-                isHost: data.isHost,
-                role: Role[data.role as keyof typeof Role],
-                
-              },
-            ]);
-            break;
-          case 'UserLeave':
-            chats.userLeave(data.username);
-            members.update((value) =>
-              value.filter((member) => data.username !== member.username)
-            );
-            break;
-          case 'ChatMessage':
-            chats.updateChat(data.username, data.content);
-            break;
-        }
-      };
-  
-      ws.onerror = function (error) {
-        console.error('WebSocket connection error:', error);
-        reject(error);
-      };
-  
-      ws.onopen = function () {
-        wsStore.set(ws);
-        resolve(ws);
-      };
-      ws.onclose = function(){
-        wsStore.set(null);
-        resolve(ws);
-      }
-    });
+function createWebSocketStore(ws:WebSocket|null){
+  const { subscribe, set, update } = writable<WebSocket|null>(ws);
+  return{
+    subscribe,
+    set,
+    update
   }
+}
+
   
+export const wsStore = createWebSocketStore(null);
 
 const ruleEditor = writable<RuleEditorState>({
-  variantType: VariantType.Standard,
+  variantType: VariantType.Custom,
   objective: Objective.Checkmate
 })
 
 export { 
-  createWebSocket, 
+  createWebSocketStore, 
   members, 
   roomId, 
   chats, 
