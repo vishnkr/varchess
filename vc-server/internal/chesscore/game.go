@@ -120,20 +120,19 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 		return nil, err
 	}
 	var variant = variant{
-		Objective:   gameConfig.Objective,
 		variantType: Custom,
 		position:    position,
 	}
 	switch variantType {
 	case Custom:
-		switch gameConfig.Objective.Type {
+		/*switch gameConfig.Objective.Type {
 		case Antichess:
 			newVariant = &AntichessVariant{variant}
 		case NCheck:
 			newVariant = &NCheckVariant{variant: variant, blackKingCheckCount: 0, whiteKingCheckCount: 0, targetChecks: 3}
 		default:
 			newVariant = &CheckmateVariant{variant}
-		}
+		}*/
 	default:
 		newVariant = &CheckmateVariant{variant}
 	}
@@ -142,8 +141,8 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 }
 
 func (v *variant) getGameConfig()(GameConfig,error){
-	gameConfig := GameConfig{VariantType: v.variantType,Objective: v.Objective}
-	gameConfig.Position = v.getPosition()
+	gameConfig := GameConfig{VariantType: v.variantType}
+	//gameConfig.Position = v.getPosition()
 	return gameConfig,nil
 }
 

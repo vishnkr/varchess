@@ -24,7 +24,7 @@ export interface RuleEditorState{
 	variantType: VariantType,
 }
 
-interface MovePattern{
+export interface MovePattern{
 	slideDirections: number[][],
 	jumpOffsets: number[][],
 }

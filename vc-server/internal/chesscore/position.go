@@ -60,8 +60,10 @@ type Position struct {
 
 type GameConfig struct {
 	VariantType        variantType `json:"variant_type"`
-	Position 		   Position `json:"position"`
-	Objective          Objective `json:"objective"`
+	Dimensions Dimensions               `json:"dimensions"`
+	Fen        string                   `json:"fen"`
+	PieceProps map[string]PieceProperties `json:"piece_props,omitempty"`
+	AdditionalData interface `json:"additonal_data,omitempty"`
 }
 
 func (p *position) addStandardPieceProps() {
@@ -106,21 +108,19 @@ func (p *position) addStandardPieceProps() {
 	p.pieceProps = props
 }
 func newPosition(gameConfig GameConfig) (position, error) {
-	boardData := strings.Split(gameConfig.Position.Fen, " ")
+	boardData := strings.Split(gameConfig.Fen, " ")
 	rowsData := strings.Split(boardData[0], "/")
 	var standardPieceMap = map[string]pieceType{"p": Pawn,"k": King, "n": Knight, "q": Queen, "r": Rook, "b": Bishop}
 	position := position{
 		pieceLocations: make(map[int]piece),
-		dimensions:     gameConfig.Position.Dimensions,
+		dimensions:     gameConfig.Dimensions,
 		additionalProps: AdditionalProps{
 			blackKingMoved:     false,
 			whiteKingMoved:     false,
 			kingCaptureAllowed: false,
 		},
 	}
-	if gameConfig.Objective.Type == Antichess{
-		position.additionalProps.kingCaptureAllowed = true
-	}
+
 	var col, id int = 0, 0
 	var colEnd int = 0
 	var secDigit = 0
@@ -167,7 +167,7 @@ func newPosition(gameConfig GameConfig) (position, error) {
 						notation:  pieceChar,
 						pieceType: CustomPiece,
 					}
-					position.pieceProps[pieceChar] = gameConfig.Position.PieceProps[pieceChar]
+					position.pieceProps[pieceChar] = gameConfig.PieceProps[pieceChar]
 				} else {
 					piece := piece{
 						color:     color,

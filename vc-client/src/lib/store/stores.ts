@@ -1,5 +1,6 @@
 import { writable} from 'svelte/store';
-import { type RuleEditorState, VariantType } from './types';
+import { type RuleEditorState, VariantType, type MovePattern } from './types';
+import { camelToSnake } from '$lib/utils';
 
 export enum Role{
 	Viewer,
@@ -31,10 +32,38 @@ export interface User{
   username?:string,
 }
 
+export interface Config{
+	variantType: VariantType;
+    dimensions: {
+        ranks: number;
+        files: number;
+    };
+    fen: string;
+    pieceProps: Record<string, MovePattern>;
+	additionalData?: object;
+}
+
 const roomId = writable<string|null>(null);
 const members = writable<Member[]>([]);
 const me = writable<User|null>({});
 
+
+function newConfigStore(){
+	const {subscribe, set, update} = writable<Config|null>(null);
+	const setConfig = (config:Config)=>{
+		set(config)
+	}
+	
+	const removeConfig = ()=>{
+		set(null)
+	}
+	return{
+		setConfig,
+		removeConfig,
+		update,
+		subscribe
+	}
+}
 
 function newChatStore(){
 	const { subscribe, set, update } = writable<ChatMessage[]>([]);
@@ -58,11 +87,53 @@ function newChatStore(){
 	}
 }
 
+const configStore = newConfigStore();
 const chats = newChatStore();
+
+type ConnectType = "create" | "join";
+export interface ConnectParams {
+	connectType: ConnectType,
+	sessionId: string,
+	gameConfig?:Config,
+	gameId?:string
+}
 
 function createWebSocketStore(ws:WebSocket|null){
   const { subscribe, set, update } = writable<WebSocket|null>(ws);
+
+  const newWebSocketConnection = async (url:string,params:ConnectParams)=>{
+	const ws = await new WebSocket(url);
+
+	ws.onopen = () => {
+		const wsMessage = { event: "game.connect_user", params: params };
+		const json = JSON.stringify(camelToSnake(wsMessage));
+		console.log(json, ws);
+		ws.send(json);
+		console.log('WebSocket connection success');
+	  };
+	ws.onclose = ()=>{
+		set(null);
+	}
+	ws.onerror = (e)=>{
+		console.error('WebSocket connection error:', e);
+		return
+	}
+	ws.onmessage = (e)=>{
+		const data = JSON.parse(e.data);
+		switch (data?.event){
+			case "game.connect_user":
+				if (data.result?.game_id){
+					gameId.set(data.result.game_id);
+				}
+				break;
+			default:
+				console.log('invalid msg type');
+		}
+	}
+	set(ws);
+  }
   return{
+	newWebSocketConnection,
     subscribe,
     set,
     update
@@ -70,7 +141,8 @@ function createWebSocketStore(ws:WebSocket|null){
 }
 
   
-export const wsStore = createWebSocketStore(null);
+const wsStore = createWebSocketStore(null);
+const gameId = writable<string|null>(null);
 
 const ruleEditor = writable<RuleEditorState>({
   variantType: VariantType.Checkmate,
@@ -81,6 +153,9 @@ export {
   members, 
   roomId, 
   chats, 
+  wsStore,
   me, 
-  ruleEditor
+  ruleEditor,
+  configStore,
+  gameId
 };

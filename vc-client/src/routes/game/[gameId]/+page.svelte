@@ -5,8 +5,12 @@
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import { onMount } from 'svelte';
-	let stonkfish: typeof import ('stonkfish-wasm');
+	import { configStore, wsStore } from '$lib/store/stores';
+	import { camelToSnake } from '$lib/utils';
+	import { goto } from '$app/navigation';
 
+	let stonkfish: typeof import ('stonkfish-wasm');
+	let chesscore: unknown;
 	let boardConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
 		dimensions: { ranks: 8, files: 8 },
@@ -15,10 +19,9 @@
 		isFlipped: false,
 		boardType: BoardType.GameBoard
 	};
-	let isWaiting: boolean;
-	let gameId: string;
-	$: ({ isWaiting, gameId} = $page.data);
-	console.log(isWaiting,"waiting",gameId)
+	let isWaiting: boolean = $page.data.isWaiting;;
+	let gameId: string = $page.data.gameId;
+
 	let mpBoardConfig: BoardConfig = { ...boardConfig, interactive: false };
 	let activeItem = 'Chat';
 	
@@ -36,25 +39,18 @@
     	}, 2000);
 		navigator.clipboard.writeText(gameId);
 	};
-
+	$: {
+		if (!$wsStore || ($wsStore && $wsStore.readyState!== WebSocket.OPEN)){ goto('/home');}
+	}
 	onMount(async () => {
-		const config = {
-          "variant_type": "AntiChess",
-          "fen": "R3k3/8/8/8/8/8/8/R3K3 w - - 0 1",
-          "dimensions": {
-              "ranks": 8,
-              "files": 8
-          },
-          "piece_props": {}
-        }
-        const json = JSON.stringify(config);
-        console.log(json);
-        
 		stonkfish = await import('stonkfish-wasm');
-		await stonkfish.default();
-		const chesscore = new stonkfish.ChessCoreLib(json)
-		console.log(chesscore.getLegalMoves());
+		await stonkfish.default();	
+		if ($configStore) {
+			const config_json = JSON.stringify(camelToSnake($configStore))
+			chesscore = new stonkfish.ChessCoreLib(config_json)
+		}
 	});
+
 </script>
 
 <svelte:head>

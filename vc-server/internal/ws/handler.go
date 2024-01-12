@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 	"varchess/internal/chesscore"
@@ -14,10 +15,12 @@ import (
 func handleUserConnect(c *Client, req Request){
 	var params ParamsUserConnect
 	var response ResponseUserConnect = ResponseUserConnect{}
+	fmt.Println("we connected")
 	if err := unmarshalParameters(req,&params, c); err!=nil{
+		fmt.Println("err",err)
 		return
 	}
-	
+	fmt.Println(params)
 	var gameID string
 	if params.Type == "create" {
 		gameID, _ = generateRandomString(8)

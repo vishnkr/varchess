@@ -1,11 +1,14 @@
 package ws
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"varchess/internal/game"
 	"varchess/internal/template"
-	"varchess/internal/user"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -14,19 +17,19 @@ import (
 type WebSocket struct{
 	gameService game.Service
 	templateService template.Service
-	userService user.Service
+	//userService user.Service
 	gameHubs map[string]*gameHub
 	destroy chan string
 }
 
-func NewWebSocket(gameService game.Service, templateService template.Service, userService user.Service) *WebSocket{
+func NewWebSocket(gameService game.Service, templateService template.Service) *WebSocket{
 	gameHubs := make(map[string]*gameHub)
 	destroy := make(chan string)
 	go handleDestroy(destroy,gameHubs)
 	return &WebSocket{
 		gameService, 
 		templateService, 
-		userService,
+		//userService,
 		gameHubs,
 		destroy,
 	}
@@ -62,6 +65,24 @@ func (ws *WebSocket) HandleWSConnection(w http.ResponseWriter, r *http.Request){
 	}
 	go client.readPump()
 	go client.writePump()
+}
+
+func sendErrorMessage(c *Client, response interface{}) {
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Failed to marshal response into JSON: %v", err)
+		closeConnection(c, websocket.CloseProtocolError, "internal server error")
+		return
+	}
+	c.send <- responseBytes
+}
+
+func generateRandomString(length int) (string, error) {
+    bytes := make([]byte, length)
+    if _, err := rand.Read(bytes); err != nil {
+        return "", err
+    }
+    return base64.URLEncoding.EncodeToString(bytes)[:length], nil
 }
 
 func handleDestroy(destroy chan string, gameHub map[string]*gameHub){

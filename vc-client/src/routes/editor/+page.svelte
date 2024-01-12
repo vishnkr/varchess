@@ -11,11 +11,14 @@
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	import { browser } from '$app/environment';
 	import MpEditBoard from '$lib/board/MPEditBoard.svelte';
-	import { beforeNavigate } from '$app/navigation';
-	import { boardEditor, editorSubTypeSelected, pieceEditor, ruleEditor } from '$lib/store/editor';
+	import { beforeNavigate, goto } from '$app/navigation';
+	import { boardEditor, editorSubTypeSelected, pieceEditor, ruleEditor} from '$lib/store/editor';
 	import { editorMaxBoard } from '$lib/board/board';
 	import { onMount } from 'svelte';
+	import type { Config, ConnectParams } from '$lib/store/stores';
 	import { camelToSnake } from '$lib/utils/index';
+	import { configStore, gameId, wsStore } from '$lib/store/stores';
+	
 	let stonkfish: typeof import ('stonkfish-wasm');
 
 	let activeItem = 'Room';
@@ -115,23 +118,36 @@
 		let ruleEditorState =  $ruleEditor;
 
 		const fen = getFEN();
-		const gameConfig = {
-			variant_type: ruleEditorState.variantType,
+		const gameConfig:Config = {
+			variantType: ruleEditorState.variantType,
 			dimensions: {
 				ranks : boardEditorState.ranks,
 				files : boardEditorState.files
 			},
 			fen,
-			piece_props: pieceEditorState.movePatterns,
+			pieceProps: pieceEditorState.movePatterns,
 		}
-		return JSON.stringify(camelToSnake(gameConfig));
+		configStore.setConfig(gameConfig);
+		return gameConfig;
 	}
 	const playGame = ()=>{
 		const config  = generateGameConfigJSON();		
 		console.log(config);
-		const chesscore = new stonkfish.ChessCoreLib(config)
+		const config_json = JSON.stringify(camelToSnake(config))
+		const chesscore = new stonkfish.ChessCoreLib(config_json);
 		console.log(chesscore.getLegalMoves());
+		const url = `ws://${import.meta.env.VITE_WS_HOST}/ws`;
+		const params:ConnectParams = {
+			connectType:"create",
+			sessionId: "sdf",
+			gameConfig: config
+		}
+		wsStore.newWebSocketConnection(url,params);
 	}
+	$: {
+		console.log('gmae id up',$gameId)
+    	if ($gameId !== null) { goto(`/game/${$gameId}?waiting=true`); }
+  	}
 
 </script>
 
