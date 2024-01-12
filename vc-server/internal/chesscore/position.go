@@ -63,7 +63,7 @@ type GameConfig struct {
 	Dimensions Dimensions               `json:"dimensions"`
 	Fen        string                   `json:"fen"`
 	PieceProps map[string]PieceProperties `json:"piece_props,omitempty"`
-	AdditionalData interface `json:"additonal_data,omitempty"`
+	AdditionalData interface{} `json:"additonal_data,omitempty"`
 }
 
 func (p *position) addStandardPieceProps() {
