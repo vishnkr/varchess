@@ -34,7 +34,7 @@ let getMovePatternBoardConfig: ()=> BoardConfig = ()=>{
                 mpSquares[newId]=MoveType.Jump
             }
             })
-            movePatterns.slideOffsets?.forEach((offset)=>{
+            movePatterns.slideDirections?.forEach((offset)=>{
                 let x = offset[0];
                 let y = offset[1];
                 let newId = (center+x)*9+(center+y);

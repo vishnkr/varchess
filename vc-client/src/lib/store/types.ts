@@ -8,17 +8,12 @@ export interface BoardEditorState {
 }
 
 export enum VariantType{
-	Custom = "Custom",
+	Checkmate = "Checkmate",
+	Antichess = "AntiChess",
+	NCheck = "NCheck",
 	DuckChess = "Duck",
-	ArcherChess = "Archer",
+	ArcherChess = "ArcherChess",
 	Wormhole = "Wormhole"
-}
-
-
-export enum Objective{
-	Checkmate,
-	Antichess,
-	NCheck,
 }
 
 export enum MoveType{
@@ -27,11 +22,10 @@ export enum MoveType{
 }
 export interface RuleEditorState{
 	variantType: VariantType,
-	objective: Objective
 }
 
 interface MovePattern{
-	slideOffsets: number[][],
+	slideDirections: number[][],
 	jumpOffsets: number[][],
 }
 

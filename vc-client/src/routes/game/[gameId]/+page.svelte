@@ -4,7 +4,8 @@
 	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
-	
+	import { onMount } from 'svelte';
+	let stonkfish: typeof import ('stonkfish-wasm');
 
 	let boardConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
@@ -35,6 +36,25 @@
     	}, 2000);
 		navigator.clipboard.writeText(gameId);
 	};
+
+	onMount(async () => {
+		const config = {
+          "variant_type": "AntiChess",
+          "fen": "R3k3/8/8/8/8/8/8/R3K3 w - - 0 1",
+          "dimensions": {
+              "ranks": 8,
+              "files": 8
+          },
+          "piece_props": {}
+        }
+        const json = JSON.stringify(config);
+        console.log(json);
+        
+		stonkfish = await import('stonkfish-wasm');
+		await stonkfish.default();
+		const chesscore = new stonkfish.ChessCoreLib(json)
+		console.log(chesscore.getLegalMoves());
+	});
 </script>
 
 <svelte:head>

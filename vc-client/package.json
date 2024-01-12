@@ -13,7 +13,8 @@
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
 		"format": "prettier --plugin-search-dir . --write .",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"wasm": "wasm-pack build ./stonkfish/stonkfish-wasm --target web"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.37.1",
@@ -45,6 +46,8 @@
 		"tslib": "^2.6.2",
 		"typescript": "^5.2.2",
 		"vite": "^4.4.9",
+		"vite-plugin-top-level-await": "^1.4.1",
+		"vite-plugin-wasm-pack": "^0.1.12",
 		"vitest": "^0.25.8"
 	},
 	"type": "module",
@@ -66,6 +69,7 @@
 		"svelte-modals": "^1.3.0",
 		"svelte-router-spa": "^6.0.3",
 		"svelte-switch": "^0.0.5",
-		"tailwind-merge": "^1.14.0"
+		"tailwind-merge": "^1.14.0",
+		"vite-plugin-wasm": "^3.3.0"
 	}
 }

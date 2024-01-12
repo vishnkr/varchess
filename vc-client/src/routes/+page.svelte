@@ -5,7 +5,6 @@
 	import Board from '$lib/board/Board.svelte';
 	import { me, roomId } from '$lib/store/stores';
 	import { displayAlert, getErrorMessage } from '$lib/store/alert';
-
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
 		dimensions: { ranks: 7, files: 9 },
@@ -13,6 +12,7 @@
 		interactive: true,
 		boardType: BoardType.View
 	};
+  
 	const cardData = [
 		{
 			title: 'Variable Board Sizes',

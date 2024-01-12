@@ -1,4 +1,4 @@
-import { type BoardEditorState, type PieceEditorState, VariantType, Objective, type RuleEditorState } from './types';
+import { type BoardEditorState, type PieceEditorState, VariantType, type RuleEditorState } from './types';
 import { writable } from 'svelte/store';
 import { EditorSubType } from '$lib/components/types';
 import {  Color,type Position } from '$lib/board/types';
@@ -11,7 +11,7 @@ function newPieceEditorStore(){
       update((editorState)=>{
         const newMovePatterns = { ...editorState.movePatterns };
         if (!newMovePatterns[piece]) {
-            newMovePatterns[piece] = {slideOffsets:[],jumpOffsets:[]}
+            newMovePatterns[piece] = {slideDirections:[],jumpOffsets:[]}
             newMovePatterns[piece].jumpOffsets = [offset];
         } else if(newMovePatterns[piece].jumpOffsets && !newMovePatterns[piece].jumpOffsets?.includes(offset)) {
           newMovePatterns[piece].jumpOffsets?.push(offset);
@@ -29,7 +29,7 @@ function newPieceEditorStore(){
             const idx = jumpOffsets.findIndex((o)=> o[0]===offset[0] && o[1]===offset[1]);
             if(idx!==-1){
               jumpOffsets.splice(idx,1)
-              if (jumpOffsets.length === 0 && newMovePatterns[piece].slideOffsets.length === 0) {
+              if (jumpOffsets.length === 0 && newMovePatterns[piece].slideDirections.length === 0) {
                 delete newMovePatterns[piece];
               }
             }
@@ -44,10 +44,9 @@ function newPieceEditorStore(){
         update((editorState)=>{
             const newMovePatterns = { ...editorState.movePatterns };
             if (!newMovePatterns[piece]) {
-                newMovePatterns[piece] = {slideOffsets:[],jumpOffsets:[]}
-                newMovePatterns[piece].slideOffsets = [offset];
-            } else if(newMovePatterns[piece].slideOffsets && !newMovePatterns[piece].slideOffsets?.includes(offset)) {
-                newMovePatterns[piece].slideOffsets?.push(offset);
+                newMovePatterns[piece] = {slideDirections:[offset],jumpOffsets:[]}
+            } else if(newMovePatterns[piece].slideDirections && !newMovePatterns[piece].slideDirections?.includes(offset)) {
+                newMovePatterns[piece].slideDirections?.push(offset);
             }
             return {...editorState, movePatterns: newMovePatterns};
         })
@@ -58,12 +57,12 @@ function newPieceEditorStore(){
             const newMovePatterns = { ...editorState.movePatterns };
             if (newMovePatterns[piece]) {
             
-            const slideOffsets = newMovePatterns[piece].slideOffsets;
-            if (slideOffsets) {
-                const idx = slideOffsets.findIndex((o)=> o===offset);
+            const slideDirections = newMovePatterns[piece].slideDirections;
+            if (slideDirections) {
+                const idx = slideDirections.findIndex((o)=> o===offset);
                 if(idx!==-1){
-                    slideOffsets.splice(idx,1)
-                    if (slideOffsets.length === 0 && newMovePatterns[piece].jumpOffsets.length === 0) {
+                    slideDirections.splice(idx,1)
+                    if (slideDirections.length === 0 && newMovePatterns[piece].jumpOffsets.length === 0) {
                         delete newMovePatterns[piece];
                       }
                 }
@@ -116,8 +115,8 @@ function newBoardEditorStore(){
 
 function newRuleStore(){
   const {set, update,subscribe}= writable<RuleEditorState>({
-    variantType: VariantType.Custom,
-    objective: Objective.Checkmate
+    variantType: VariantType.Checkmate,
+
   });
   return {set, subscribe, update}
 }

@@ -2,7 +2,7 @@
 	
 	import pieceSvg from '$lib/assets/svg/piece.svg';
 	import boardSvg from '$lib/assets/svg/board.svg';
-	import { BoardType, type BoardConfig } from '$lib/board/types';
+	import { BoardType, type BoardConfig, Color } from '$lib/board/types';
 	import { EditorSubType } from '$lib/components/types';
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
 	import PieceEditor from '$lib/components/editor/PieceEditor.svelte';
@@ -12,8 +12,11 @@
 	import { browser } from '$app/environment';
 	import MpEditBoard from '$lib/board/MPEditBoard.svelte';
 	import { beforeNavigate } from '$app/navigation';
-	import { editorSubTypeSelected } from '$lib/store/editor';
-
+	import { boardEditor, editorSubTypeSelected, pieceEditor, ruleEditor } from '$lib/store/editor';
+	import { editorMaxBoard } from '$lib/board/board';
+	import { onMount } from 'svelte';
+	import { camelToSnake } from '$lib/utils/index';
+	let stonkfish: typeof import ('stonkfish-wasm');
 
 	let activeItem = 'Room';
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
@@ -37,14 +40,19 @@
 		}
 	};*/
 
-	beforeNavigate(({ cancel }) => {
-		/*if (dirty) {
+	onMount(async () => {
+		stonkfish = await import('stonkfish-wasm');
+		await stonkfish.default();
+	});
+
+	/*beforeNavigate(({ cancel }) => {
+		if (dirty) {
 			const confirmMessage = "Leaving this page might result in loss. Are you sure you want to leave?";
 			if (!confirm(confirmMessage)) {
 			cancel();
 			}
-		}*/
-	});
+		}
+	});*/
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 	function exitRoom(){
@@ -70,7 +78,61 @@
     	hidePopup();
   	};
 
+
 	// Play Game 
+	const getFEN = ()=>{
+		let position = '';
+		for(let i=0; i<$boardEditor.ranks;i++){
+			let empty_count = 0;
+			for(let j=0;j<$boardEditor.files;j++){
+				let square = $editorMaxBoard[i][j]
+				if (square.isPiecePresent || square.wall){
+					if (empty_count>0){position+=`${empty_count}`; empty_count=0;}
+					if (square.wall){
+						position+="."
+					} else{
+						position+= square.piece?.color==Color.BLACK ? square.piece?.pieceType : square.piece?.pieceType.toUpperCase(); 
+					}
+				} else{
+					empty_count+=1;
+				}
+			}
+			if (i!=$boardEditor.ranks-1){
+				if (empty_count>0){position+=`${empty_count}`;}
+				position+="/";
+			}
+		}
+		
+		const turn = 'w';
+		const castleRights = "KQkq";
+		const ep="-";
+		return `${position} ${turn} ${castleRights} ${ep} 0 0`
+	}
+
+	const generateGameConfigJSON = () =>{
+		let boardEditorState = $boardEditor;
+		let pieceEditorState = $pieceEditor;
+		let ruleEditorState =  $ruleEditor;
+
+		const fen = getFEN();
+		const gameConfig = {
+			variant_type: ruleEditorState.variantType,
+			dimensions: {
+				ranks : boardEditorState.ranks,
+				files : boardEditorState.files
+			},
+			fen,
+			piece_props: pieceEditorState.movePatterns,
+		}
+		return JSON.stringify(camelToSnake(gameConfig));
+	}
+	const playGame = ()=>{
+		const config  = generateGameConfigJSON();		
+		console.log(config);
+		const chesscore = new stonkfish.ChessCoreLib(config)
+		console.log(chesscore.getLegalMoves());
+	}
+
 </script>
 
 <svelte:head>
@@ -90,7 +152,8 @@
 							<button class="w-32 bg-orange-600 hover:bg-orange-800 text-white rounded-md font-semibold py-2 px-2 mx-3" on:click={showPopup}>
 								Save
 							</button>
-							<button class="w-32 bg-green-600 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded">Play</button>
+							<button on:click={playGame} class="w-32 bg-green-600 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded">Play</button>
+							<form action="/?play"></form>
 						</div>					
 					</div>
 					<ExpandableCard svg={boardSvg} title="Board Editor">

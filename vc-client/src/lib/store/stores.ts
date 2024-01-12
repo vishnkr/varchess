@@ -1,5 +1,5 @@
 import { writable} from 'svelte/store';
-import { Objective, type RuleEditorState, VariantType } from './types';
+import { type RuleEditorState, VariantType } from './types';
 
 export enum Role{
 	Viewer,
@@ -73,8 +73,7 @@ function createWebSocketStore(ws:WebSocket|null){
 export const wsStore = createWebSocketStore(null);
 
 const ruleEditor = writable<RuleEditorState>({
-  variantType: VariantType.Custom,
-  objective: Objective.Checkmate
+  variantType: VariantType.Checkmate,
 })
 
 export { 
