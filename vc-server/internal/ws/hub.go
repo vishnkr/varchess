@@ -4,10 +4,16 @@ import (
 	"varchess/internal/chesscore"
 )
 
+type players struct{
+	white *Client 
+	black *Client 
+}
 
 type gameHub struct {
  gameId string
  game *chesscore.Game
+ gameConfig string
+ players players
  clients map[*Client]bool
  broadcast chan []byte
  register chan *Client

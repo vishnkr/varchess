@@ -1,6 +1,7 @@
 import { writable} from 'svelte/store';
 import { type RuleEditorState, VariantType, type MovePattern } from './types';
 import { camelToSnake } from '$lib/utils';
+import type { ChessCoreLib } from 'stonkfish';
 
 export enum Role{
 	Viewer,
@@ -90,33 +91,36 @@ function newChatStore(){
 const configStore = newConfigStore();
 const chats = newChatStore();
 
-type ConnectType = "create" | "join";
 export interface ConnectParams {
-	connectType: ConnectType,
-	sessionId: string,
+	sessionId: string;
+	gameId?: string;
+  }
+
+export interface CreateParams extends ConnectParams{
 	gameConfig?:Config,
-	gameId?:string
+	color:string
 }
+export type ConnectType = "create"|"join";
 
 function createWebSocketStore(ws:WebSocket|null){
   const { subscribe, set, update } = writable<WebSocket|null>(ws);
 
-  const newWebSocketConnection = async (url:string,params:ConnectParams)=>{
+  const newWebSocketConnection = async (url:string,params:ConnectParams,connectType:ConnectType = "join")=>{
 	const ws = await new WebSocket(url);
 
 	ws.onopen = () => {
-		const wsMessage = { event: "game.connect_user", params: params };
+		const wsMessage = { event: `game.${connectType}_game`, params: params };
 		const json = JSON.stringify(camelToSnake(wsMessage));
-		console.log(json, ws);
+		//console.log(json, ws);
 		ws.send(json);
-		console.log('WebSocket connection success');
+		//console.log('WebSocket connection success');
 	  };
 	ws.onclose = ()=>{
 		set(null);
 	}
 	ws.onerror = (e)=>{
 		console.error('WebSocket connection error:', e);
-		return
+		 return
 	}
 	ws.onmessage = (e)=>{
 		const data = JSON.parse(e.data);
@@ -144,6 +148,13 @@ function createWebSocketStore(ws:WebSocket|null){
 const wsStore = createWebSocketStore(null);
 const gameId = writable<string|null>(null);
 
+export interface GameState{
+	status : "Waiting" | "InProgress",
+	chesscore : ChessCoreLib,
+}
+
+const gameState = writable<GameState|null>(null);
+
 const ruleEditor = writable<RuleEditorState>({
   variantType: VariantType.Checkmate,
 })
@@ -157,5 +168,6 @@ export {
   me, 
   ruleEditor,
   configStore,
-  gameId
+  gameId,
+  gameState
 };

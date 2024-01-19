@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"varchess/internal/chesscore"
 
 	"github.com/gorilla/websocket"
 )
 
-
-
-func handleUserConnect(c *Client, req Request){
+/*func handleUserConnect(c *Client, req Request){
 	var params ParamsUserConnect
 	var response ResponseUserConnect = ResponseUserConnect{}
 	fmt.Println("we connected")
@@ -28,7 +25,7 @@ func handleUserConnect(c *Client, req Request){
 		if err!=nil{
 			closeConnection(c,websocket.CloseProtocolError,"Invalid Config")
 			return
-		} 
+		}
 		c.ws.gameHubs[gameID] = NewGameHub(gameID,c.ws.destroy)
 		c.ws.gameHubs[gameID].game = newGame
 		go c.ws.gameHubs[gameID].run()
@@ -55,14 +52,14 @@ func handleUserConnect(c *Client, req Request){
 			},
 			Result: ResultUserConnect{
 				GameID: gameID,
-				//NewUser: c.user.Username,
+
 			},
 		}
 	} else{
 		closeConnection(c,websocket.CloseProtocolError,"Invalid Connect Type")
 		return
 	}
-	
+
 	gameHub := c.ws.gameHubs[gameID]
 	gameHub.register <- c
 	c.hubs[gameID] = gameHub
@@ -71,6 +68,77 @@ func handleUserConnect(c *Client, req Request){
 		log.Printf("user connect : JSON marshal failed %v",err)
 		closeConnection(c,websocket.CloseProtocolError,"Internal server error")
 	}
+	c.broadcastToMembers(gameID,bytes)
+}*/
+
+func handleCreateGame(c *Client,req Request){
+	var params ParamsUserCreate
+
+	fmt.Println("we connected")
+	if err := unmarshalParameters(req,&params, c); err!=nil{
+		fmt.Println("err",err)
+		return
+	}
+	fmt.Println(params)
+	var gameID string
+
+	gameID, _ = generateRandomString(8)
+	//todo: init new game
+	/*newGame, err := chesscore.CreateGame(params.GameConfig)
+	if err!=nil{
+		closeConnection(c,websocket.CloseProtocolError,"Invalid Config")
+		return
+	}*/
+	c.ws.gameHubs[gameID] = NewGameHub(gameID,c.ws.destroy)
+	//c.ws.gameHubs[gameID].game = newGame
+	go c.ws.gameHubs[gameID].run()
+	if params.Color=="w"{
+		c.ws.gameHubs[gameID].players = players{ white: c}
+	} else if params.Color=="b"{
+		c.ws.gameHubs[gameID].players = players{ black: c}
+	} // else throw some error 
+	//timer1 := time.NewTimer(120 * time.Second)
+
+	response := ResponseCreate{
+		Response: Response{
+			Event : EventUserConnect,
+			Success: true,
+		},
+		Result: ResultCreate{
+			GameID: gameID,
+				//NewUser: c.user.Username,
+		},
+	}
+	c.conn.WriteJSON(response)
+}
+
+func handleJoinGame(c *Client,req Request){
+	var params ParamsUserJoin
+	gameID := params.GameID
+	if !c.isValidGame(gameID){
+		closeConnection(c,websocket.CloseProtocolError,"Invalid ID")
+		return
+	}
+	gameHub := c.ws.gameHubs[gameID]
+	gameHub.register <- c
+	c.hubs[gameID] = gameHub
+	if gameHub.players.white !=nil  {
+		c.ws.gameHubs[gameID].players = players{ black: c}
+	} else if gameHub.players.black !=nil{
+		c.ws.gameHubs[gameID].players = players{ white: c}
+	}  /*  else user is just a viewer }*/
+	
+	response := ResponseUserJoin{
+		Response: Response{
+			Event : EventUserConnect,
+			Success: true,
+		},
+		Result: ResultUserJoin{
+			GameID: gameID,
+			//send game state and set player
+		},
+	}
+	bytes,_ := json.Marshal(response)
 	c.broadcastToMembers(gameID,bytes)
 }
 

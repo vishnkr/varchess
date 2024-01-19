@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 import wasmPack from 'vite-plugin-wasm-pack';
 
 export default defineConfig({
-	plugins: [sveltekit(),wasmPack('./stonkfish/stonkfish-wasm')],
+	plugins: [sveltekit(),wasmPack('./stonkfish')],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
 	}

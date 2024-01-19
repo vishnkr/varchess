@@ -5,12 +5,11 @@
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import { onMount } from 'svelte';
-	import { configStore, wsStore } from '$lib/store/stores';
+	import { configStore, wsStore, gameState } from '$lib/store/stores';
 	import { camelToSnake } from '$lib/utils';
 	import { goto } from '$app/navigation';
 
-	let stonkfish: typeof import ('stonkfish-wasm');
-	let chesscore: unknown;
+	let stonkfish: typeof import ('stonkfish');
 	let boardConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
 		dimensions: { ranks: 8, files: 8 },
@@ -30,7 +29,6 @@
 
 	// --------------  Used by Waiting Page ------------
 	let copiedToClipboard = false;
-	let playAsWhite = true;
 
 	const copyToClipboard = () => {
 		copiedToClipboard = true;
@@ -43,11 +41,13 @@
 		if (!$wsStore || ($wsStore && $wsStore.readyState!== WebSocket.OPEN)){ goto('/home');}
 	}
 	onMount(async () => {
-		stonkfish = await import('stonkfish-wasm');
+		isWaiting = !$gameState || $gameState && $gameState.status === "Waiting";
+		stonkfish = await import('stonkfish');
 		await stonkfish.default();	
 		if ($configStore) {
 			const config_json = JSON.stringify(camelToSnake($configStore))
-			chesscore = new stonkfish.ChessCoreLib(config_json)
+			const chesscore = new stonkfish.ChessCoreLib(config_json)
+
 		}
 	});
 
@@ -129,37 +129,6 @@
 		  {#if copiedToClipboard}
 			<p class="text-green-500 mt-2">Copied to clipboard</p>
 		  {/if}
-		</div>
-		
-		<div class="grid grid-cols-2">
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<div
-				class={`flex items-center rounded-md p-4 m-1.5 bg-white hover:bg-gray-500 hover:text-white  border border-gray-200 dark:border-gray-700 cursor-pointer`}
-				on:click={() => playAsWhite = true}
-			>
-				<input
-					class="cursor-pointer w-4 h-4 text-black-600 bg-white border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-					type="radio"
-					value="White"
-					name="color"
-					checked={playAsWhite}	
-				/>
-				<label class="ml-2 cursor-pointer" for="White">Play as White</label>
-			</div>
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<div
-				class="flex items-center rounded-md pl-4 m-1.5 text-white bg-black hover:bg-gray-500 border border-gray-200 dark:border-gray-700 cursor-pointer"
-				on:click={() => playAsWhite = false}
-			>
-				<input
-					class="cursor-pointer w-4 h-4 text-white bg-black border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-					type="radio"
-					value="Black"
-					name="color"
-					checked={!playAsWhite}
-				/>
-				<label class="ml-2 cursor-pointer" for="Black">Play as Black</label>
-			</div>
 		</div>
 	  </div>
 

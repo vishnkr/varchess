@@ -7,10 +7,7 @@ export const load: PageServerLoad= async ({params,url, locals}) =>{
         throw redirect(303,'/login')
     }
     const { gameId } = params;
-
-    const waiting = url.searchParams.get('waiting');
     return {
-          isWaiting : waiting ?? false,
           gameId
     }
 }

@@ -105,8 +105,11 @@ func handleMessage(c *Client, msg []byte) {
 	}
 
 	switch eventType(request.Event){
-	case EventUserConnect:
-		handleUserConnect(c,request)
+	
+	case EventCreateGame:
+		handleCreateGame(c,request)
+	case EventJoinGame:
+		handleJoinGame(c,request)
 	case EventChatMessage:
 		handleChatMessage(c,request)
 	case EventGameMakeMove:

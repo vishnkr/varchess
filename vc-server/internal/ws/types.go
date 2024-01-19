@@ -12,7 +12,10 @@ type eventType string
 const (
 	EventChatMessage eventType = "chat.message"
 	EventUserConnect eventType = "game.connect_user"
+	EventCreateGame eventType = "game.create_game"
+	EventJoinGame eventType = "game.join_game"
 	EventUserDisconnect eventType = "game.disconnect_user"
+	EventSetPlayers eventType = "game.set_players"
 	EventGameResult eventType = "game.result"
 	EventGameMakeMove eventType = "game.make_move"
 	EventGameDrawOffer eventType = "game.offer_draw"
@@ -34,20 +37,16 @@ type Response struct {
 
 type RequestConnectUser struct {
 	Event  string            `json:"event"`
-	Params ParamsUserConnect `json:"params"`
+	Params ParamsUserCreate `json:"params"`
 }
-type ParamsUserConnect struct{
-	Type string `json:"connect_type"` // Create or Join
+
+type ParamsUserCreate struct{
 	SessionID string `json:"session_id"`
-	ParamsUserConnectCreate
-	ParamsUserConnectJoin
-}
-
-type ParamsUserConnectCreate struct{
 	GameConfig chesscore.GameConfig `json:"game_config"`
+	Color string `json:"color,omitempty"`
 }
 
-type ParamsUserConnectJoin struct{
+type ParamsUserJoin struct{
 	GameID string `json:"game_id"`
 }
 
@@ -57,15 +56,24 @@ type ParamsChat struct{
 	Message string `json:"message"`
 }
 
-type ResultUserConnect struct {
+type ResultUserJoin struct {
 	NewUser       string   `json:"new_user"`
 	ExistingUsers []string `json:"existing_users"`
 	GameID       string   `json:"game_id"`
 }
 
-type ResponseUserConnect struct {
+type ResponseUserJoin struct {
 	Response
-	Result ResultUserConnect `json:"result"`
+	Result ResultUserJoin `json:"result"`
 }
 
+type ResultCreate struct {
+	NewUser       string   `json:"new_user"`
+	ExistingUsers []string `json:"existing_users"`
+	GameID       string   `json:"game_id"`
+}
 
+type ResponseCreate struct {
+	Response
+	Result ResultCreate `json:"result"`
+}

@@ -7,10 +7,8 @@ export const GET = async ({ url, cookies, locals }) => {
 	const storedState = cookies.get("github_oauth_state");
 	const state = url.searchParams.get("state");
 	const code = url.searchParams.get("code");
-    console.log('here4')
-	// validate state
+
 	if (!storedState || !state || storedState !== state || !code) {
-        console.log('here3')
 		return new Response(null, {
 			status: 400
 		});
@@ -46,12 +44,10 @@ export const GET = async ({ url, cookies, locals }) => {
 
 		if (e instanceof OAuthRequestError) {
 			// invalid code
-            console.log('here1')
 			return new Response(null, {
 				status: 400
 			});
 		}
-        console.log('here2',e)
 		return new Response(null, {
 			status: 500
 		});

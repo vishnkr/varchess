@@ -14,7 +14,7 @@
 		"format": "prettier --plugin-search-dir . --write .",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
-		"wasm": "wasm-pack build ./stonkfish/stonkfish-wasm --target web"
+		"wasm": "wasm-pack build ./stonkfish --target web"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.37.1",

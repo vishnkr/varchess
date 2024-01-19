@@ -1,4 +1,7 @@
-<script>
+<script lang="ts">
+	import { goto } from "$app/navigation";
+	import { type ConnectParams, wsStore, gameId } from "$lib/store/stores";
+
 
 	let templates = [
 		{num:0, name:"Template 0"},
@@ -9,20 +12,28 @@
 		{num:5, name:"Template 5n"}
 	]
 	export let data;
-	let roomCode;
 	let userId;
-
+	let gameIdInput: string;
 	let username;
 	$: {
 		({ userId } = data);
 		username = userId;
 	}
 
-	function goToEditor(){
-		if (browser) { 
-			window.location.href = '/editor';
+	const joinGame = ()=>{
+		if (gameIdInput){
+			const url = `ws://${import.meta.env.VITE_WS_HOST}/ws`;
+			const params:ConnectParams = {
+				connectType:"join",
+				sessionId: "sdf",
+				gameId: gameIdInput
+			};
+			wsStore.newWebSocketConnection(url,params);
 		}
 	}
+	$: {
+    	if ($gameId !== null) { goto(`/game/${$gameId}`); }
+  	}
 </script>
 
 <svelte:head>
@@ -44,7 +55,7 @@
 		<span class="text-white">OR</span>
 		<div class="my-3">
 			<form method="POST" action="?/joinRoom">
-			<input type="text" name="roomCode" placeholder="Enter Room Code" class="border border-gray-300 px-4 py-2 rounded-l max-w-64" bind:value={roomCode}>
+			<input type="text" name="gameId" bind:value={gameIdInput} placeholder="Enter Room Code" class="border border-gray-300 px-4 py-2 rounded-l max-w-64">
 			<button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-r" >Join Room</button>
 			</form>
 		</div>
