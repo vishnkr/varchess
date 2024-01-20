@@ -16,6 +16,6 @@ export default {
 			}
 		}
 	},
-	plugins: [require('@tailwindcss/typography'),require('daisyui')],
+	plugins: [require('@tailwindcss/typography'), require('daisyui')],
 	purge: ['./src/**/*.{html,js,svelte,ts}']
 };

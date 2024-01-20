@@ -1,59 +1,61 @@
 <script lang="ts">
 	import { BoardType, getSquareColor, type Position } from './types';
 	import Square from './Square.svelte';
-	import slide from '$lib/assets/svg/slide.svg'
-	import jump from '$lib/assets/svg/jump.svg'
+	import slide from '$lib/assets/svg/slide.svg';
+	import jump from '$lib/assets/svg/jump.svg';
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
 	import { MoveType } from '$lib/store/types';
 	export let boardConfig: BoardConfig;
+	export let isFlipped:boolean = false;
 	export let squares = generateSquareMaps(
 		boardConfig.dimensions,
-		boardConfig.isFlipped ?? false
+		isFlipped
 	).squares;
 
-	export let customBoardId = "board";
+	export let customBoardId = 'board';
 	export let position: Position = convertFenToPosition(boardConfig.fen)?.position ?? {
 		piecePositions: {},
 		walls: {}
 	};
-	export let mpSquares : Record<number,MoveType>|null = null;
+	export let mpSquares: Record<number, MoveType> | null = null;
+	function isCursorBoardType(bType: BoardType): boolean {
+		return bType !== BoardType.MovePatternView && bType != BoardType.View;
+	}
+
+	$: {
+    	squares = generateSquareMaps(boardConfig.dimensions, isFlipped).squares;
+  	}
 </script>
 
 <div id="wrapper">
 	<div
 		id={customBoardId}
 		style={`--size: ${Math.max(boardConfig.dimensions.ranks, boardConfig.dimensions.files)}`}
-		class={`${boardConfig.editable ? 'cursor-pointer' : null}`}
+		class={`${isCursorBoardType(boardConfig.boardType) ? 'cursor-pointer' : null}`}
 	>
-			{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
-				{#if boardConfig.boardType == BoardType.MovePatternEditor && mpSquares && mpSquares[idx]!==undefined}
-					<Square 
-						boardId={customBoardId} 
-						editable={false} 
-						interactive={false}
-						squareData={squares[idx]}
-						color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
-						boardType={boardConfig.boardType}
-						nonPieceSvg={mpSquares[idx]=== MoveType.Slide ? slide : jump}
-					 />
-				{:else}
+		{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
+			{#if boardConfig.boardType == BoardType.MovePatternEditor && mpSquares && mpSquares[idx] !== undefined}
 				<Square
 					boardId={customBoardId}
-					editable={boardConfig.editable}
-					interactive={boardConfig.interactive}
+					squareData={squares[idx]}
+					color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
+					boardType={boardConfig.boardType}
+					nonPieceSvg={mpSquares[idx] === MoveType.Slide ? slide : jump}
+				/>
+			{:else}
+				<Square
+					boardId={customBoardId}
 					squareData={squares[idx]}
 					color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
 					piece={position.piecePositions[idx] ?? null}
 					wall={position.walls[idx] ?? false}
 					boardType={boardConfig.boardType}
 				/>
-				{/if}
-
-				
-			{/each}
+			{/if}
+		{/each}
 	</div>
 </div>
 

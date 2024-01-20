@@ -45,7 +45,7 @@ export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean) =
 			//idToSqMap[squareIndex] = squareNotation;
 			coordToIdMap[`${row}:${column}`] = squareIndex;
 			squares[squareIndex] = {
-				gridX: isFlipped ?  dimensions.ranks - row : row + 1,
+				gridX: isFlipped ? dimensions.ranks - row : row + 1,
 				gridY: colIdx + 1,
 				squareIndex,
 				squareNotation: (isFlipped
@@ -70,9 +70,7 @@ export const updatePiecePositionsFromMaxBoard = (
 	for (let row = 0; row < dimensions.ranks; row++) {
 		for (let col = 0; col < dimensions.files; col++) {
 			if (maxBoardState[row][col].isPiecePresent) {
-				piecePositions[row * dimensions.files + col] = maxBoardState[row][
-					col
-				].piece as IPiece;
+				piecePositions[row * dimensions.files + col] = maxBoardState[row][col].piece as IPiece;
 			} else if (maxBoardState[row][col].wall) {
 				walls[row * dimensions.files + col] = true;
 			}
@@ -83,7 +81,7 @@ export const updatePiecePositionsFromMaxBoard = (
 
 function createEditorMaxBoard() {
 	const { subscribe, set, update } = writable<PiecePresentInfo[][]>([[]]);
-	
+
 	return {
 		subscribe,
 		set,

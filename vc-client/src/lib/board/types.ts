@@ -1,5 +1,3 @@
-import type { EditorSubType } from "$lib/components/types";
-
 export enum Color {
 	BLACK = 'black',
 	WHITE = 'white'
@@ -30,7 +28,7 @@ export type File =
 	| 'p';
 export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
 
-export enum BoardType{
+export enum BoardType {
 	// Editor: clicks on squares adds/removes pieces/walls
 	Editor,
 	// MovePatternEditor: clicks on squares adds jump patterns and used to display selected slide pattern
@@ -43,6 +41,10 @@ export enum BoardType{
 	GameBoard
 }
 
+export function doesSupportDragDrop(bType: BoardType): boolean {
+	return bType === BoardType.GameBoard || bType === BoardType.Editor;
+}
+
 export type SquareNotation = `${File}${Rank}`;
 export type SquareMaps = {
 	coordToIdMap: CoordinatetoIDMap;
@@ -50,8 +52,13 @@ export type SquareMaps = {
 };
 
 export const SQUARE_COLORS = ['light', 'dark'] as const;
-export type SquareColor = typeof SQUARE_COLORS[number];
-export function getSquareColor(row: number, col: number, isFlipped?: boolean,overrideColorType?:string): SquareColor {
+export type SquareColor = (typeof SQUARE_COLORS)[number];
+export function getSquareColor(
+	row: number,
+	col: number,
+	isFlipped?: boolean,
+	overrideColorType?: string
+): SquareColor {
 	const idx = row + col;
 	return overrideColorType ?? idx % 2 === 1 ? 'dark' : 'light';
 }
@@ -87,21 +94,10 @@ export type CoordinatetoIDMap = Record<string, SquareIdx>;
 export interface BoardConfig {
 	dimensions: Dimensions;
 	fen: string;
-	//editable - allowing piece additions/deletions to board squares
-	editable: boolean;
-	//interactive - allowing moves to be made through clicks/drags
-	interactive: boolean;
 	isFlipped?: boolean;
 	boardType: BoardType;
 }
-export enum GameType {
-	CUSTOM,
-	PREDEFINED
-}
-export interface EditorSettings {
-	pieceSelection: IPiece | null;
-	editorSubTypeSelected: EditorSubType;
-}
+
 /*
 
 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31

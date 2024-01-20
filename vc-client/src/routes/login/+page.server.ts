@@ -8,36 +8,23 @@ export const load = async ({ locals }) => {
 	return {};
 };
 
-
 export const actions: Actions = {
 	loginUser: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const username = formData.get("username");
-		const password = formData.get("password");
-		if (
-			typeof username !== "string" ||
-			username.length < 1 ||
-			username.length > 31
-		) {
+		const username = formData.get('username');
+		const password = formData.get('password');
+		if (typeof username !== 'string' || username.length < 1 || username.length > 31) {
 			return fail(400, {
-				message: "Invalid username"
+				message: 'Invalid username'
 			});
 		}
-		if (
-			typeof password !== "string" ||
-			password.length < 1 ||
-			password.length > 255
-		) {
+		if (typeof password !== 'string' || password.length < 1 || password.length > 255) {
 			return fail(400, {
-				message: "Invalid password"
+				message: 'Invalid password'
 			});
 		}
 		try {
-			const key = await auth.useKey(
-				"username",
-				username.toLowerCase(),
-				password
-			);
+			const key = await auth.useKey('username', username.toLowerCase(), password);
 			const session = await auth.createSession({
 				userId: key.userId,
 				attributes: {}
@@ -56,40 +43,32 @@ export const actions: Actions = {
 				});
 			}*/
 			return fail(500, {
-				message: "An unknown error occurred"
+				message: 'An unknown error occurred'
 			});
 		}
-		throw redirect(302, "/");
+		throw redirect(302, '/');
 	},
 	signup: async ({ request, locals }) => {
 		const formData = await request.formData();
-		const username = formData.get("signup-username");
-		const password = formData.get("signup-password");
+		const username = formData.get('signup-username');
+		const password = formData.get('signup-password');
 		// basic check
-		if (
-			typeof username !== "string" ||
-			username.length < 4 ||
-			username.length > 31
-		) {
+		if (typeof username !== 'string' || username.length < 4 || username.length > 31) {
 			return fail(400, {
-				message: "Invalid username"
+				message: 'Invalid username'
 			});
 		}
-		if (
-			typeof password !== "string" ||
-			password.length < 6 ||
-			password.length > 255
-		) {
+		if (typeof password !== 'string' || password.length < 6 || password.length > 255) {
 			return fail(400, {
-				message: "Invalid password"
+				message: 'Invalid password'
 			});
 		}
 		try {
 			const user = await auth.createUser({
 				key: {
-					providerId: "username", 
-					providerUserId: username.toLowerCase(), 
-					password 
+					providerId: 'username',
+					providerUserId: username.toLowerCase(),
+					password
 				},
 				attributes: {
 					username
@@ -112,9 +91,9 @@ export const actions: Actions = {
 				});
 			}*/
 			return fail(500, {
-				message: "An unknown error occurred"
+				message: 'An unknown error occurred'
 			});
 		}
-		throw redirect(302, "/");
+		throw redirect(302, '/');
 	}
-}
+};

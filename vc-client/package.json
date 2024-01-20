@@ -40,6 +40,7 @@
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.1",
 		"storybook": "^7.4.0",
+		"stonkfish": "./stonkfish/pkg",
 		"svelte": "^3.59.2",
 		"svelte-check": "^3.5.1",
 		"tailwindcss": "^3.3.3",

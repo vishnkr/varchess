@@ -1,12 +1,12 @@
 // routes/login/github/callback/+server.ts
-import { auth, githubAuth } from "$lib/server/lucia.js";
-import { OAuthRequestError } from "@lucia-auth/oauth";
-import { redirect } from "@sveltejs/kit";
+import { auth, githubAuth } from '$lib/server/lucia.js';
+import { OAuthRequestError } from '@lucia-auth/oauth';
+import { redirect } from '@sveltejs/kit';
 
 export const GET = async ({ url, cookies, locals }) => {
-	const storedState = cookies.get("github_oauth_state");
-	const state = url.searchParams.get("state");
-	const code = url.searchParams.get("code");
+	const storedState = cookies.get('github_oauth_state');
+	const state = url.searchParams.get('state');
+	const code = url.searchParams.get('code');
 
 	if (!storedState || !state || storedState !== state || !code) {
 		return new Response(null, {
@@ -14,8 +14,7 @@ export const GET = async ({ url, cookies, locals }) => {
 		});
 	}
 	try {
-		const { getExistingUser, githubUser, createUser } =
-			await githubAuth.validateCallback(code);
+		const { getExistingUser, githubUser, createUser } = await githubAuth.validateCallback(code);
 
 		const getUser = async () => {
 			const existingUser = await getExistingUser();
@@ -37,11 +36,10 @@ export const GET = async ({ url, cookies, locals }) => {
 		return new Response(null, {
 			status: 302,
 			headers: {
-				Location: "/home"
+				Location: '/home'
 			}
 		});
 	} catch (e) {
-
 		if (e instanceof OAuthRequestError) {
 			// invalid code
 			return new Response(null, {

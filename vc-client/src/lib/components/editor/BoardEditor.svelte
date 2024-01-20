@@ -8,19 +8,18 @@
 
 	// @ts-ignore
 	import Switch from 'svelte-switch';
-	import {boardEditor } from '../../store/editor';
+	import { boardEditor } from '../../store/editor';
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
-	export let loggedIn = true;
 	// @ts-ignore
 	function handleChange(e) {
 		const { checked } = e.detail;
 		checkedValue = checked;
 		boardEditor.update((val) => ({ ...val, isWallSelectorOn: checked }));
 	}
-	let maxDimension = loggedIn ? 16 : 8;
-	let boardTheme = "Default";
+	let maxDimension = 16;
+	let boardTheme = 'Default';
 	function updateColors() {
 		const light = colorThemes[boardTheme].lightColor;
 		const dark = colorThemes[boardTheme].darkColor;
@@ -35,13 +34,21 @@
 		Classic: { lightColor: 'hsl(0, 0%, 100%)', darkColor: 'hsl(0, 0%, 45%)' },
 		Candy: { lightColor: 'hsl(314, 100%, 90%)', darkColor: 'hsl(328, 100%, 55%)' }
 	};
+	function updateBoardDimensions() {
+		console.log('Updating dimensions:', dimensions);
+		boardEditor.update((val) => ({
+			...val,
+			ranks: dimensions.ranks,
+			files: dimensions.files
+		}));
+	}
 </script>
 
 <div>
 	<div>
 		<button
 			class="
-            bg-red-600 rounded-md p-2 text-white border-white 
+            bg-red-600 rounded-md p-2 text-white border-white
             transform transition duration-200 hover:scale-105"
 			on:click={() => dispatch('clear')}
 		>
@@ -49,54 +56,57 @@
 		</button>
 	</div>
 	<div class="grid grid-rows-1 md:grid-cols-2 shadow-md">
-
-	<div>
-		<div class="bg-white py-2 rounded-md ">
-			<h3 class="text-xl font-semibold">Board Width : {dimensions.files}</h3>
-			<input
-				class="cursor-pointer"
-				type="range"
-				min={5}
-				max={maxDimension}
-				bind:value={dimensions.files}
-			/>
+		<div>
+			<div class="bg-white py-2 rounded-md">
+				<h3 class="text-xl font-semibold">Board Width : {dimensions.files}</h3>
+				<input
+					class="cursor-pointer"
+					type="range"
+					min={5}
+					max={maxDimension}
+					bind:value={dimensions.files}
+					on:input={updateBoardDimensions}
+				/>
+			</div>
+			<div class="bg-white py-2 rounded-md">
+				<h3 class="text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
+				<input
+					class="cursor-pointer"
+					type="range"
+					min={5}
+					max={maxDimension}
+					bind:value={dimensions.ranks}
+					on:input={updateBoardDimensions}
+				/>
+			</div>
 		</div>
-		<div class="bg-white py-2 rounded-md">
-			<h3 class="text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
-			<input
-				class="cursor-pointer"
-				type="range"
-				min={5}
-				max={maxDimension}
-				bind:value={dimensions.ranks}
-			/>
-		</div>
-	</div>
-	<div class="flex flex-col justify-between items-center h-auto p-2">
-		<h3 class="text-xl">Shift Board</h3>
-		<button class="dbtn" on:click={() => dispatch('shift', 'up')}
-			><img class="svg" src={up} alt="Shift up" /></button
-		>
-		<div class="flex-1">
-			<button class="dbtn" on:click={() => dispatch('shift', 'left')}
-				><img class="svg" src={left} alt="Shift left" /></button
+		<div class="flex flex-col justify-between items-center h-auto p-2">
+			<h3 class="text-xl">Shift Board</h3>
+			<button class="dbtn" on:click={() => dispatch('shift', 'up')}
+				><img class="svg" src={up} alt="Shift up" /></button
 			>
-			<button class="dbtn" on:click={() => dispatch('shift', 'right')}
-				><img class="svg" src={right} alt="Shift right" /></button
+			<div class="flex-1">
+				<button class="dbtn" on:click={() => dispatch('shift', 'left')}
+					><img class="svg" src={left} alt="Shift left" /></button
+				>
+				<button class="dbtn" on:click={() => dispatch('shift', 'right')}
+					><img class="svg" src={right} alt="Shift right" /></button
+				>
+			</div>
+			<button class="dbtn" on:click={() => dispatch('shift', 'down')}
+				><img class="svg" src={down} alt="Shift down" /></button
 			>
 		</div>
-		<button class="dbtn" on:click={() => dispatch('shift', 'down')}
-			><img class="svg" src={down} alt="Shift down" /></button
-		>
-	</div>
 	</div>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="relative inline-flex items-center cursor-pointer">
-		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Toggle Wall Selector</span>
+		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300"
+			>Toggle Wall Selector</span
+		>
 		<Switch on:change={handleChange} checked={checkedValue} />
 	</label>
 	<div class="flex items-center">
-		<span class="p-3  text-md font-medium text-gray-900 dark:text-gray-300">Theme: </span>
+		<span class="p-3 text-md font-medium text-gray-900 dark:text-gray-300">Theme: </span>
 		<select
 			class="bg-white appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
 			bind:value={boardTheme}

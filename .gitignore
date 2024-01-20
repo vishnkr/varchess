@@ -6,5 +6,4 @@ vc-server/vc-server
 .vscode
 */.env
 */*.log
-vc-server/pb/*
-vc-server/fly.toml
+vc-server/internal/wasm

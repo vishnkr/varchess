@@ -1,7 +1,8 @@
 package chesscore
 
 import (
-	"bytes"
+	"fmt"
+	"strconv"
 )
 
 type classicMoveType uint8
@@ -101,6 +102,7 @@ func CreateGame(gameConfig GameConfig) (*Game, error) {
 	if err != nil {
 		return nil, err
 	}*/
+	fmt.Println("incoming ---------- ", gameConfig)
 	variant, err := newVariant(gameConfig)
 	if err != nil {
 		return nil, err
@@ -109,6 +111,8 @@ func CreateGame(gameConfig GameConfig) (*Game, error) {
 		variant: variant,
 		History: []Move{},
 	}
+	ok,_:=game.GetGameConfig()
+	fmt.Println("outgoing ---------- ", ok)
 	return &game, nil
 }
 
@@ -140,9 +144,18 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 	return newVariant, nil
 }
 
-func (v *variant) getGameConfig()(GameConfig,error){
-	gameConfig := GameConfig{VariantType: v.variantType}
-	//gameConfig.Position = v.getPosition()
+func (g *Game) GetGameConfig()(GameConfig,error){
+	return g.variant.GetGameConfig()
+}
+
+func (v *variant) GetGameConfig()(GameConfig,error){
+	pos:= v.GetPosition()
+	gameConfig := GameConfig{
+		VariantType: v.variantType,
+		Fen: pos.Fen,
+		Dimensions: pos.Dimensions,
+	}
+
 	return gameConfig,nil
 }
 
@@ -150,25 +163,42 @@ func IsValidConfig (config GameConfig) (bool,error){
 	return true,nil
 }
 
-func (v *variant) getPosition() Position{
+func (v *variant) GetPosition() Position{
 	position := Position{Dimensions: v.dimensions,PieceProps: v.pieceProps}
-	var fen bytes.Buffer
-	for i:=0;i<v.dimensions.Files;i++{
-		for j:=0;j<v.dimensions.Ranks;j++{
+	var fen string
+	for i:=0;i<v.dimensions.Ranks;i++{
+		empty := 0
+		for j:=0;j<v.dimensions.Files;j++{
 			id:= v.toPos(i,j)
 			if piece,ok := v.position.pieceLocations[id]; ok{
-				fen.WriteString(piece.notation)
+				if empty>0{
+					fen += strconv.Itoa(empty)
+				}
+				empty = 0
+				fen += piece.notation
 			} else if _, ok:= v.position.wallSquares[id];ok{
-				fen.WriteString(".")
+				if empty>0{
+					fen += strconv.Itoa(empty)
+				}
+				empty = 0
+				fen += "."
+			} else{
+				empty+=1
 			}
 		}
-		if (i!=v.dimensions.Files-1){fen.WriteString("/")}
+		if (i!=v.dimensions.Ranks-1){
+			if empty>0{
+				fen += strconv.Itoa(empty)
+			}
+			empty = 0
+			fen+="/"
+		}
 	}
 	if v.turn == ColorWhite{
-		fen.WriteString(" w")
-	} else { fen.WriteString(" b")}
-	fen.WriteString(" KQkq - 0 1")
-	position.Fen = fen.String()
+		fen+=" w"
+	} else { fen+=" b"}
+	fen+=" KQkq - 0 1"
+	position.Fen = fen
 	return position
 }
 

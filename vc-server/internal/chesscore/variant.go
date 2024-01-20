@@ -19,6 +19,7 @@ type Variant interface {
 	getPseudoLegalMoves(Color, bool) []Move
 	GetLegalMoves() []Move
 	PerformMove(Move) (result,bool)
+	GetGameConfig()(GameConfig,error)
 }
 
 type variant struct {

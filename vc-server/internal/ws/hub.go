@@ -29,6 +29,36 @@ func NewGameHub(gameId string,destroy chan<- string) *gameHub{
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 		destroy: 	destroy,
+		players: players{},
+	}
+}
+
+func (h *gameHub) getExistingUsers()[]string{
+	users:=[]string{}
+	for c:= range h.clients{
+		users = append(users, c.user.Username)
+	}
+	return users
+}
+
+func (h *gameHub) setPlayer(c *Client, color string){
+	if color=="w"{
+		h.players.white = c
+	} else{
+		h.players.black = c
+	}
+}
+
+func (h *gameHub) broadcastToPlayers(msg interface{}){
+	sendMessage(h.players.white,msg)
+	sendMessage(h.players.black,msg)
+}
+
+func (h *gameHub) broadcastToMembersExceptClient(c *Client, msg interface{}){
+	for client := range h.clients{
+		if client!=c{
+			sendMessage(client,msg)
+		}
 	}
 }
 

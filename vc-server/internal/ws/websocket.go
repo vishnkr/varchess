@@ -67,7 +67,7 @@ func (ws *WebSocket) HandleWSConnection(w http.ResponseWriter, r *http.Request){
 	go client.writePump()
 }
 
-func sendErrorMessage(c *Client, response interface{}) {
+func sendMessage(c *Client, response interface{}) {
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Failed to marshal response into JSON: %v", err)

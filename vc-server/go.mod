@@ -38,5 +38,6 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.31.0
+	github.com/wasmerio/wasmer-go v1.0.4
 	golang.org/x/sys v0.13.0 // indirect
 )

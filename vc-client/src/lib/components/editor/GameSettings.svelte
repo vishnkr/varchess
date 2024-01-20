@@ -4,9 +4,8 @@
 	let settingsChecked = {
 		disableChat: false,
 		showLegalMoves: false,
-		autoQueen:false,
+		autoQueen: false
 	};
-	
 </script>
 
 <div class="flex flex-col p-3">
@@ -25,5 +24,4 @@
 		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300">Auto Queen</span>
 		<Switch checked={settingsChecked.autoQueen} />
 	</label>
-	
 </div>

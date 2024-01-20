@@ -21,7 +21,6 @@
 
 <div>
 	<div class="flex justify-center items-center justify-start m-2 space-x-2">
-		
 		<button class="p-2 bg-orange-400 rounded-md text-white">View Variant Rules</button>
 	</div>
 	<div class="m-2">

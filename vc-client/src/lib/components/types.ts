@@ -1,6 +1,6 @@
-export enum EditorSubType{
-  Board,
-  Piece,
-  MovePattern,
-  Rule
+export enum EditorSubType {
+	Board,
+	Piece,
+	MovePattern,
+	Rule
 }

@@ -12,7 +12,7 @@
 		interactive: true,
 		boardType: BoardType.View
 	};
-  
+
 	const cardData = [
 		{
 			title: 'Variable Board Sizes',
@@ -40,7 +40,6 @@
 			bg: 'bg-purple-600'
 		}
 	];
-
 </script>
 
 <svelte:head>
@@ -51,7 +50,7 @@
 	<div class=" max-w-6xl mx-auto sm:py-5 px-4 sm:px-6 lg:px-8">
 		<div class="isolate">
 			<div class="relative px-6 lg:px-8 py-16 sm:py-8">
-				<div class="pb-1 ">
+				<div class="pb-1">
 					<div class="flex flex-cols space-x-8 items-center justify-start">
 						<div class="flex-1 text-left w-[38rem]">
 							<h1 class="text-center font-bold tracking-tight text-white text-6xl">
@@ -63,11 +62,9 @@
 								</span>
 							</h1>
 							<p class="mt-8 text-2xl text-center leading-8 text-white">Create. Customize. Play</p>
-								<div class="mt-10 flex items-center justify-center gap-x-6">
-									<a href="/login"><span class="btn-custom-1">
-										Play now!
-									</span></a>
-								</div>
+							<div class="mt-10 flex items-center justify-center gap-x-6">
+								<a href="/login"><span class="btn-custom-1"> Play now! </span></a>
+							</div>
 						</div>
 						<div class="flex-1">
 							<Board {boardConfig} />
@@ -93,5 +90,4 @@
 			</div>
 		{/each}
 	</div>
-	
 </section>

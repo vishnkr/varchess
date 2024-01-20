@@ -148,6 +148,9 @@ func newPosition(gameConfig GameConfig) (position, error) {
 				}
 			} else {
 				if char == '.' {
+					if position.wallSquares==nil{
+						position.wallSquares = make(map[int]bool)
+					}
 					position.wallSquares[id] = true
 					col++
 					id += 1

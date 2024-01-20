@@ -1,19 +1,25 @@
 <script lang="ts">
 	import './board-styles.css';
-	import { BoardType, type IPiece, type SquareColor, type SquareInfo } from './types';
+	import {
+		BoardType,
+		doesSupportDragDrop,
+		type IPiece,
+		type SquareColor,
+		type SquareInfo
+	} from './types';
 	import { editorMaxBoard } from './board';
 	import { pieceEditor, boardEditor } from '$lib/store/editor';
-	import wallSvg from '$lib/assets/svg/wall.svg'
+	import wallSvg from '$lib/assets/svg/wall.svg';
 	export let squareData: SquareInfo;
-	export let editable: boolean;
-	export let interactive: boolean;
 
 	export let color: SquareColor;
 	export let piece: IPiece | null = null;
 	export let wall: boolean = false;
-	export let boardId: string = "board";
+	export let boardId: string = 'board';
 	export let boardType: BoardType = BoardType.GameBoard;
-	export let nonPieceSvg: string| null = null;
+
+	let isDraggable: boolean = doesSupportDragDrop(boardType);
+	export let nonPieceSvg: string | null = null;
 	function getPieceClass(piece: IPiece) {
 		return piece.color.charAt(0).toLowerCase() + piece.pieceType.charAt(0).toLowerCase();
 	}
@@ -36,7 +42,7 @@
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
-		if (!piece && !wall && interactive) {
+		if (!piece && !wall && isDraggable) {
 			dragOver = true;
 		}
 	}
@@ -44,7 +50,7 @@
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		const data = e.dataTransfer?.getData('dragInfo');
-		if (data && !wall && interactive) {
+		if (data && !wall && isDraggable) {
 			var obj = JSON.parse(data);
 			piece = obj.piece;
 			dragOver = false;
@@ -57,44 +63,52 @@
 
 	function handleClick(e: MouseEvent) {
 		e.preventDefault();
-		if (boardType===BoardType.Editor) {
-			if ($boardEditor.isWallSelectorOn) {
-				console.log('clicking wall')
-				wall = !wall;
-				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-					isPiecePresent: false,
-					wall,
-					piece: null
-				});
-			} else {
-				if ($pieceEditor.pieceSelection)
+		switch (boardType) {
+			case BoardType.Editor:
+				if ($boardEditor.isWallSelectorOn) {
+					wall = !wall;
 					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-						isPiecePresent: piece ? false : true,
-						piece: piece ? null : $pieceEditor.pieceSelection
+						isPiecePresent: false,
+						wall,
+						piece: null
 					});
-			}
-		} else if (boardType===BoardType.MovePatternEditor){
-			if(piece){return}
-			let selectedPiece = $pieceEditor.pieceSelection
-			let jumpOffset = [squareData.row-4,squareData.column-4]
-			if (selectedPiece){
-				const isJumpOffsetPresent = $pieceEditor.movePatterns[selectedPiece.pieceType] && $pieceEditor.movePatterns[selectedPiece.pieceType].jumpOffsets.some(
-					(o) => o[0] === jumpOffset[0] && o[1] === jumpOffset[1] );
-				if(isJumpOffsetPresent){
-					pieceEditor.removeJumpPattern(selectedPiece.pieceType,jumpOffset)
 				} else {
-					pieceEditor.addJumpPattern(selectedPiece.pieceType,jumpOffset)
+					if ($pieceEditor.pieceSelection)
+						editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+							isPiecePresent: piece ? false : true,
+							piece: piece ? null : $pieceEditor.pieceSelection
+						});
 				}
-				
-			}
-		} 
+				break;
+			case BoardType.MovePatternEditor:
+				if (piece) {
+					return;
+				}
+				let selectedPiece = $pieceEditor.pieceSelection;
+				let jumpOffset = [squareData.row - 4, squareData.column - 4];
+				if (selectedPiece) {
+					const isJumpOffsetPresent =
+						$pieceEditor.movePatterns[selectedPiece.pieceType] &&
+						$pieceEditor.movePatterns[selectedPiece.pieceType].jumpOffsets.some(
+							(o) => o[0] === jumpOffset[0] && o[1] === jumpOffset[1]
+						);
+					if (isJumpOffsetPresent) {
+						pieceEditor.removeJumpPattern(selectedPiece.pieceType, jumpOffset);
+					} else {
+						pieceEditor.addJumpPattern(selectedPiece.pieceType, jumpOffset);
+					}
+				}
+				break;
+			case BoardType.GameBoard:
+				break;
+			default:
+				break;
+		}
 	}
-
-	const isViewableOnly = () => !editable && !interactive;
 
 	function handleMouseEnter(e: MouseEvent) {
 		e.preventDefault();
-		if (piece && !isViewableOnly()) {
+		if (piece && boardType !== BoardType.View) {
 			hover = true;
 		}
 	}
@@ -110,8 +124,7 @@
 		hover = false;
 	}
 	let pieceEditorStore = null;
-	$: pieceEditorStore = $pieceEditor
-	
+	$: pieceEditorStore = $pieceEditor;
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -132,8 +145,10 @@
 >
 	{#if piece}
 		<div
-			class={`absolute bg-piece ${interactive ? 'draggable' : null} w-full h-full ${getPieceClass(piece)}`}
-			draggable={interactive}
+			class={`absolute bg-piece ${isDraggable ? 'draggable' : null} w-full h-full ${getPieceClass(
+				piece
+			)}`}
+			draggable={isDraggable}
 			id={`${boardId}-p-${squareData.squareIndex}`}
 			bind:this={pieceEl}
 			on:dragstart={handleDragStart}
@@ -145,7 +160,7 @@
 			<img draggable={false} src={wallSvg} class="w-full h-full" />
 		</div>
 	{:else if nonPieceSvg}
-		<div class="absolute inset-0 flex items-center justify-center ">
+		<div class="absolute inset-0 flex items-center justify-center">
 			<!-- svelte-ignore a11y-missing-attribute -->
 			<img draggable={false} src={nonPieceSvg} class="w-full h-full" />
 		</div>
