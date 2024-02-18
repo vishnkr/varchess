@@ -6,13 +6,18 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 type API struct{
-	repository Repository
+	service Service
 }
 
-func NewAPI(repository Repository)API{
-	return API{repository}
+func NewAPI(service Service)API{
+	return API{service}
 }
 
+const (
+	errInternalServer = "Internal Server Error"
+	errTemplateNotFound = "Template not found"
+	errInvalidTemplateID = "Invalid TemplateId"
+)
 // endpoint POST /templates
 func (api *API) HandleCreateTemplate(w http.ResponseWriter, r *http.Request){
 	//ctx := r.Context()
@@ -23,7 +28,16 @@ func (api *API) HandleCreateTemplate(w http.ResponseWriter, r *http.Request){
 func (api *API) HandleGetTemplates(w http.ResponseWriter, r *http.Request){
 	//ctx := r.Context()
 	//logger := logger.FromContext(ctx)
+	/*
+	userID:= middleware.getUserIDFromContext(ctx)
+	templates,err := api.service.GetTemplatesByUser(ctx,userID)
+	if err!=nil{
+		return
+	}
+	Write response with status
+	*/
 }
+
 
 func (api *API) HandleGetTemplate(w http.ResponseWriter, r *http.Request){
 	//ctx := r.Context()

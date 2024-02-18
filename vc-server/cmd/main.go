@@ -18,16 +18,14 @@ import (
 	"varchess/internal/ws"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog"
 )
 
 func main(){
-	l := logger.Get()
 	cfg, err := config.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
-
+	l := logger.New()
 	conn, err := db.Connect(cfg.DB)
 	if err != nil {
 		log.Fatalf("Error connecting to db: %v", err)
@@ -58,7 +56,7 @@ func main(){
 }
 
 
-func serverHandler(r chi.Router, l zerolog.Logger, db *db.Database) chi.Router{
+func serverHandler(r chi.Router, l logger.Logger, db *db.Database) chi.Router{
 	r.Use(mw.Cors())
 	r.Use(mw.RequestLogger(l))
 	gameRepository := game.NewRepository(db)
@@ -67,7 +65,8 @@ func serverHandler(r chi.Router, l zerolog.Logger, db *db.Database) chi.Router{
 	templateService := template.NewService(templateRepository)
 	websocket:= ws.NewWebSocket(gameService,templateService)
 	websocket.RegisterHandlers(r)
-	r.Get("/health",func (w http.ResponseWriter, _ *http.Request) {
+	r.Get("/health",func (w http.ResponseWriter, req *http.Request) {
+
 		utils.WriteStatus(w, http.StatusOK, struct {
 			Message string `json:"message"`
 		}{Message: "health check OK"})

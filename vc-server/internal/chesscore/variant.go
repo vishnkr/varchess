@@ -7,7 +7,9 @@ import (
 type variantType string
 
 const (
-	Custom variantType = "Custom"
+	Checkmate variantType = "Checkmate"
+	Antichess variantType = "Antichess"
+	NCheck variantType = "NCheck"
 	DuckChess variantType = "DuckChess"
 	ArcherChess variantType = "ArcherChess"
 	Wormhole variantType = "Wormhole"
@@ -183,7 +185,7 @@ func (v variant) genKingMoves(piece piece, currentSquareId int) []Move{
 func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) (bool,[]int){
 	curRow,_ := v.toRowCol(kingPos)
 	var rookSrc, rookTarget, dx,i int
-	if v.Objective.Type == Antichess{
+	if v.variantType == Antichess{
 		return false,[]int{-1,-1}
 	}
 	if isKingside{

@@ -7,7 +7,7 @@ import (
 
 type Template struct {
 	ID           int32 	`json:"id"`
-	TemplateName string	`json:"template_name"`
+	Name string	`json:"name"`
 	GameTemplate []byte `json:"game_template"`
 	UserID       string `json:"user_id"`
 }
@@ -33,7 +33,7 @@ func NewRepository(conn *db.Database) *repository{
 
 func (r *repository) CreateTemplate(ctx context.Context, template Template) error{
 	arg := db.CreateTemplateParams{
-		TemplateName: template.TemplateName,
+		TemplateName: template.Name,
 		GameTemplate: template.GameTemplate,
 		UserID: template.UserID,
 	}

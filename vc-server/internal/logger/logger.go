@@ -1,68 +1,50 @@
 package logger
 
 import (
-	"io"
+	"context"
+	"fmt"
 	"os"
-	"runtime/debug"
-	"strconv"
-	"sync"
 	"time"
 
+	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/pkgerrors"
 )
 
-var once sync.Once
-var log zerolog.Logger
-
-func Get() zerolog.Logger{
-	once.Do(func() {
-		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
-		zerolog.TimeFieldFormat = time.RFC3339Nano
-
-		logLevel,err:= strconv.Atoi(os.Getenv("LOG_LEVEL"))
-		if err!=nil{
-			logLevel = int(zerolog.InfoLevel)
-		}
-		var output io.Writer = zerolog.ConsoleWriter{
-			Out:os.Stdout,
-			TimeFormat: time.RFC3339,
-			FieldsExclude: []string{
-				"user_agent",
-				"git_revision",
-				"go_version",
-			  },
-		}
-
-		/*if os.Getenv("APP_ENV")!="development"{
-			fileLogger:=&lumberjack.Logger{
-				Filename: "test.log",
-				MaxSize: 5,
-				MaxBackups: 10,
-				MaxAge: 14,
-				Compress: true,
-			}
-			output = zerolog.MultiLevelWriter(os.Stderr, fileLogger)
-		}*/
-		var gitRevision string
-		buildInfo,ok:= debug.ReadBuildInfo()
-		if ok{
-			for _,v:= range buildInfo.Settings{
-				if v.Key == "vcs.revision"{
-					gitRevision = v.Value
-					break
-				}
-			}
-		}
-
-		log = zerolog.New(output).
-			Level(zerolog.Level(logLevel)).
-			With().
-			Timestamp().
-			Str("git_revision",gitRevision).
-			Str("go_version",buildInfo.GoVersion).
-			Logger()
-	})
-	return log
+type Logger struct{
+	*zerolog.Logger
 }
 
+const LoggerKey int = 0
+
+func New() Logger{
+	logFolder := "logs"
+	environment := os.Getenv("ENVIRONMENT")
+	createLogs := environment == "development"
+	if createLogs {
+		if _, err := os.Stat(logFolder); os.IsNotExist(err) {
+			err := os.Mkdir(logFolder, os.ModePerm)
+			if err != nil {
+				fmt.Printf("Error creating logs folder: %v\n", err)
+			}
+		}
+	}
+	logFile := ""
+	if createLogs {
+		logFile = fmt.Sprintf("logs/app-%s.log", time.Now().Format("2006-01-02"))
+	}
+	logRotator := &lumberjack.Logger{
+		Filename:   logFile,
+		MaxBackups: 3, 
+		MaxAge:     7,
+		Compress:   true,
+	}
+	log := zerolog.New(logRotator).With().Timestamp().Logger()
+	return Logger{&log}
+}
+
+func FromContext(ctx context.Context) Logger{
+	if l, ok := ctx.Value(LoggerKey).(Logger); ok {
+		return l
+	}
+	return New()
+}

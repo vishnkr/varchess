@@ -2,12 +2,16 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
+	"varchess/internal/logger"
 
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
@@ -36,15 +40,19 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 
-func RequestLogger(l zerolog.Logger) func(http.Handler) http.Handler {
+func RequestLogger(l logger.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler{
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-
+			requestID, correlationID := getOrCreateIDs(r)
+			reqLogger:= l.With().Str("requestID", requestID).Str("correlationID", correlationID).Logger()
+			ctx := r.Context()
+			ctx = context.WithValue(ctx,logger.LoggerKey,reqLogger)
+			r = r.WithContext(ctx)
 			lrw := newLoggingResponseWriter(w)
-			logLevel := zerolog.InfoLevel
-
+			
 			defer func() {
+				logLevel := zerolog.InfoLevel
 				panicVal := recover()
 				if panicVal != nil {
 					lrw.statusCode = http.StatusInternalServerError
@@ -56,13 +64,14 @@ func RequestLogger(l zerolog.Logger) func(http.Handler) http.Handler {
 				} else if lrw.statusCode >= http.StatusBadRequest {
 					logLevel = zerolog.WarnLevel
 				}
-				l.
-					WithLevel(logLevel).
-					Str("method", r.Method).
-					Str("url", r.URL.RequestURI()).
-					Dur("elapsed_ms", time.Since(start)).
-					Int("status_code", lrw.statusCode).
-					Msg("incoming request")
+				queryString := ""
+				if r.URL.RawQuery != "" {
+					queryString = "?" + r.URL.RawQuery
+				}
+
+				reqLogger.WithLevel(logLevel).
+					Dur("duration", time.Since(start)).
+					Str("info", fmt.Sprintf("[%v] %s: %s%s", lrw.statusCode, r.Method, r.URL.RequestURI(), queryString)).Msg("Request processed")
 			}()
 			next.ServeHTTP(lrw, r)
 		})
@@ -80,3 +89,22 @@ func Cors() func(http.Handler) http.Handler {
 	})
 }
 
+func getOrCreateIDs(r *http.Request) (reqID string, corrID string) {
+	reqID = getRequestID(r)
+	corrID = getCorrelationID(r)
+	if reqID == "" {
+		reqID = uuid.NewString()
+	}
+	if corrID == "" {
+		corrID = uuid.NewString()
+	}
+	return reqID, corrID
+}
+
+func getRequestID(r *http.Request) string {
+	return r.Header.Get("X-Request-ID")
+}
+
+func getCorrelationID(r *http.Request) string {
+	return r.Header.Get("X-Correlation-id")
+}

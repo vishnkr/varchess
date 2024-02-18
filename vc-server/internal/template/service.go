@@ -8,7 +8,7 @@ import (
 )
 
 type Service interface{
-
+	CreateTemplate(context.Context, CreateTemplateInput) error
 }
 
 type service struct{
@@ -21,17 +21,21 @@ func NewService(repository Repository) *service {
 
 type CreateTemplateInput struct{
 	ID           int32 	`json:"id"`
-	TemplateName string	`json:"template_name" validate:"required,min=1"`
+	Name 		 string	`json:"name" validate:"required,min=1"`
 	GameTemplate []byte `json:"game_template"`
 	UserID       string `json:"user_id"`
 }
-func (s *service) CreateTemplate(ctx context.Context, template_input CreateTemplateInput)error{
+
+func (s *service) CreateTemplate(ctx context.Context, templateInput CreateTemplateInput)error{
 	//logger := logger.FromContext(ctx)
 	validate := validator.New()
-	err:=validate.Struct(template_input)
+	err:=validate.Struct(templateInput)
 	if err!=nil{
 		log.Printf("service: invalid template name")
 	}
-	return s.repository.CreateTemplate(ctx,Template(template_input))
+	return s.repository.CreateTemplate(ctx,Template(templateInput))
 }
 
+func (s *service) GetTemplatesByUser(ctx context.Context, userId string) error{
+	return nil
+}

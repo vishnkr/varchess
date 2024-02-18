@@ -47,9 +47,6 @@ const (
 	DuckPlacement variantMoveType = iota
 	Teleport
 
-	Checkmate GameObjective = "checkmate"
-	NCheck GameObjective = "ncheck"
-	Antichess GameObjective = "antichess"
 	Targetsquare GameObjective = "target"
 	Capture GameObjective = "capture"
 
@@ -124,19 +121,12 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 		return nil, err
 	}
 	var variant = variant{
-		variantType: Custom,
+		variantType: Checkmate,
 		position:    position,
 	}
 	switch variantType {
-	case Custom:
-		/*switch gameConfig.Objective.Type {
-		case Antichess:
-			newVariant = &AntichessVariant{variant}
-		case NCheck:
-			newVariant = &NCheckVariant{variant: variant, blackKingCheckCount: 0, whiteKingCheckCount: 0, targetChecks: 3}
-		default:
-			newVariant = &CheckmateVariant{variant}
-		}*/
+	case Checkmate:
+		newVariant = &CheckmateVariant{variant}
 	default:
 		newVariant = &CheckmateVariant{variant}
 	}
