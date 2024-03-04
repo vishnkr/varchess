@@ -12,3 +12,5 @@ export const load: PageServerLoad = async ({ params, url, locals }) => {
 		gameId
 	};
 };
+
+export const ssr = false;

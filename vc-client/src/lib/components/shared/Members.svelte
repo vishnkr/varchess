@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Board from '$lib/board/Board.svelte';
-	import { me, members, type Member, Role } from '$lib/store/stores';
+	import { members, type Member, Role } from '$lib/store/stores';
 	import { onDestroy } from 'svelte';
 
 	let membersList: Member[];

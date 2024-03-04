@@ -121,7 +121,7 @@
 	};
 	const playGame = () => {
 		const config = generateGameConfigJSON();
-		console.log(config);
+		//console.log(config);
 		const config_json = JSON.stringify(camelToSnake(config));
 		//const chesscore = new stonkfish.ChessCoreLib(config_json);
 		//console.log(chesscore.getLegalMoves());

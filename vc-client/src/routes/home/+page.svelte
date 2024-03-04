@@ -39,7 +39,7 @@
 	<div class="mx-auto flex items-center justify-center flex-col p-4">
 		<div class="rounded text-white">
 			<a href="/editor">
-				<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold m-2 py-2 px-4 rounded">
+				<button class="bg-blue-600 hover:bg-blue-700 text-white font-bold m-2 py-2 px-4 rounded-2xl">
 					<i class="fa-solid fa-plus" />
 					Create New Game
 				</button>
@@ -52,41 +52,41 @@
 				name="gameId"
 				bind:value={gameIdInput}
 				placeholder="Enter Room Code"
-				class="border border-gray-300 px-4 py-2 rounded-l max-w-64"
+				class="border border-gray-300 px-4 py-2 rounded-xl max-w-64"
 			/>
 			<button
 				on:click={joinGame}
-				class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-r"
+				class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-2xl m-4"
 				>Join Room</button
 			>
 		</div>
-		<div class="mx-3">
-			<h3 class="text-center text-white my-3 text-2xl font-bold">My Templates</h3>
-			<table class="border border-gray-300 w-full">
+		<div class="my-3">
+			<h3 class="text-center text-white mt-1 text-2xl font-bold mb-4">My Templates</h3>
+			<table class="overflow-hidden w-full rounded-xl">
 				<thead>
 					<tr>
-						<th class="text-white bg-gray-700 border border-gray-300 px-4 py-2">Variant Template</th
+						<th class="text-white bg-gray-700 px-4 py-2 ">Variant Template</th
 						>
-						<th class="text-white bg-gray-700 border border-gray-300 px-4 py-2">Actions</th>
+						<th class="text-white bg-gray-700  px-4 py-2">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each templates as template}
 						<tr class="bg-white">
-							<td class="text-gray-900 border text-center border-gray-300 px-4 py-2"
+							<td class="text-gray-900 text-center px-4 py-2"
 								>{template.name}</td
 							>
-							<td class="text-gray-900 border flex justify-center border-gray-300 px-4 py-2">
+							<td class="text-gray-900 flex justify-center px-4 py-2">
 								<button
-									class="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded mr-2"
+									class="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-2xl mr-2"
 									>Play</button
 								>
 								<button
-									class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded mr-2"
+									class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-2xl mr-2"
 									>Edit</button
 								>
 								<button
-									class="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded mr-2"
+									class="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-2xl mr-2 "
 									>Delete</button
 								>
 							</td>

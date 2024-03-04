@@ -1,8 +1,23 @@
 :root {
-	--default-light-square: hsl(51deg 24% 84%);
-	--default-dark-square: hsl(145deg 32% 44%);
+	--default-light-square: #e0ddcc;
+	--default-dark-square: #4c946a;
 	--default-hover-square: hsl(52deg 98% 70%);
 	--drag-piece-over-square: hsl(221, 75%, 44%);
+	--coords-font-size: 0.7rem;
+  	--coords-font-family: sans-serif;
+	--piece-drag-z-index: 9999;
+	--ghost-piece-opacity: 0.35;
+
+	--move-target-marker-radius-occupied: 82%;
+	--move-target-marker-radius: 24%;
+	--move-target-marker-color-dark-square: hsl(144deg 64% 9% / 90%);
+	--move-target-marker-color-light-square: hsl(144deg 64% 9% / 90%);
+	--square-color-dark-hover: hsl(144deg 75% 44%);
+	--square-color-light-hover: hsl(52deg 98% 70%);
+	--square-color-dark-active: hsl(218, 77%, 43%);
+	--square-color-light-active: hsl(218, 77%, 43%);
+	--outline-color-dark-active: hsl(138deg 85% 53% / 95%);
+  	--outline-color-light-active: hsl(66deg 97% 72% / 95%);
 }
 
 .bg-piece {

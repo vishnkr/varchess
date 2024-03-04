@@ -61,7 +61,10 @@
 			}
 		}));
 	};
-	const updateColor = (newColor: Color) => pieceEditor.updateColor(newColor);
+	const updateColor = (newColor: Color) => {
+		pieceEditor.updateColor(newColor);
+		color = newColor;
+	}
 </script>
 
 <div>

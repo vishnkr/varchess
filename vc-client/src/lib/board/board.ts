@@ -96,3 +96,21 @@ function createEditorMaxBoard() {
 }
 
 export const editorMaxBoard = createEditorMaxBoard();
+
+export function generateRankLabels(isFlipped:boolean,rankCount:number): string[] {
+	const rankLabels: string[] = [];
+	for (let rank = 1; rank <= rankCount; rank++) {
+	rankLabels.push(`${isFlipped ? rankCount - rank + 1 : rank}`);
+	}
+	return rankLabels;
+  }
+
+export function generateFileLabels(isFlipped:boolean,fileCount:number): string[] {
+	const fileLabels: string[] = [];
+	const files = 'abcdefghijklmnopqrstuvwxyz'.slice(0, fileCount);
+	if (isFlipped) {
+	files.split("").reverse().join("");;
+	}
+	fileLabels.push(...files);
+	return fileLabels;
+}

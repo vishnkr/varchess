@@ -33,6 +33,7 @@ export type PieceSelection = {
 	pieceType: string;
 	color: Color;
 	group: string;
+	notation:string;
 };
 export interface PieceEditorState {
 	movePatterns: Record<string, MovePattern>;

@@ -6,6 +6,7 @@ export enum Color {
 export interface IPiece {
 	pieceType: string;
 	color: Color;
+	notation: string;
 }
 
 export type SquareIdx = number;
@@ -28,6 +29,28 @@ export type File =
 	| 'p';
 export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
 
+export enum ClassicMoveType {
+	Quiet = "Quiet",
+	Capture = "Capture",
+	DoublePawnPush = "DoublePawnPush",
+	EnPassant = "EnPassant",
+	Castle = "Castle",
+	Promotion = "Promotion",
+  }
+
+
+export enum VariantMoveType {
+	Duck = "Duck"
+  }
+  
+export interface Move {
+	src: number,
+	dest: number,
+	classic_move_type: ClassicMoveType,
+	variant_move_type?: VariantMoveType,
+	piece: IPiece
+}
+
 export enum BoardType {
 	// Editor: clicks on squares adds/removes pieces/walls
 	Editor,
@@ -40,6 +63,26 @@ export enum BoardType {
 	// GameBoard: Playable board, can trigger websocket messages for move validation
 	GameBoard
 }
+export function isEditor(boardType: BoardType): boolean {
+	return boardType === BoardType.Editor;
+  }
+  
+  export function isMovePatternEditor(boardType: BoardType): boolean {
+	return boardType === BoardType.MovePatternEditor;
+  }
+  
+  export function isMovePatternView(boardType: BoardType): boolean {
+	return boardType === BoardType.MovePatternView;
+  }
+  
+  export function isView(boardType: BoardType): boolean {
+	return boardType === BoardType.View;
+  }
+  
+  export function isGameBoard(boardType: BoardType): boolean {
+	return boardType === BoardType.GameBoard;
+  }
+  
 
 export function doesSupportDragDrop(bType: BoardType): boolean {
 	return bType === BoardType.GameBoard || bType === BoardType.Editor;
@@ -75,6 +118,7 @@ export interface SquareInfo {
 	gridY: number;
 	row: number;
 	column: number;
+	isMarkedTarget?: boolean;
 }
 export type Coordinate = [number, number];
 

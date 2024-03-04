@@ -4,10 +4,12 @@
 	import slide from '$lib/assets/svg/slide.svg';
 	import jump from '$lib/assets/svg/jump.svg';
 	import './board-styles.css';
-	import type { BoardConfig } from './types';
+	import type { BoardConfig, Move } from './types';
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
 	import { MoveType } from '$lib/store/types';
+	import { moveSelector } from '$lib/store/stores';
+
 	export let boardConfig: BoardConfig;
 	export let isFlipped:boolean = false;
 	export let squares = generateSquareMaps(
@@ -24,10 +26,32 @@
 	function isCursorBoardType(bType: BoardType): boolean {
 		return bType !== BoardType.MovePatternView && bType != BoardType.View;
 	}
+	const { src, dest, piece, recentMove, legalMoves } = moveSelector;
+	let markedTargets: number[] = [];
+
+	$: squares = generateSquareMaps(boardConfig.dimensions, isFlipped).squares;
 
 	$: {
-    	squares = generateSquareMaps(boardConfig.dimensions, isFlipped).squares;
-  	}
+		if($src && $piece){
+		//set marked targets
+		markedTargets = $legalMoves
+		.filter((move)=> move.src===$src)// && $piece?.pieceType===move.piece.pieceType})
+		.map((move)=> move.dest)
+		markedTargets.forEach((target)=>{ squares[target].isMarkedTarget = true;})
+		} else { 
+			markedTargets = []; 
+			for (let square in squares){
+				squares[square].isMarkedTarget = false;
+			}
+		}
+	}
+
+	$: if($dest){
+
+	}
+	
+
+	const isMPSquareOcc = (idx:number)=> boardConfig.boardType === BoardType.MovePatternEditor && mpSquares && mpSquares[idx] !== undefined;
 </script>
 
 <div id="wrapper">
@@ -37,15 +61,6 @@
 		class={`${isCursorBoardType(boardConfig.boardType) ? 'cursor-pointer' : null}`}
 	>
 		{#each Array(boardConfig.dimensions.ranks * boardConfig.dimensions.files) as _, idx}
-			{#if boardConfig.boardType == BoardType.MovePatternEditor && mpSquares && mpSquares[idx] !== undefined}
-				<Square
-					boardId={customBoardId}
-					squareData={squares[idx]}
-					color={getSquareColor(squares[idx]?.row, squares[idx]?.column, boardConfig.isFlipped)}
-					boardType={boardConfig.boardType}
-					nonPieceSvg={mpSquares[idx] === MoveType.Slide ? slide : jump}
-				/>
-			{:else}
 				<Square
 					boardId={customBoardId}
 					squareData={squares[idx]}
@@ -53,24 +68,24 @@
 					piece={position.piecePositions[idx] ?? null}
 					wall={position.walls[idx] ?? false}
 					boardType={boardConfig.boardType}
+					nonPieceSvg={isMPSquareOcc(idx) && mpSquares ? mpSquares[idx] === MoveType.Slide ? slide : jump : null}
 				/>
-			{/if}
-		{/each}
-	</div>
+    	{/each}
+  </div>
 </div>
 
 <style>
 	#board {
 		display: grid;
 		width: 100%;
-		max-width: 700px;
+		max-width: 80%;
 		justify-items: center;
 		grid-template-columns: repeat(var(--size), 1fr);
 		grid-template-rows: repeat(var(--size), 1fr);
-		border: 1px solid var(--default-dark-square);
-		background-color: hsla(0, 10%, 94%, 0.7);
+		/*border: 1px solid var(--default-dark-square);
+		background-color: #090a21;/*hsla(0, 10%, 94%, 0.7);*/
 		user-select: none;
-		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+		/*box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);*/
 		touch-action: none;
 		border-collapse: collapse;
 		box-sizing: border-box;

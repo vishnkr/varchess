@@ -1,15 +1,16 @@
 <script lang="ts">
 	import Board from '$lib/board/Board.svelte';
-	import { BoardType, type BoardConfig } from '$lib/board/types';
+	import { BoardType, type BoardConfig, type Move } from '$lib/board/types';
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
-	import { onMount } from 'svelte';
-	import { configStore, wsStore, gameState, gameId } from '$lib/store/stores';
+	import { onDestroy, onMount } from 'svelte';
+	import { configStore, wsStore, gameState, gameId, moveSelector } from '$lib/store/stores';
 	import { camelToSnake } from '$lib/utils';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-
-	let stonkfish: typeof import('stonkfish');
+	import init,{ChessCoreLib} from 'stonkfish';
+	
+	
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
 	let activeItem = 'Chat';
@@ -18,47 +19,68 @@
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 	let isFlipped = false;
 	let username: string;
-
+	let isPlayer = false;
+	let isMounted = false;
 	export let data;
-
+	
 	const goHome = ()=>{if (browser) { goto('/home') }};
 
+	async function initWasm(){ await init(); isMounted = true;}
+	initWasm();
 	$: { if (data.username) username = data.username;}
 	$: {
 		if (!$wsStore) {
 			goHome()
 		}
 	}
-
+	let chesscore;
+	const {legalMoves } = moveSelector;
 	$: {
 		if ($configStore) {
 			const config_json = JSON.stringify(camelToSnake($configStore));
-			//const chesscore = new stonkfish.ChessCoreLib(config_json);
+			if (isMounted){
+				chesscore = new ChessCoreLib(config_json);
+				let moves:Move[] = chesscore.getLegalMoves();
+				
+				legalMoves.set(moves)
+			}
+			
 			boardConfig = {
 				fen: $configStore.fen,
 				dimensions: $configStore.dimensions,
-				boardType: BoardType.GameBoard
+				boardType: isPlayer ? BoardType.GameBoard : BoardType.View
 			};
 		}
 	}
 	onMount(async () => {
-		//stonkfish = await import('stonkfish');
-		//await stonkfish.default();
+		initWasm();
+		
 		if($gameState?.players?.playerBlack === data.username){
+			isPlayer = true
 			isFlipped=true
+		} else if ($gameState?.players?.playerWhite === data.username){
+			isPlayer = true
 		}
 	});
 	
+	function clearStores(){
+		wsStore.set(null);//close();
+		configStore.removeConfig();
+		gameId.set(null);
+	}
 	let dirty = true;
+	
 	beforeNavigate(({ cancel }) => {
+		clearStores()
 		if (dirty) {
-			const confirmMessage = "Exiting this page results in loss. Are you sure you want to leave?";
+			/*const confirmMessage = "Exiting this page results in loss. Are you sure you want to leave?";
 			if (!confirm(confirmMessage)) {
 			cancel();
 			} else {
-            // Set $wsStore to null when user confirms leaving
-            $wsStore = null;
-        }
+				wsStore.set(null);
+				configStore.removeConfig();
+				gameId.set(null);
+        	}*/
 		}
 	});
 
@@ -69,9 +91,9 @@
 </svelte:head>
 
 <div class="font-inter text-zinc-90 flex-grow">
-	<div class="flex-1 flex m-4 lg:flex-row flex-col">
+	<div class="flex m-4 lg:flex-row flex-col">
 		<div class="text-white rounded-md lg:w-8/12 p-3">
-			<div>
+			<div class="max-w-[90%]">
 				<Board {boardConfig} {isFlipped}/>
 			</div>
 		</div>
@@ -85,14 +107,13 @@
 					<i class="fa-solid fa-repeat fa-lg" style="color: #ffffff;" />
 					<span class="text-md md:text-lg"> Flip </span>
 				</button>
-				<a href="/home">
 					<button
+					on:click={goHome}
 					class="flex gap-1 items-center justify-center rounded-md bg-orange-600 text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
 					>
 					<i class="fa-solid fa-right-from-bracket fa-lg" style="color: #ffffff;" />
 					<span class="text-md md:text-lg"> Exit </span>
 					</button>
-				</a>
 				<button
 					class="bg-blue-600 flex gap-1 items-center justify-center rounded-md text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
 				>

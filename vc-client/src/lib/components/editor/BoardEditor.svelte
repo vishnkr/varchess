@@ -4,8 +4,8 @@
 	import right from '$lib/assets/svg/right.svg';
 	import left from '$lib/assets/svg/left.svg';
 	import type { Dimensions } from '$lib/board/types';
-	import { createEventDispatcher } from 'svelte';
-
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { COLOR_THEMES } from '$lib/utils';
 	// @ts-ignore
 	import Switch from 'svelte-switch';
 	import { boardEditor } from '../../store/editor';
@@ -19,23 +19,24 @@
 		boardEditor.update((val) => ({ ...val, isWallSelectorOn: checked }));
 	}
 	let maxDimension = 16;
-	let boardTheme = 'Default';
+
+	let boardTheme: string;
+	onMount(()=>{
+		boardTheme = sessionStorage.getItem("board-theme") ?? 'Default';
+		updateColors();
+	});
+	
+	const changeTheme = ()=>{sessionStorage.setItem("board-theme",boardTheme); updateColors();}
+
 	function updateColors() {
-		const light = colorThemes[boardTheme].lightColor;
-		const dark = colorThemes[boardTheme].darkColor;
+		const light = COLOR_THEMES[boardTheme].lightColor;
+		const dark = COLOR_THEMES[boardTheme].darkColor;
 		document.documentElement.style.setProperty('--default-light-square', light);
 		document.documentElement.style.setProperty('--default-dark-square', dark);
 	}
 
-	const colorThemes: Record<string, { lightColor: string; darkColor: string }> = {
-		Default: { lightColor: 'hsl(51deg 24% 84%)', darkColor: 'hsl(145deg 32% 44%)' },
-		Brown: { lightColor: 'hsl(36, 81%, 84%)', darkColor: 'hsl(25, 31%, 51%)' },
-		Aqua: { lightColor: 'hsl(197, 34%, 83%)', darkColor: 'hsl(217, 68%, 52%)' },
-		Classic: { lightColor: 'hsl(0, 0%, 100%)', darkColor: 'hsl(0, 0%, 45%)' },
-		Candy: { lightColor: 'hsl(314, 100%, 90%)', darkColor: 'hsl(328, 100%, 55%)' }
-	};
+	
 	function updateBoardDimensions() {
-		console.log('Updating dimensions:', dimensions);
 		boardEditor.update((val) => ({
 			...val,
 			ranks: dimensions.ranks,
@@ -110,9 +111,9 @@
 		<select
 			class="bg-white appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
 			bind:value={boardTheme}
-			on:change={updateColors}
+			on:change={changeTheme}
 		>
-			{#each Object.keys(colorThemes) as theme}
+			{#each Object.keys(COLOR_THEMES) as theme}
 				<option value={theme}>{theme}</option>
 			{/each}
 		</select>
@@ -121,11 +122,11 @@
 			<div class="m-1 flex items-centerr">
 				<div
 					class="w-6 h-6 rounded-sm"
-					style="background-color: {colorThemes[boardTheme].lightColor}"
+					style="background-color: {COLOR_THEMES[boardTheme].lightColor}"
 				/>
 				<div
 					class="w-6 h-6 rounded-sm ml-2"
-					style="background-color: {colorThemes[boardTheme].darkColor}"
+					style="background-color: {COLOR_THEMES[boardTheme].darkColor}"
 				/>
 			</div>
 		{/if}

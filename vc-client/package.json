@@ -17,6 +17,9 @@
 		"wasm": "wasm-pack build ./stonkfish --target web"
 	},
 	"devDependencies": {
+		"@babel/plugin-transform-class-properties": "^7.23.3",
+		"@babel/plugin-transform-nullish-coalescing-operator": "^7.23.4",
+		"@babel/plugin-transform-optional-chaining": "^7.23.4",
 		"@playwright/test": "^1.37.1",
 		"@storybook/addon-essentials": "^7.4.0",
 		"@storybook/addon-interactions": "^7.4.0",
@@ -31,7 +34,6 @@
 		"@typescript-eslint/eslint-plugin": "^5.62.0",
 		"@typescript-eslint/parser": "^5.62.0",
 		"autoprefixer": "^10.4.15",
-		"daisyui": "^3.7.5",
 		"eslint": "^8.49.0",
 		"eslint-config-prettier": "^8.10.0",
 		"eslint-plugin-storybook": "^0.6.13",
@@ -40,15 +42,12 @@
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.1",
 		"storybook": "^7.4.0",
-		"stonkfish": "./stonkfish/pkg",
 		"svelte": "^3.59.2",
 		"svelte-check": "^3.5.1",
 		"tailwindcss": "^3.3.3",
 		"tslib": "^2.6.2",
 		"typescript": "^5.2.2",
 		"vite": "^4.4.9",
-		"vite-plugin-top-level-await": "^1.4.1",
-		"vite-plugin-wasm-pack": "^0.1.12",
 		"vitest": "^0.25.8"
 	},
 	"type": "module",
@@ -71,6 +70,6 @@
 		"svelte-router-spa": "^6.0.3",
 		"svelte-switch": "^0.0.5",
 		"tailwind-merge": "^1.14.0",
-		"vite-plugin-wasm": "^3.3.0"
+		"vite-plugin-wasm-pack": "^0.1.12"
 	}
 }
