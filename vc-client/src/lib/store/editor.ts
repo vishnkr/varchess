@@ -11,7 +11,7 @@ import { Color, type Position } from '$lib/board/types';
 function newPieceEditorStore() {
 	const { subscribe, set, update } = writable<PieceEditorState>({
 		movePatterns: {},
-		pieceSelection: { pieceType: 'p', color: Color.WHITE, group: 'standard' }
+		pieceSelection: { pieceType: 'pawn',notation:'p', color: Color.WHITE, group: 'standard' }
 	});
 	const addJumpPattern = (piece: string, offset: number[]) => {
 		update((editorState) => {
@@ -126,9 +126,13 @@ function newBoardEditorStore() {
 
 function newRuleStore() {
 	const { set, update, subscribe } = writable<RuleEditorState>({
-		variantType: VariantType.Checkmate
+		variantType: VariantType.Checkmate,
+		isViewVariantRulesOn: false
 	});
-	return { set, subscribe, update };
+	function updateVariantType(variantType:VariantType){
+		ruleEditor.update((current)=> {return {...current,variantType};});
+	}
+	return { set, subscribe, update, updateVariantType };
 }
 
 function newPositionStore() {

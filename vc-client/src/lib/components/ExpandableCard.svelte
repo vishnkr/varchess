@@ -6,7 +6,7 @@
 
 <details class="bg-white shadow rounded group mb-4">
 	<summary class="list-none flat flex flex-wrap items-center cursor-pointer">
-		<h3 class="flex flex-1 p-4 lg:text-xl text-lg font-semibold">{title}</h3>
+		<h3 class="flex flex-1 p-4 md:text-lg text-md font-semibold">{title}</h3>
 		{#if svg}
 			<img class="w-g h-6" src={svg} alt="piece editor" />
 		{:else if iconClass}

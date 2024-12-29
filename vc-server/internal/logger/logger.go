@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"varchess/internal/config"
 
 	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
@@ -18,8 +19,8 @@ const LoggerKey int = 0
 
 func New() Logger{
 	logFolder := "logs"
-	environment := os.Getenv("ENVIRONMENT")
-	createLogs := environment == "development"
+	env := os.Getenv(config.EnvKey)
+	createLogs := env == "development"
 	if createLogs {
 		if _, err := os.Stat(logFolder); os.IsNotExist(err) {
 			err := os.Mkdir(logFolder, os.ModePerm)

@@ -13,6 +13,8 @@
 	import { pieceEditor, boardEditor } from '$lib/store/editor';
 	import wallSvg from '$lib/assets/svg/wall.svg';
 	import { moveSelector } from '$lib/store/stores';
+	//import chessCore from '$lib/chesscoreWrapper';
+
 	export let squareData: SquareInfo;
 
 	export let color: SquareColor;
@@ -35,9 +37,9 @@
 	let drag: boolean = false;
 	let isMoveSrc:boolean = false;
 
-	$: isMoveSrc = $src!=null && $src===squareData.squareIndex && boardType === BoardType.GameBoard
-	$: isMarkedTarget = boardType === BoardType.GameBoard && (squareData.isMarkedTarget ?? false);
-	
+	$: isMoveSrc = $src!=null && $src===squareData.squareIndex && isGameBoard(boardType)
+	$: isMarkedTarget = isGameBoard(boardType) && (squareData.isMarkedTarget ?? false);
+
 	const { src, dest, piece: moveSelectorPiece } = moveSelector;
 
 	function handleDragStart(e: DragEvent) {
@@ -78,7 +80,8 @@
 				
 			}
 	}
-
+	//async function initWasm(){ await chessCore.initWasm();}
+	//initWasm();
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		const data = e.dataTransfer?.getData('dragInfo');
@@ -135,16 +138,15 @@
 	}
 	function handleGameClick(){
 		if ($src){
-			//if same src square is clicked, then cancel src selection
-			// else make move if dest and move is in legalmoves and send it to backend for validation(can be done in board component if dest is set)
 			if ($src === squareData.squareIndex){
 				$src = null
 				$moveSelectorPiece = null
 			} else{
 				$dest = squareData.squareIndex
+				//chessCore.getLegalMoves();
 			}
 		} else{
-			//source is not selected
+			
 			$src = squareData.squareIndex
 			$moveSelectorPiece = piece
 		}
@@ -227,7 +229,7 @@
 	{:else if wall}
 		<div class="absolute inset-0 flex items-center justify-center bg-red-400">
 			<!-- svelte-ignore a11y-missing-attribute -->
-			<img draggable={boardType === BoardType.Editor} src={wallSvg} class="w-full h-full" />
+			<img draggable={isEditor(boardType)} src={wallSvg} class="w-full h-full" />
 		</div>
 	{:else if nonPieceSvg}
 		<div class="absolute inset-0 flex items-center justify-center">

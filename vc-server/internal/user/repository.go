@@ -7,7 +7,8 @@ import (
 
 
 type Repository interface {
-	GetUser (ctx context.Context, userID string) (User,error)
+	GetUserIDFromSessionID (ctx context.Context, sessionID string) (string,error)
+	GetUserFromUserID (ctx context.Context, userID string) (User,error)
 }
 
 type repository struct {
@@ -15,7 +16,19 @@ type repository struct {
 	q  *db.Queries
 }
 
-func (r *repository) GetUser(ctx context.Context, userID string) (User,error){
+func NewRepository(conn *db.Database) *repository{
+	return &repository{
+		db:conn,
+		q:db.New(conn),
+	}
+}
 
+func (r *repository) GetUserFromUserID(ctx context.Context, userID string) (User,error){
 	return User{},nil
 }
+
+func (r *repository) GetUserIDFromSessionID(ctx context.Context, sessionID string) (string,error){
+	userSess,err := r.q.GetUserFromSession(ctx,sessionID)
+	return userSess.UserID,err
+}
+

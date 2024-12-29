@@ -17,7 +17,8 @@ const (
 
 	serverHost = "SERVER_HOST"
 	serverPort = "SERVER_PORT"
-	envKey = "ENVIRONMENT"
+	EnvKey = "ENVIRONMENT"
+	jwtSecret = "JWT_SECRET_KEY"
 	
 )
 
@@ -25,6 +26,7 @@ type Config struct{
 	ServerHost string
 	ServerPort string
 	DB DBConfig
+	JWTSecret string
 }
 
 type DBConfig struct {
@@ -57,7 +59,7 @@ func getDBConfig() (DBConfig,error){
 func Load(file string) (*Config, error) {
 	err := godotenv.Load(file)
 	if err != nil {
-		env := os.Getenv(envKey)
+		env := os.Getenv(EnvKey)
 		if env==""{
 			return nil, fmt.Errorf("error loading .env file: %w", err)
 		}
@@ -67,6 +69,10 @@ func Load(file string) (*Config, error) {
 	dbConfig ,err := getDBConfig()
 	if err!=nil{
 		return nil,err
+	}
+	jwtSecretValue := os.Getenv(jwtSecret)
+	if jwtSecretValue == "" {
+		return nil, fmt.Errorf("missing JWT_SECRET environment variable")
 	}
 	return &Config{
 		ServerPort: serverPort,

@@ -7,3 +7,5 @@ vc-server/vc-server
 */.env
 */*.log
 vc-server/internal/wasm
+vc-server/logs
+vc-server/bin

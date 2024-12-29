@@ -7,6 +7,6 @@
 	<p class="text-lg block">
 		The requested page <code
 			>"{$page.url.pathname.substr($page.url.pathname.lastIndexOf('/'))}"</code
-		> does not exist. Try googling "en-passant"
+		> does not exist.
 	</p>
 </div>

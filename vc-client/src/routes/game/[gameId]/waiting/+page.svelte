@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { gameState } from '$lib/store/stores';
+	import { Status, gameState } from '$lib/store/stores';
 	import { goto } from '$app/navigation';
 	let copiedToClipboard = false;
 	let currentGameId = $page.data.gameId;
@@ -13,14 +13,13 @@
 		navigator.clipboard.writeText(currentGameId);
 	};
 	$: {
-		if ($gameState.status === 'InProgress') {
+		if ($gameState.status === Status.InProgress) {
 			goto(`/game/${currentGameId}`);
 		}
 	}
 </script>
 
 <div class="font-inter text-zinc-90 flex-grow">
-	<!-- Modal -->
 	<div class="fixed inset-0 z-10 overflow-y-auto">
 		<div class="flex items-center justify-center min-h-screen">
 			<div class="bg-white p-8 rounded-md shadow-md">

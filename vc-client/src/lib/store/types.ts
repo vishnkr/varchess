@@ -1,4 +1,5 @@
-import type { Color } from '$lib/board/types';
+import type { Color, Move } from '$lib/board/types';
+import type { SvelteComponent, SvelteComponentTyped } from 'svelte';
 
 export interface BoardEditorState {
 	ranks: number;
@@ -13,7 +14,8 @@ export enum VariantType {
 	NCheck = 'NCheck',
 	DuckChess = 'Duck',
 	ArcherChess = 'ArcherChess',
-	Wormhole = 'Wormhole'
+	Wormhole = 'Wormhole',
+	GoalChess = 'GoalChess',
 }
 
 export enum MoveType {
@@ -22,6 +24,8 @@ export enum MoveType {
 }
 export interface RuleEditorState {
 	variantType: VariantType;
+	isViewVariantRulesOn: boolean;
+	ruleComponent?: typeof SvelteComponent | null
 }
 
 export interface MovePattern {
@@ -50,7 +54,7 @@ export interface EditorState {
 	};
 }
 
-type EventType =
+export type EventType =
 	| 'chat.message'
 	| 'game.connect_user'
 	| 'game.create_game'
@@ -78,3 +82,20 @@ export const EventGameDrawResult: EventType = 'game.draw_result';
 export const EventGameResign: EventType = 'game.resign';
 export const EventStartGame: EventType = 'game.start_game';
 export const EventError: EventType = 'Error';
+
+export interface WebSocketMessage{
+	event: EventType
+	params: WSParams
+}
+
+export interface WSParams{
+	gameId: string,
+}
+
+export interface ChatParams extends WSParams{
+	message: string
+}
+
+export interface MoveParams extends WSParams{
+	move: Move
+}

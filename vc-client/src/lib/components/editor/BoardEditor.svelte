@@ -22,7 +22,7 @@
 
 	let boardTheme: string;
 	onMount(()=>{
-		boardTheme = sessionStorage.getItem("board-theme") ?? 'Default';
+		boardTheme = localStorage.getItem("board-theme") ?? 'Default';
 		updateColors();
 	});
 	
@@ -49,7 +49,7 @@
 	<div>
 		<button
 			class="
-            bg-red-600 rounded-md p-2 text-white border-white
+            bg-red-600 rounded-2xl p-2 text-white border-white
             transform transition duration-200 hover:scale-105"
 			on:click={() => dispatch('clear')}
 		>
@@ -59,7 +59,7 @@
 	<div class="grid grid-rows-1 md:grid-cols-2 shadow-md">
 		<div>
 			<div class="bg-white py-2 rounded-md">
-				<h3 class="text-xl font-semibold">Board Width : {dimensions.files}</h3>
+				<h3 class="text-md md:text-xl font-semibold">Board Width : {dimensions.files}</h3>
 				<input
 					class="cursor-pointer"
 					type="range"
@@ -70,7 +70,7 @@
 				/>
 			</div>
 			<div class="bg-white py-2 rounded-md">
-				<h3 class="text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
+				<h3 class="text-md md:text-xl font-semibold">Board Height : {dimensions.ranks}</h3>
 				<input
 					class="cursor-pointer"
 					type="range"
@@ -82,7 +82,7 @@
 			</div>
 		</div>
 		<div class="flex flex-col justify-between items-center h-auto p-2">
-			<h3 class="text-xl">Shift Board</h3>
+			<h3 class="text-md md:text-xl">Shift Board</h3>
 			<button class="dbtn" on:click={() => dispatch('shift', 'up')}
 				><img class="svg" src={up} alt="Shift up" /></button
 			>

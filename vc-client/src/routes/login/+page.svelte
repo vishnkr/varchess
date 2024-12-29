@@ -23,18 +23,18 @@
 			<label for="username" class="label font-medium pb-1">
 				<span class="label-text text-white">Username</span>
 			</label>
-			<input type="text" name="username" class="input input-bordered w-full max-w-md" />
+			<input type="text" name="username" class="p-2 input rounded-md w-full max-w-md" />
 		</div>
 		<div class="form-control w-full max-w-md">
 			<label for="password" class="label font-medium pb-1">
 				<span class="label-text text-white">Password</span>
 			</label>
-			<input type="password" name="password" class="input input-bordered w-full max-w-md" />
+			<input type="password" name="password" class="p-2 input rounded-md w-full max-w-md" />
 		</div>
 		<input
 			type="submit"
 			value="Login"
-			class="bg-orange-600 text-white px-3 py-2 rounded-md cursor-pointer"
+			class="btn-custom-1"
 		/>
 		<div>
 			<p on:click={openModal} class="cursor-pointer text-blue-500">
@@ -45,7 +45,6 @@
 	{#if isModalOpen}
 		<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
 			<div class="bg-white p-4 rounded-md">
-				<!-- Modal content goes here -->
 				<h2 class="text-xl font-bold mb-4 text-black">Sign up</h2>
 				<form method="POST" action="?/signup">
 					<label for="signup-email" class="label font-medium pb-1">

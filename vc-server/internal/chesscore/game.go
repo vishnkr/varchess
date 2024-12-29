@@ -9,8 +9,6 @@ type classicMoveType uint8
 
 type Color string
 
-type GameObjective string
-
 type pieceType string
 
 type result uint8
@@ -46,9 +44,6 @@ const (
 
 	DuckPlacement variantMoveType = iota
 	Teleport
-
-	Targetsquare GameObjective = "target"
-	Capture GameObjective = "capture"
 
 	CaptureOnlyJump allowedJumpMoveType = iota
 	QuietOnlyJump
@@ -88,11 +83,6 @@ type Move struct {
 	AdditionalData interface{} 		`json:"additional_data,omitempty"`
 }
 
-type Objective struct {
-	Type  GameObjective `json:"type"`
-	ObjectiveProps interface{}   `json:"objective_props,omitempty"`
-}
-
 func CreateGame(gameConfig GameConfig) (*Game, error) {
 	/*var gameConfig GameConfig
 	err := json.Unmarshal([]byte(gameConfigJSON), gameConfig)
@@ -121,12 +111,14 @@ func newVariant(gameConfig GameConfig) (Variant, error) {
 		return nil, err
 	}
 	var variant = variant{
-		variantType: Checkmate,
+		variantType: gameConfig.VariantType,
 		position:    position,
 	}
 	switch variantType {
 	case Checkmate:
 		newVariant = &CheckmateVariant{variant}
+	case Antichess:
+		newVariant = &AntichessVariant{variant}
 	default:
 		newVariant = &CheckmateVariant{variant}
 	}
@@ -191,7 +183,3 @@ func (v *variant) GetPosition() Position{
 	position.Fen = fen
 	return position
 }
-
-/*func (g *Game) PerformMove(Move) (error){
-
-}*/

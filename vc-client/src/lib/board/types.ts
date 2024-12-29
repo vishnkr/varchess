@@ -60,33 +60,32 @@ export enum BoardType {
 	MovePatternView,
 	// View: View only board to view current game state
 	View,
-	// GameBoard: Playable board, can trigger websocket messages for move validation
+	// GameBoard: Playable board
 	GameBoard
 }
+
 export function isEditor(boardType: BoardType): boolean {
 	return boardType === BoardType.Editor;
-  }
+}
   
-  export function isMovePatternEditor(boardType: BoardType): boolean {
+export function isMovePatternEditor(boardType: BoardType): boolean {
 	return boardType === BoardType.MovePatternEditor;
-  }
+}
   
-  export function isMovePatternView(boardType: BoardType): boolean {
+ export function isMovePatternView(boardType: BoardType): boolean {
 	return boardType === BoardType.MovePatternView;
-  }
+}
   
-  export function isView(boardType: BoardType): boolean {
+export function isView(boardType: BoardType): boolean {
 	return boardType === BoardType.View;
-  }
+}
   
-  export function isGameBoard(boardType: BoardType): boolean {
+export function isGameBoard(boardType: BoardType): boolean {
 	return boardType === BoardType.GameBoard;
-  }
+}
   
 
-export function doesSupportDragDrop(bType: BoardType): boolean {
-	return bType === BoardType.GameBoard || bType === BoardType.Editor;
-}
+export const doesSupportDragDrop = (bType: BoardType): boolean => isGameBoard(bType) || isEditor(bType);
 
 export type SquareNotation = `${File}${Rank}`;
 export type SquareMaps = {

@@ -87,6 +87,22 @@ func (q *Queries) GetTemplate(ctx context.Context, id int32) (Template, error) {
 	return i, err
 }
 
+const getUserFromSession = `-- name: GetUserFromSession :one
+SELECT id, user_id, active_expires, idle_expires FROM user_session WHERE id=$1
+`
+
+func (q *Queries) GetUserFromSession(ctx context.Context, id string) (UserSession, error) {
+	row := q.db.QueryRow(ctx, getUserFromSession, id)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ActiveExpires,
+		&i.IdleExpires,
+	)
+	return i, err
+}
+
 const listGames = `-- name: ListGames :many
 SELECT id FROM saved_game 
 WHERE saved_game.player1 = $1 OR saved_game.player2 = $1

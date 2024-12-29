@@ -13,7 +13,7 @@ type Game struct {
 	CurrentState string	`json:"current_state"`
 	GameTemplate string `json:"game_template"`
 	Player1       string `json:"player1"`
-	Player2       string `json:"playr2"`
+	Player2       string `json:"player2"`
 }
 
 type Repository interface {

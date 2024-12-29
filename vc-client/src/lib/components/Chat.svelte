@@ -1,29 +1,28 @@
 <script lang="ts">
 	import { chats, gameId, wsStore, type ChatMessage, MessageType } from '$lib/store/stores';
-	import { EventChatMessage } from '$lib/store/types';
-	import { camelToSnake } from '$lib/utils';
+	import { EventChatMessage, type ChatParams, type WebSocketMessage } from '$lib/store/types';
+	import { sendWebsocketMsg } from '$lib/websocket';
 
 	let chatMessages: ChatMessage[] = [];
 	let inputMessage = '';
 	
 	function sendMessage() {
-		if (inputMessage.trim() !== '') {
-			const wsMessage = {
+		if (inputMessage.trim() !== '' && $gameId) {
+			const wsMessage:WebSocketMessage = {
 				event: EventChatMessage,
 				params:{
 					gameId: $gameId,
 					message: inputMessage.trim()
-				}
+				} as ChatParams
 			}
-			$wsStore?.send(JSON.stringify(camelToSnake(wsMessage)));
+			if($wsStore){
+				sendWebsocketMsg($wsStore,wsMessage);
+			}
 			inputMessage = '';
 		}
 	}
 
-	$: {
-		chatMessages = $chats;
-		console.log(chatMessages)
-	}
+	$: chatMessages = $chats;
 
 </script>
 

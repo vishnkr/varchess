@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BoardType, getSquareColor, type Position } from './types';
+	import { BoardType, getSquareColor, isMovePatternEditor, type Position } from './types';
 	import Square from './Square.svelte';
 	import slide from '$lib/assets/svg/slide.svg';
 	import jump from '$lib/assets/svg/jump.svg';
@@ -51,7 +51,7 @@
 	}
 	
 
-	const isMPSquareOcc = (idx:number)=> boardConfig.boardType === BoardType.MovePatternEditor && mpSquares && mpSquares[idx] !== undefined;
+	const isMPSquareOcc = (idx:number)=> isMovePatternEditor(boardConfig.boardType) && mpSquares && mpSquares[idx] !== undefined;
 </script>
 
 <div id="wrapper">

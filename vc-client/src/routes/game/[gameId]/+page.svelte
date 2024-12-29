@@ -3,13 +3,15 @@
 	import { BoardType, type BoardConfig, type Move } from '$lib/board/types';
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
-	import { onDestroy, onMount } from 'svelte';
-	import { configStore, wsStore, gameState, gameId, moveSelector } from '$lib/store/stores';
+	import { onMount } from 'svelte';
+	import { configStore, gameState, gameId, moveSelector, Status } from '$lib/store/stores';
+	import {sendWebsocketMsg, wsStore} from '$lib/websocket';
 	import { camelToSnake } from '$lib/utils';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import init,{ChessCoreLib} from 'stonkfish';
-	
+	import { sendDrawOffer } from '$lib/websocket.js';
+	import chessCore from '$lib/chesscore.worker.js';
+	import { EventGameResign } from '$lib/store/types.js';
 	
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
@@ -23,9 +25,13 @@
 	let isMounted = false;
 	export let data;
 	
-	const goHome = ()=>{if (browser) { goto('/home') }};
+	const goHome = ()=>{
+		if (browser) { 
+			goto('/home');
+		}
+	};
 
-	async function initWasm(){ await init(); isMounted = true;}
+	async function initWasm(){ await chessCore.initWasm(); isMounted = true;}
 	initWasm();
 	$: { if (data.username) username = data.username;}
 	$: {
@@ -39,9 +45,9 @@
 		if ($configStore) {
 			const config_json = JSON.stringify(camelToSnake($configStore));
 			if (isMounted){
-				chesscore = new ChessCoreLib(config_json);
-				let moves:Move[] = chesscore.getLegalMoves();
-				
+				chesscore = chessCore.loadPosition(config_json);
+				let moves:Move[] = chessCore.getLegalMoves();
+				console.log(moves)
 				legalMoves.set(moves)
 			}
 			
@@ -64,9 +70,10 @@
 	});
 	
 	function clearStores(){
-		wsStore.set(null);//close();
+		wsStore.set(null);
 		configStore.removeConfig();
 		gameId.set(null);
+		gameState.updateStatus(Status.Completed)
 	}
 	let dirty = true;
 	
@@ -84,6 +91,13 @@
 		}
 	});
 
+	const handleDraw = ()=>{
+		if($wsStore && $gameId) sendDrawOffer($wsStore,$gameId)
+	}
+
+	const handleResign = () =>{
+		if($wsStore && $gameId) sendWebsocketMsg($wsStore,EventGameResign,{gameId:$gameId})
+	}
 </script>
 
 <svelte:head>
@@ -107,20 +121,24 @@
 					<i class="fa-solid fa-repeat fa-lg" style="color: #ffffff;" />
 					<span class="text-md md:text-lg"> Flip </span>
 				</button>
-					<button
-					on:click={goHome}
-					class="flex gap-1 items-center justify-center rounded-md bg-orange-600 text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
-					>
-					<i class="fa-solid fa-right-from-bracket fa-lg" style="color: #ffffff;" />
-					<span class="text-md md:text-lg"> Exit </span>
-					</button>
+					<a href="/home" data-sveltekit-reload>
+						<button
+						on:click={clearStores}
+						class="flex gap-1 items-center justify-center rounded-md bg-orange-600 text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
+						>
+						<i class="fa-solid fa-right-from-bracket fa-lg" style="color: #ffffff;" />
+						<span class="text-md md:text-lg"> Exit </span>
+						</button>
+					</a>
 				<button
+					on:click={handleDraw}
 					class="bg-blue-600 flex gap-1 items-center justify-center rounded-md text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
 				>
 					<i class="fa-solid fa-handshake-simple fa-lg" style="color: #ffffff;" />
 					<span class="text-md md:text-lg"> Draw </span>
 				</button>
 				<button
+					on:click={handleResign}
 					class="bg-red-600 flex gap-1 items-center justify-center rounded-md text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
 				>
 					<i class="fa-solid fa-flag fa-lg" style="color: #ffffff;" />

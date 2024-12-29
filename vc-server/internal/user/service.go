@@ -16,7 +16,12 @@ func NewService(repository Repository) *service {
 }
 
 type Service interface{
-	ValidateSession(ctx context.Context, sessionID string, userID string) error
+	ValidateSession(ctx context.Context, sessionID string) (string,error)
 }
+
+func (s *service) ValidateSession(ctx context.Context, sessionId string) (string,error){
+	return s.repository.GetUserIDFromSessionID(ctx,sessionId)
+}
+
 
 

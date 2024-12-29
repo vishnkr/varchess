@@ -37,3 +37,6 @@ WHERE id = $1;
 -- name: DeleteGame :exec
 DELETE FROM saved_game 
 WHERE id = $1;
+
+-- name: GetSessionUserById :one
+SELECT * FROM user_session WHERE id=$1;

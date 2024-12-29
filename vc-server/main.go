@@ -14,6 +14,7 @@ import (
 	"varchess/internal/logger"
 	mw "varchess/internal/middleware"
 	"varchess/internal/template"
+	"varchess/internal/user"
 	"varchess/internal/utils"
 	"varchess/internal/ws"
 
@@ -59,12 +60,23 @@ func main(){
 func serverHandler(r chi.Router, l logger.Logger, db *db.Database) chi.Router{
 	r.Use(mw.Cors())
 	r.Use(mw.RequestLogger(l))
+
+	userRepository := user.NewRepository(db)
+	userService := user.NewService(userRepository)
 	gameRepository := game.NewRepository(db)
 	gameService := game.NewService(gameRepository)
+	gameApi := game.NewAPI(gameService,userService)
+	
 	templateRepository := template.NewRepository(db)
 	templateService := template.NewService(templateRepository)
+	templateApi := template.NewAPI(templateService)
+
 	websocket:= ws.NewWebSocket(gameService,templateService)
+
+	templateApi.RegisterHandlers(r)
+	gameApi.RegisterHandlers(r)
 	websocket.RegisterHandlers(r)
+	
 	r.Get("/health",func (w http.ResponseWriter, req *http.Request) {
 
 		utils.WriteStatus(w, http.StatusOK, struct {

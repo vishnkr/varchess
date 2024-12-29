@@ -15,10 +15,8 @@
 	import { editorMaxBoard } from '$lib/board/board';
 	import { onMount } from 'svelte';
 	import type { Config, CreateParams } from '$lib/store/stores';
-	import { camelToSnake } from '$lib/utils/index';
-	import { configStore, gameId, wsStore } from '$lib/store/stores';
-
-	let stonkfish: typeof import('stonkfish');
+	import { configStore, gameId } from '$lib/store/stores';
+	import { wsStore } from '$lib/websocket.js';
 
 	export let boardConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
@@ -48,6 +46,11 @@
 		if (data.username) username = data.username;
 	}
 
+	let isVariantRulesOn: boolean;
+    $: {
+        isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
+    }
+
 	// Save Template
 	let isPopupVisible = false;
 	let templateName = '';
@@ -60,7 +63,6 @@
 		isPopupVisible = false;
 	};
 	const confirmTemplate = () => {
-		// TODO: construct json and send post request
 		templateName = '';
 		hidePopup();
 	};
@@ -103,7 +105,8 @@
 		const ep = '-';
 		return `${position} ${turn} ${castleRights} ${ep} 0 0`;
 	};
-
+	let rule;
+	$: { rule = $ruleEditor; }
 	const generateGameConfigJSON = () => {
 		const fen = getFEN();
 
@@ -121,10 +124,6 @@
 	};
 	const playGame = () => {
 		const config = generateGameConfigJSON();
-		//console.log(config);
-		const config_json = JSON.stringify(camelToSnake(config));
-		//const chesscore = new stonkfish.ChessCoreLib(config_json);
-		//console.log(chesscore.getLegalMoves());
 		const url = `ws://${import.meta.env.VITE_WS_HOST}/ws`;
 		const params: CreateParams = {
 			color: playAsWhite ? 'w' : 'b',
@@ -146,28 +145,29 @@
 	<title>Editor - Varchess</title>
 </svelte:head>
 <div class="font-inter flex-grow">
+	{#if $ruleEditor.isViewVariantRulesOn && $ruleEditor.ruleComponent}
+		<svelte:component this={$ruleEditor.ruleComponent} />
+	{/if}
 	<div class="flex-1 flex m-4 lg:flex-row flex-col">
 		<div class="text-black rounded-md lg:w-5/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
 			<div class="border-b border-gray-200 dark:border-gray-700 flex flex-col text-center">
 				<div class="flex flex-col justify-center">
 					<div class="m-2 flex">
-						<a href="/home">
-							<button
-								class="w-32 bg-red-600 hover:bg-red-800 text-white rounded-md font-semibold py-2 px-2 mx-3"
+						<button
+								class="w-1/3 bg-red-700 hover:bg-red-800 transform transition duration-200 hover:scale-105 text-white rounded-md font-semibold py-2 px-2 mx-2"
 								on:click={exitRoom}
 							>
 								Exit
-							</button>
-						</a>
+						</button>
 						<button
-							class="w-32 bg-orange-600 hover:bg-orange-800 text-white rounded-md font-semibold py-2 px-2 mx-3"
+							class="w-1/3 bg-orange-700 hover:bg-orange-800 transform transition duration-200 hover:scale-105 text-white rounded-md font-semibold py-2 px-2 mx-2"
 							on:click={showPopup}
 						>
 							Save
 						</button>
 						<button
 							on:click={playGame}
-							class="w-32 bg-green-600 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded"
+							class="w-1/3 bg-green-700 hover:bg-green-800 transform transition duration-200 hover:scale-105 text-white font-semibold py-2 px-4 rounded-md mx-2"
 							>Play</button
 						>
 						<form action="/?play" />

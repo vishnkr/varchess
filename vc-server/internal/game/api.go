@@ -2,15 +2,17 @@ package game
 
 import (
 	"net/http"
+	"varchess/internal/user"
 
 	"github.com/go-chi/chi/v5"
 )
 type API struct{
-	repository Repository
+	gameService Service
+	userService user.Service
 }
 
-func NewAPI(repository Repository)API{
-	return API{repository}
+func NewAPI(gameService Service,userService user.Service)API{
+	return API{gameService, userService}
 }
 
 // endpoint POST /templates

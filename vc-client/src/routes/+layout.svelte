@@ -3,13 +3,15 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import { onMount } from 'svelte';
 	import '../app.css';
-
+	import { goto } from '$app/navigation';
 	export let data;
 
 	let userId: string | undefined;
 	let username: string | undefined;
+	let isLoggedIn: boolean = false;
 	$: {
 		({ userId, username } = data);
+		isLoggedIn = userId && username ? true : false;
 	}
 	let isOpen = false;
 
@@ -28,6 +30,16 @@
 			menu?.classList.toggle('hidden');
 		});
 	});
+
+	let isSidebarOpen = false;
+
+	function handleSidebarHover() {
+		isSidebarOpen = true;
+	}
+
+	function handleSidebarLeave() {
+		isSidebarOpen = false;
+	}
 </script>
 
 <div class="flex flex-col min-h-screen">
@@ -84,8 +96,44 @@
 	</nav>
 	<div class="font-inter dark:bg-[#0a0c13] radial-bg flex flex-col flex-grow">
 		<Alert />
-		<main class="flex">
-			<slot />
+		<main class="flex text-white">
+			{#if isLoggedIn}
+			<!-- Side Menu -->
+			<div on:mouseenter={handleSidebarHover} on:mouseleave={handleSidebarLeave} class="flex-shrink-0 w-16 hover:w-48 transition-width duration-300 ease-in-out border-r border-gray-600 text-white h-screen">
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<ul class="flex flex-col space-y-4 p-2 cursor-pointer">
+						<li class="group flex items-center space-x-4 p-2 hover:bg-gray-700" on:click={()=>goto("/home")}>
+							<i class="fas fa-home"></i>
+							<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out" class:opacity-0={!isSidebarOpen}>Home</span>
+								
+						</li>
+						<li class="group flex items-center space-x-4 p-2 hover:bg-gray-700" on:click={()=>goto("/games")}>
+							<i class="fa-solid fa-chess"></i>
+							<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out" class:opacity-0={!isSidebarOpen}>Games</span>
+						</li>
+						<li class="group flex items-center space-x-4 p-2 hover:bg-gray-700" on:click={()=>goto("/templates")}>
+							<i class="fa-solid fa-rectangle-list"></i>
+							<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out" class:opacity-0={!isSidebarOpen}>Templates</span>
+						</li>
+						<li class="group flex items-center space-x-4 p-2 hover:bg-gray-700" on:click={()=>goto("/settings")}>
+							<i class="fas fa-cog"></i>
+							<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out" class:opacity-0={!isSidebarOpen}>Settings</span>
+						</li>
+						<li class="group flex items-center space-x-4 p-2 hover:bg-gray-700">
+							<i class="fa-solid fa-robot"></i>
+							<div class="group flex flex-col items-center hover:bg-gray-700">
+								<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out" class:opacity-0={!isSidebarOpen}>Stonkfish</span>
+								<span class="whitespace-nowrap transition-opacity duration-300 ease-in-out rounded-md bg-red-500 px-1 text-sm text-white"  class:opacity-0={!isSidebarOpen}>Coming soon</span>
+							</div>
+							
+						</li>
+					</ul>
+				</div>
+			{/if}
+			<!-- Main Content -->
+			<div class="flex-grow">
+				<slot />
+			</div>
 		</main>
 	</div>
 	<Footer />

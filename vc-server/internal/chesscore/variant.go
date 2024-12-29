@@ -8,7 +8,7 @@ type variantType string
 
 const (
 	Checkmate variantType = "Checkmate"
-	Antichess variantType = "Antichess"
+	Antichess variantType = "AntiChess"
 	NCheck variantType = "NCheck"
 	DuckChess variantType = "DuckChess"
 	ArcherChess variantType = "ArcherChess"
@@ -25,7 +25,6 @@ type Variant interface {
 }
 
 type variant struct {
-	Objective Objective `json:"objective"`
 	position
 	variantType
 	recentCapture recentCaptureInfo
@@ -197,7 +196,6 @@ func (v variant) isCastleAllowed(color Color,kingPos int,isKingside bool) (bool,
 				if !v.isEmpty(i) || v.isWall(i){ return false,[]int{-1,-1}}
 				i+=dx
 			}
-			
 		}
 	} else { 
 		rookSrc,dx = v.toPos(curRow,0),-1
@@ -365,6 +363,10 @@ func (v *variant) unmakeMove(move Move) {
 	}
 }
 
+func (v *variant) IsGameOver() (result, bool) {
+	return v.gameResult,v.isGameOverBool
+}
+
 type CheckmateVariant struct {
 	variant
 }
@@ -414,10 +416,6 @@ func (cv *CheckmateVariant) checkGameOver() (result, bool) {
 	return 0, false
 }
 
-func (v *variant) IsGameOver() (result, bool) {
-	return v.gameResult,v.isGameOverBool
-}
-
 func (cv *CheckmateVariant) PerformMove(move Move)(result, bool){
 	cv.makeMove(move)
 	cv.switchTurn()
@@ -427,136 +425,4 @@ func (cv *CheckmateVariant) PerformMove(move Move)(result, bool){
 	return res,over
 }
 
-// ------------ N-Check -------------------
-type NCheckVariant struct {
-	variant
-	blackKingCheckCount int
-	whiteKingCheckCount int
-	targetChecks        int
-}
 
-func (ncv *NCheckVariant) GetLegalMoves() []Move {
-	pseudoMoves := ncv.getPseudoLegalMoves(ncv.turn, false)
-	for _, mv := range pseudoMoves {
-		ncv.makeMove(mv)
-		//check if king is in check
-		ncv.unmakeMove(mv)
-	}
-	return []Move{}
-}
-
-func (ncv *NCheckVariant) isKingUnderCheck(color Color) bool {
-	ncv.getPseudoLegalMoves(ncv.getOpponentColor(), false)
-	var kingPos int
-	if color == ColorWhite {
-		kingPos = ncv.variant.position.additionalProps.whiteKingPos
-	} else {
-		kingPos = ncv.variant.position.additionalProps.blackKingPos
-	}
-	_, ok := ncv.attackedSquares[kingPos]
-	return ok
-}
-
-func (ncv *NCheckVariant) checkGameOver() (result, bool) {
-	ncv.possibleLegalMoves = ncv.GetLegalMoves()
-	if ncv.turn == ColorBlack && ncv.whiteKingCheckCount == ncv.targetChecks {
-		return BlackWins, true
-	} else if ncv.blackKingCheckCount == ncv.targetChecks {
-		return WhiteWins, true
-	}
-	if ncv.turn==ColorBlack{
-		bc := ncv.isKingUnderCheck(ColorBlack)
-		if len(ncv.possibleLegalMoves)==0{
-			if bc { return WhiteWins,true } else {return Stalemate,true}
-		}
-	} else {
-		wc := ncv.isKingUnderCheck(ColorBlack)
-		if len(ncv.possibleLegalMoves)==0{
-			if wc { return BlackWins,true } else {return Stalemate,true}
-		}
-	}
-	return 0, false
-}
-
-func (ncv *NCheckVariant) PerformMove(move Move)(result, bool){
-	ncv.makeMove(move)
-	ncv.switchTurn()
-	res,over:= ncv.checkGameOver()
-	ncv.gameResult = res
-	ncv.isGameOverBool = over
-	return res,over
-}
-
-// ------------ Antichess -------------------
-type AntichessVariant struct {
-	variant
-}
-
-func (av *AntichessVariant) GetLegalMoves() []Move {
-	pseudoMoves := av.getPseudoLegalMoves(av.turn, true)
-	var captureMoves []Move = []Move{}
-	for _, move := range pseudoMoves {
-		if move.ClassicMoveType == CaptureMove || move.ClassicMoveType == EnPassantMove {
-			captureMoves = append(captureMoves, move)
-		}
-	}
-
-	if len(captureMoves) > 0 {
-		pseudoMoves = captureMoves
-	}
-	return pseudoMoves
-}
-
-
-func (av *AntichessVariant) PerformMove(move Move)(result, bool){
-	av.makeMove(move)
-	av.switchTurn()
-	res,over:= av.checkGameOver()
-	av.gameResult = res
-	av.isGameOverBool = over
-	return res,over
-}
-
-func (av *AntichessVariant) checkGameOver() (result, bool) {
-	var whitePieceCount int = 0
-	var blackPieceCount int = 0
-	for _,piece := range av.position.pieceLocations{
-		if piece.color==ColorBlack{
-			blackPieceCount+=1
-		} else{
-			whitePieceCount+=1
-		}
-	}
-	if whitePieceCount == 0{
-		return WhiteWins,true
-	} else if blackPieceCount == 0{
-		return BlackWins,true
-	}
-	legalMoves := av.GetLegalMoves()
-	if len(legalMoves)==0{
-		return Stalemate,true
-	}
-	return av.checkStalemate()
-}
-
-func (av *AntichessVariant) checkStalemate() (result,bool){
-	darkBlackBishops,lightBlackBishops,lightWhiteBishops, darkWhiteBishops :=0,0,0,0
-	for pos,piece := range av.pieceLocations{
-		if piece.pieceType!=Bishop{
-			continue
-		}
-		if piece.color==ColorBlack{
-			if pos%2==0{
-				darkBlackBishops+=1
-			} else { lightBlackBishops+=1}
-		} else { 
-			if pos%2==0{
-				darkWhiteBishops+=1
-			} else{ lightWhiteBishops+=1}
-		}
-	}
-	if (darkBlackBishops!=0 && darkWhiteBishops!=0) || (lightBlackBishops!=0 && lightWhiteBishops!=0){
-		return 0, false
-	} 
-	return Stalemate,true
-}
