@@ -80,12 +80,19 @@ type Game struct {
 	EndedAt    *primitive.DateTime           `json:"endedAt,omitempty" bson:"ended_at,omitempty"`
 }
 
+type ActiveGameState string
+const (
+	Waiting ActiveGameState = "w"
+	InProgress ActiveGameState = "ip"
+	Complete ActiveGameState = "c"
+)
+
 type ActiveGame struct {
 	ID      string                        `json:"id"`
-	Players map[string]primitive.ObjectID `json:"players"`
+	Players map[string]string `json:"players"`
 	Config  GameConfig                    `json:"gameConfig"`
 	Moves   []string                      `json:"moves"`
-	State   string                        `json:"state"`
+	State   ActiveGameState                        `json:"state"`
 	Turn    string                        `json:"turn"`
 }
 

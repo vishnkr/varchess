@@ -69,22 +69,17 @@ func (r *Game) HandleMessage(client *Client, msg []byte) {
        
         hub.SaveGameStateToRedis(r.gameID, r.gameState)
         */
-        r.Broadcast(msg)
+        //r.Broadcast(msg)
 
     case "chat":
-        r.Broadcast(msg)
+        //r.Broadcast(msg)
     case "resign":
-        r.Broadcast(msg)
+       //r.Broadcast(msg)
     case "draw_offer":
-        r.Broadcast(msg)
+        //r.Broadcast(msg)
     }
 }
 
-func (r *Game) Broadcast(msg []byte) {
-    for _, player := range r.players {
-        player.send <- msg
-    }
-}
 
 
 

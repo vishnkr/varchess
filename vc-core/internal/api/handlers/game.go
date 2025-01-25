@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"vc-core/internal/api/models"
 	"vc-core/internal/db"
 	"vc-core/internal/middleware"
+	"vc-core/internal/models"
 	"vc-core/internal/utils"
 
 	"github.com/go-chi/chi/v5"
@@ -127,7 +127,8 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 		game := models.ActiveGame{
 			ID:    	shortID,
 			Config: gameConfig,
-			State:      "waiting",
+			State:  models.Waiting,
+			Players: make(map[string]string),
 			Moves: make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)

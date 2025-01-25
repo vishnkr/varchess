@@ -24,18 +24,15 @@ func InitRedis() {
         return
 	}
 	fmt.Println("Connected to Redis")
+    SubscribeToRedis()
 }
 
 func GetRedisClient() *redis.Client {
     return redisClient
 }
 
-func PublishToRedis(gameID string, msg []byte) {
-    redisClient.Publish(context.Background(), "game."+gameID, msg)
-}
-
 func SubscribeToRedis() {
-    pubsub := redisClient.Subscribe(context.Background(), "*_resp")
+    pubsub := redisClient.Subscribe(context.Background(), "game_updates")
     ch := pubsub.Channel()
 
     go func() {
@@ -48,10 +45,10 @@ func SubscribeToRedis() {
                 continue
             }
 
-            game,err := hub.GetGame(event.GameID)
-            if err != nil {
+            _,_ = hub.GetGame(event.GameID)
+            /*if err != nil {
                 game.Broadcast([]byte(event.Payload))
-            }
+            }*/
         }
     }()
 }

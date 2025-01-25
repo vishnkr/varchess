@@ -32,7 +32,7 @@ func main(){
 	}
 	defer dbConn.Close()
 
-	wp := worker.NewWorkerPool(10)
+	wp := worker.NewWorkerPool(10,dbConn.RedisClient)
 	go dbConn.SetupRedisSubscriber(context.Background(),wp)
 	router := chi.NewRouter()
 

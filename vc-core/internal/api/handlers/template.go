@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"vc-core/internal/api/models"
 	"vc-core/internal/db"
 	"vc-core/internal/middleware"
+	"vc-core/internal/models"
 	"vc-core/internal/utils"
 
 	"github.com/go-chi/chi/v5"

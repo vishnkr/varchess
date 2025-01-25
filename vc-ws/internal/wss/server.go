@@ -1,6 +1,7 @@
 package wss
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,7 +16,7 @@ var (
 )
 
 func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
-    gameID := strings.TrimPrefix(r.URL.Path, "/ws/play/")
+    gameID := strings.TrimPrefix(r.URL.Path, "/play/")
     if gameID == "" {
         http.Error(w, "Invalid game ID", http.StatusBadRequest)
         return
@@ -52,7 +53,25 @@ func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
         send:  make(chan []byte, 256),
     }
     game.players[assignedColor] = player
-
+    var eventData JoinPayload = JoinPayload{Color: assignedColor}
+    
+    joinEvent := Event{
+        GameID: gameID,
+        UserID: userID,
+        Type: Join,
+        Data: eventData,
+    }
+    data,err := json.Marshal(joinEvent)
+    if err != nil {
+        fmt.Println("Error marshalling join event:", err)
+        conn.Close()
+        return
+    }
+    err = redisClient.Publish(r.Context(), "game_events", data).Err()
+    if err != nil {
+        fmt.Println("Error publishing join event to Redis:", err)
+        return
+    }
     go player.listenForMessages()
 }
 

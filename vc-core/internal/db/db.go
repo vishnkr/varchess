@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -74,7 +75,7 @@ func (db *DB) ListenAndPublishMessages(ctx context.Context,ch string) {
 }
 
 func (db *DB) SetupRedisSubscriber(ctx context.Context,wp *worker.WorkerPool){
-	ch := []string{"game_events", "moves", "game_updates"}
+	ch := []string{"game_events","moves"}
 	sub := db.RedisClient.Subscribe(ctx, ch...)
 	defer sub.Close()
 
@@ -85,14 +86,27 @@ func (db *DB) SetupRedisSubscriber(ctx context.Context,wp *worker.WorkerPool){
 			continue
 		}
 
-
-		event := worker.Event{
-			GameID:   msg.Channel,
-			UserID:   msg.Payload,
-			EventType: "move",
-			Data:      msg.Payload,
+		var event worker.Event
+		if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+			log.Println("Invalid event format:", err)
+			continue
 		}
+		switch event.Type {
+		case worker.Join:
+			var joinData worker.JoinPayload
+			if err := json.Unmarshal(event.Data, &joinData); err != nil {
+				log.Println("Failed to unmarshal Join data:", err)
+				continue
+			}
+			fmt.Printf("Join Event: %+v\n", joinData)
 
+		case worker.Move:
+			
+			fmt.Printf("Move Event\n")
+
+		default:
+			log.Println("Unknown event type:", event.Type)
+		}
 		wp.EventChannel <- event
 	}
 }
