@@ -23,13 +23,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, err := utils.ParseToken(tokenString)
+		claims, err := utils.ParseToken(tokenString)
 		if err != nil {
 			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserIDKey{}, userID)
+		ctx := context.WithValue(r.Context(), UserIDKey{}, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

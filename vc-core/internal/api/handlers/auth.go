@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"vc-core/internal/db"
+	"vc-core/internal/middleware"
 	"vc-core/internal/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,7 +21,7 @@ type SignupRequest struct {
 
 // LoginRequest represents the request body for login
 type LoginRequest struct {
-	Email    string `json:"email"`
+	Username    string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -78,9 +79,8 @@ func HandleLogin(database *db.DB) http.HandlerFunc {
 
 		collection := database.Collection("users")
 
-		// Find user by email
 		var user bson.M
-		err := collection.FindOne(context.TODO(), bson.M{"email": req.Email}).Decode(&user)
+		err := collection.FindOne(context.TODO(), bson.M{"username": req.Username}).Decode(&user)
 		if err != nil {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 			return
@@ -109,6 +109,34 @@ func HandleLogin(database *db.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(bson.M{
 			"access_token": token,
 			"refresh_token": refreshToken,
+			"username": userID,
 		})
 	}
+}
+
+
+func HandleValidateAuth(database *db.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := middleware.GetUserIDFromContext(r)
+		objectId,err := primitive.ObjectIDFromHex(userID)
+		if err!=nil{
+			http.Error(w, "Invalid user id", http.StatusUnauthorized)
+			return
+		}
+		var user bson.M
+		err = database.Collection("users").FindOne(context.TODO(),bson.M{"_id":objectId}).Decode(&user)
+		if err != nil {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		response := map[string]string{
+			"status": "ok",
+			"user_id": userID,
+			"username": user["username"].(string),
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+}
 }

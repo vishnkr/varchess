@@ -2,6 +2,7 @@ package wss
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +16,34 @@ var (
     }
 )
 
+type AuthResponse struct {
+    UserID  string `json:"user_id"`
+    Username string `json:"username"`
+}
+
+func authenticateToken(token string) (*AuthResponse, error) {
+    
+    url := "http://localhost:5000/api/auth/validate"
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Add("Authorization", "Bearer "+token)
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil || resp.StatusCode != http.StatusOK {
+        return nil, errors.New("invalid token")
+    }
+    defer resp.Body.Close()
+    var userData AuthResponse
+    if err := json.NewDecoder(resp.Body).Decode(&userData); err != nil {
+        return nil, errors.New("invalid response from core")
+    }
+
+    return &userData, nil
+}
+
+
 func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
     gameID := strings.TrimPrefix(r.URL.Path, "/play/")
     if gameID == "" {
@@ -22,12 +51,18 @@ func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    userID := r.Header.Get("X-User-ID")
-    if userID == "" {
-        http.Error(w, "Missing user ID", http.StatusUnauthorized)
+    token := r.Header.Get("X-Auth-Token")
+    if token == "" {
+        http.Error(w, "Missing token", http.StatusUnauthorized)
         return
     }
 
+    user,err := authenticateToken(token)
+    if err!=nil{
+        http.Error(w, "Missing token", http.StatusUnauthorized)
+        return
+    }
+    userID := user.UserID
     colorPref := r.URL.Query().Get("c")
 
     conn, err := upgrader.Upgrade(w, r, nil)

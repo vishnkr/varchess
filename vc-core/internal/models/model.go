@@ -92,7 +92,7 @@ type ActiveGame struct {
 	Players map[string]string `json:"players"`
 	Config  GameConfig                    `json:"gameConfig"`
 	Moves   []string                      `json:"moves"`
-	State   ActiveGameState                        `json:"state"`
+	State   ActiveGameState                `json:"state"`
 	Turn    string                        `json:"turn"`
 }
 

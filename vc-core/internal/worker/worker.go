@@ -64,7 +64,7 @@ func (w *Worker) processJoin(event Event){
 		log.Println("Invalid move payload:", err)
 		return
 	}
-	gameKey := fmt.Sprintf("game:%s", event.GameID)
+	gameKey := fmt.Sprintf("game.%s", event.GameID)
 	gameStateJSON, err := r.Get(ctx, gameKey).Result()
 	if err == redis.Nil {
 		log.Println("Game state not found:", event.GameID)

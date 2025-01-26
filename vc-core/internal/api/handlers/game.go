@@ -132,7 +132,7 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			Moves: make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)
-		database.RedisClient.Set(context.TODO(), "game:"+shortID, gameJSON, 30*time.Minute)
+		database.RedisClient.Set(context.TODO(), "game."+shortID, gameJSON, 30*time.Minute)
 		response.GameID = shortID
 		json.NewEncoder(w).Encode(response)
 	}
