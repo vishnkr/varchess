@@ -76,6 +76,11 @@ func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
     defer game.mu.Unlock()
 
     assignedColor := getPlayerColor(game, colorPref)
+    if existingPlayer, exists := game.players[assignedColor]; exists && existingPlayer.userId == userID {
+        // reconnect
+        existingPlayer.conn.Close()
+        delete(game.players, assignedColor)
+    }
     if assignedColor == "" {
         conn.Close()
         return
@@ -108,6 +113,7 @@ func HandleWSConnection(w http.ResponseWriter, r *http.Request) {
         return
     }
     go player.listenForMessages()
+    go player.listenForWrites()
 }
 
 func getPlayerColor(game *Game, colorPref string) string {
@@ -126,7 +132,10 @@ func getPlayerColor(game *Game, colorPref string) string {
 }
 
 func (c *Client) listenForMessages() {
-    defer c.conn.Close()
+    defer func(){
+        c.game.handleDisconnect(c)
+        c.conn.Close()
+    }()
     for {
         _, message, err := c.conn.ReadMessage()
         if err != nil {

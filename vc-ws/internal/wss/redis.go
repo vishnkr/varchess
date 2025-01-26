@@ -37,18 +37,15 @@ func SubscribeToRedis() {
 
     go func() {
         for msg := range ch {
-            var event struct {
-                GameID  string `json:"game_id"`
-                Payload string `json:"payload"`
-            }
+            var event Event
             if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
                 continue
             }
 
-            _,_ = hub.GetGame(event.GameID)
-            /*if err != nil {
-                game.Broadcast([]byte(event.Payload))
-            }*/
+            game,err := hub.GetGame(event.GameID)
+            if err == nil {
+                game.Broadcast(event)
+            }
         }
     }()
 }

@@ -81,18 +81,33 @@ func (r *Game) HandleMessage(client *Client, msg []byte) {
 }
 
 
-
-
-func (r *Game) UnregisterClient(c *Client) {
-    if _, ok := r.players["white"]; ok && r.players["white"] == c {
-        delete(r.players, "white")
-    }
-    if _, ok := r.players["black"]; ok && r.players["black"] == c {
-        delete(r.players, "black")
+func (g *Game) Broadcast(event Event) {
+    data, err := json.Marshal(event)
+    if err != nil {
+        return
     }
 
-    if len(r.players) == 0{
-        delete(hub.games,r.gameID)
+    for _, client := range g.players {
+        select {
+        case client.send <- data:
+        default:
+            close(client.send)
+            delete(g.players, client.userId)
+        }
+    }
+}
+
+
+func (g *Game) UnregisterClient(c *Client) {
+    if _, ok := g.players["white"]; ok && g.players["white"] == c {
+        delete(g.players, "white")
+    }
+    if _, ok := g.players["black"]; ok && g.players["black"] == c {
+        delete(g.players, "black")
+    }
+
+    if len(g.players) == 0{
+        delete(hub.games,g.gameID)
     }
 }
 

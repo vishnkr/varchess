@@ -1,6 +1,11 @@
 package wss
 
-import "github.com/gorilla/websocket"
+import (
+	"fmt"
+	"time"
+
+	"github.com/gorilla/websocket"
+)
 
 
 type Client struct {
@@ -25,8 +30,31 @@ func (c *Client) ReadPump() {
     }
 }
 
-func (c *Client) WritePump() {
+func (c *Client) listenForWrites() {
+    defer c.conn.Close()
     for msg := range c.send {
-        c.conn.WriteMessage(websocket.TextMessage, msg)
+        err := c.conn.WriteMessage(websocket.TextMessage, msg)
+        if err != nil {
+            fmt.Println("WebSocket write error:", err)
+            return
+        }
     }
+}
+
+
+func (g *Game) handleDisconnect(c *Client) {
+    g.mu.Lock()
+    defer g.mu.Unlock()
+
+    fmt.Println("Player disconnected:", c.userId)
+    go func() {
+        time.Sleep(30 * time.Second)
+        g.mu.Lock()
+        defer g.mu.Unlock()
+
+        if g.players[c.userId] == c {
+            delete(g.players, c.userId)
+            fmt.Println("Player removed after timeout:", c.userId)
+        }
+    }()
 }
