@@ -1,14 +1,15 @@
 <script>
 	let templates = [
-		{ num: 0, name: 'Template 0' },
-        { num: 2, name: 'quack quack' },
-        { num: 1, name: 'archer' },
-        { num: 3, name: 'no mans land' },
-        { num: 4, name: 'varchess temp' },
-        { num: 12, name: 'Template er' },
+        { num: 0, name: 'Template 0', boardDimensions: '14x13', variantType: 'Classic', objective: 'Capture the King' },
+        { num: 2, name: 'quack quack', boardDimensions: '8x8', variantType: 'Fast', objective: 'Checkmate the opponent' },
+        { num: 1, name: 'archer', boardDimensions: '10x10', variantType: 'Tactical', objective: 'Complete the challenge' },
+        { num: 3, name: 'no mans land', boardDimensions: '15x15', variantType: 'War', objective: 'Conquer the opponent' },
+        { num: 4, name: 'varchess temp', boardDimensions: '16x16', variantType: 'Strategy', objective: 'Outsmart your opponent' },
+        { num: 12, name: 'Template er', boardDimensions: '12x12', variantType: 'Advanced', objective: 'Survive the longest' },
 	];
 
 	let activeTooltipIndex = null;
+	let searchQuery = "";
 
 	function showTooltip(index) {
 		activeTooltipIndex = index;
@@ -17,46 +18,70 @@
 	function hideTooltip() {
 		activeTooltipIndex = null;
 	}
+
+	// Filter templates based on search query
+	$: filteredTemplates = templates.filter(template => 
+		template.name.toLowerCase().includes(searchQuery.toLowerCase())
+	);
 </script>
 
-<div class="my-8 relative">
+<div class="my-8 relative max-w-7xl mx-auto px-4">
 	<h3 class="text-center text-white text-2xl font-bold mb-6">My Templates</h3>
-	<div class="flex items-center justify-center">
-		<table class="w-full max-w-4xl bg-transparent rounded-lg overflow-hidden shadow-md">
-			<thead class="bg-gray-900 bg-opacity-75">
-				<tr>
-					<th class="text-white px-6 py-3 border-r border-gray-700">Variant Template</th>
-					<th class="text-white px-6 py-3">Actions</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each templates as template, index}
-					<tr class="bg-gray-800 bg-opacity-50 hover:bg-gray-700 transition-colors relative">
-						<td class="text-gray-200 text-center px-6 py-4 border-r border-gray-700">
-							<div class="relative flex items-center justify-center">
-								{template.name}
-								<div 
-									class="relative"
-									on:mouseenter={() => showTooltip(index)}
-									on:mouseleave={hideTooltip}>
-									<i class="fa-solid fa-chess-board ml-2 cursor-pointer" title="View"></i>
-									{#if activeTooltipIndex === index}
-										<div class="absolute left-full top-1/2 transform -translate-y-1/2 ml-3 w-40 p-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-100 transition-opacity duration-200">
-											<div class="absolute left-[-6px] top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
-											Preview of template goes here.
-										</div>
-									{/if}
-								</div>
-							</div>
-						</td>
-						<td class="text-gray-200 flex justify-center px-6 py-4">
-							<button class="bg-transparent border border-green-500 text-green-500 hover:bg-green-700 hover:text-white font-semibold py-2 px-4 rounded-lg mr-2 transition-colors">Play</button>
-							<button class="bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-700 hover:text-white font-semibold py-2 px-4 rounded-lg mr-2 transition-colors">Edit</button>
-							<button class="bg-transparent border border-red-500 text-red-500 hover:bg-red-700 hover:text-white font-semibold py-2 px-4 rounded-lg transition-colors">Delete</button>
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+	
+	<!-- Search Bar -->
+	<div class="mb-6 flex justify-center">
+		<input 
+			type="text" 
+			placeholder="Search Templates..." 
+			class="w-full sm:w-80 md:w-96 lg:w-1/2 p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+			bind:value={searchQuery}
+		/>
+	</div>
+	
+	<!-- Cards Layout (2 cards per row) -->
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+		{#each filteredTemplates as template, index}
+			<div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col sm:flex-row items-center">
+				<!-- Chessboard preview (left side) -->
+				<div class="flex-none w-full sm:w-40 h-40 bg-gray-600 rounded-md mb-4 sm:mb-0 relative">
+					<p class="text-center text-white absolute inset-0 flex items-center justify-center">{template.name}</p>
+				</div>
+
+				<!-- Template Info and Action Buttons (right side) -->
+				<div class="flex-1 sm:ml-4">
+					<!-- Template Name -->
+					<h4 class="text-white font-bold text-lg mb-4">{template.name}</h4>
+
+					<!-- Additional Info -->
+					<div class="text-gray-400 text-sm mb-4">
+						<p><strong>Board Dimensions:</strong> {template.boardDimensions}</p>
+						<p><strong>Variant Type:</strong> {template.variantType}</p>
+						<p><strong>Objective:</strong> {template.objective}</p>
+					</div>
+					
+					<!-- Action Buttons -->
+					<div class="flex space-x-4">
+						<button class="bg-green-500 text-white hover:bg-green-600 font-semibold py-2 px-4 rounded-lg transition-colors w-auto flex items-center">
+							<i class="fa-solid fa-play mr-2"></i> <!-- Play Icon -->
+							<span class="text-sm">Play</span> <!-- Small Text -->
+						</button>
+						<button class="bg-blue-500 text-white hover:bg-blue-600 font-semibold py-2 px-4 rounded-lg transition-colors w-auto flex items-center">
+							<i class="fa-solid fa-edit mr-2"></i> <!-- Edit Icon -->
+							<span class="text-sm">Edit</span> <!-- Small Text -->
+						</button>
+						<button class="bg-red-500 text-white hover:bg-red-600 font-semibold py-2 px-4 rounded-lg transition-colors w-auto flex items-center">
+							<i class="fa-solid fa-trash mr-2"></i> <!-- Trash Icon -->
+							<span class="text-sm">Delete</span> <!-- Small Text -->
+						</button>
+					</div>
+				</div>
+			</div>
+		{/each}
+	</div>
+
+	<!-- Pagination Buttons (Optional) -->
+	<div class="flex justify-center mt-8 space-x-4">
+		<button class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Previous</button>
+		<button class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Next</button>
 	</div>
 </div>

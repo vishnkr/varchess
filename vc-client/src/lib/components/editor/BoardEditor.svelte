@@ -5,7 +5,7 @@
 	import left from '$lib/assets/svg/left.svg';
 	import type { Dimensions } from '$lib/board/types';
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { COLOR_THEMES } from '$lib/utils';
+	import { COLOR_THEMES } from '$lib/utils/index';
 	// @ts-ignore
 	import Switch from 'svelte-switch';
 	import { boardEditor } from '../../store/editor';
@@ -83,19 +83,27 @@
 		</div>
 		<div class="flex flex-col justify-between items-center h-auto p-2">
 			<h3 class="text-md md:text-xl">Shift Board</h3>
-			<button class="dbtn" on:click={() => dispatch('shift', 'up')}
-				><img class="svg" src={up} alt="Shift up" /></button
+			<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
+    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
+    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'up')}
+				><img class=" h-6 w-6" src={up} alt="Shift up" /></button
 			>
 			<div class="flex-1">
-				<button class="dbtn" on:click={() => dispatch('shift', 'left')}
-					><img class="svg" src={left} alt="Shift left" /></button
+				<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
+    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
+    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'left')}
+					><img class=" h-6 w-6" src={left} alt="Shift left" /></button
 				>
-				<button class="dbtn" on:click={() => dispatch('shift', 'right')}
-					><img class="svg" src={right} alt="Shift right" /></button
+				<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
+    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
+    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'right')}
+					><img class=" h-6 w-6" src={right} alt="Shift right" /></button
 				>
 			</div>
-			<button class="dbtn" on:click={() => dispatch('shift', 'down')}
-				><img class="svg" src={down} alt="Shift down" /></button
+			<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
+    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
+    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'down')}
+				><img class=" h-6 w-6" src={down} alt="Shift down" /></button
 			>
 		</div>
 	</div>

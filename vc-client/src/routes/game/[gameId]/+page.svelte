@@ -6,12 +6,13 @@
 	import { onMount } from 'svelte';
 	import { configStore, gameState, gameId, moveSelector, Status } from '$lib/store/stores';
 	import {sendWebsocketMsg, wsStore} from '$lib/websocket';
-	import { camelToSnake } from '$lib/utils';
+	import { camelToSnake } from '$lib/utils/index';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { sendDrawOffer } from '$lib/websocket.js';
 	import chessCore from '$lib/chesscore.worker.js';
 	import { EventGameResign } from '$lib/store/types.js';
+	import { authStore } from '$lib/store/auth.js';
 	
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
@@ -20,10 +21,10 @@
 	let items = ['Chat', 'Move Patterns'];
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 	let isFlipped = false;
-	let username: string;
+	let username: string = "fsdf";
 	let isPlayer = false;
 	let isMounted = false;
-	export let data;
+
 	
 	const goHome = ()=>{
 		if (browser) { 
@@ -32,13 +33,20 @@
 	};
 
 	async function initWasm(){ await chessCore.initWasm(); isMounted = true;}
-	initWasm();
-	$: { if (data.username) username = data.username;}
+	//initWasm();
+	let auth;
+	$: authStore.subscribe((state) => (auth = state));
 	$: {
 		if (!$wsStore) {
 			goHome()
 		}
 	}
+	onMount(() => {
+		const accessToken = localStorage.getItem('accessToken');
+		if (!accessToken) {
+			goto('/login');
+		}
+	});
 	let chesscore;
 	const {legalMoves } = moveSelector;
 	$: {
@@ -58,13 +66,14 @@
 			};
 		}
 	}
+
 	onMount(async () => {
-		initWasm();
+		//initWasm();
 		
-		if($gameState?.players?.playerBlack === data.username){
+		if($gameState?.players?.playerBlack === username){
 			isPlayer = true
 			isFlipped=true
-		} else if ($gameState?.players?.playerWhite === data.username){
+		} else if ($gameState?.players?.playerWhite === username){
 			isPlayer = true
 		}
 	});
@@ -98,6 +107,7 @@
 	const handleResign = () =>{
 		if($wsStore && $gameId) sendWebsocketMsg($wsStore,EventGameResign,{gameId:$gameId})
 	}
+//<Board boardConfig={mpBoardConfig} />
 </script>
 
 <svelte:head>
@@ -159,7 +169,7 @@
 					{#if activeItem === 'Chat'}
 						<Chat />
 					{:else if activeItem === 'Move Pattern'}
-						<Board boardConfig={mpBoardConfig} />
+						nothing
 					{/if}
 				</div>
 			</div>

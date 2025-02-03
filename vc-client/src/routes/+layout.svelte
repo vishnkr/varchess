@@ -4,15 +4,20 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { goto } from '$app/navigation';
-	export let data;
+	import { type AuthState, authStore, logout } from '$lib/store/auth';
 
 	let userId: string | undefined;
 	let username: string | undefined;
 	let isLoggedIn: boolean = false;
-	$: {
+	let auth: AuthState;
+	$: authStore.subscribe((value) => auth = value);
+	$:{
+		console.log('auth',auth)
+	}
+	/*$: {
 		({ userId, username } = data);
 		isLoggedIn = userId && username ? true : false;
-	}
+	}*/
 	let isOpen = false;
 
 	function toggleDropdown() {
@@ -39,6 +44,10 @@
 
 	function handleSidebarLeave() {
 		isSidebarOpen = false;
+	}
+	function handleLogout() {
+		logout();
+		goto('/login');
 	}
 </script>
 
@@ -97,7 +106,7 @@
 	<div class="font-inter dark:bg-[#0a0c13] radial-bg flex flex-col flex-grow">
 		<Alert />
 		<main class="flex text-white">
-			{#if isLoggedIn}
+			{#if auth.accessToken}
 			<!-- Side Menu -->
 			<div on:mouseenter={handleSidebarHover} on:mouseleave={handleSidebarLeave} class="flex-shrink-0 w-16 hover:w-48 transition-width duration-300 ease-in-out border-r border-gray-600 text-white h-screen">
 					<!-- svelte-ignore a11y-click-events-have-key-events -->

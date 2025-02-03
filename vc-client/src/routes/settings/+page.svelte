@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { COLOR_THEMES } from '$lib/utils';
+	import { COLOR_THEMES } from '$lib/utils/index';
 	
 	let showPossibleMoves = false;
 	let enablePremove = false;

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 	"vc-core/internal/db"
 	"vc-core/internal/middleware"
 	"vc-core/internal/utils"
@@ -104,11 +105,28 @@ func HandleLogin(database *db.DB) http.HandlerFunc {
 			http.Error(w, "Error generating refresh token", http.StatusInternalServerError)
 			return
 		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     "accessToken",
+			Value:    token,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+			Path:     "/",
+			Expires:  time.Now().Add(time.Hour * 24),
+		})
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refreshToken",
+			Value:    refreshToken,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+			Path:     "/",
+			Expires:  time.Now().Add(7 * 24 * time.Hour),
+		})
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(bson.M{
-			"access_token": token,
-			"refresh_token": refreshToken,
 			"username": userID,
 		})
 	}

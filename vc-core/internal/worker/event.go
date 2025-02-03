@@ -31,6 +31,11 @@ type JoinPayload struct {
 	Color string `json:"c"`
 }
 
+type MovePayload struct{
+	Fen string `json:"fen"`
+	
+}
+
 func (w *Worker) processEvent(event Event) {
 	switch event.Type {
 	case Move:

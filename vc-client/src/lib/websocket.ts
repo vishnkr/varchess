@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { Role, Status, chats, configStore, gameId, gameState, members, type ConnectParams, type ConnectType } from './store/stores';
 import { EventChatMessage, EventGameDrawOffer, EventGameMakeMove, EventGameResign, EventJoinGame, EventStartGame, EventUserConnect, type EventType, type WSParams, type WebSocketMessage, EventUserDisconnect } from './store/types';
-import { camelToSnake } from './utils';
+import { camelToSnake } from './utils/index';
 import type { Move } from './board/types';
 
 interface UserJoin {

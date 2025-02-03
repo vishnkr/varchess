@@ -34,24 +34,16 @@
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 	function exitRoom() {
-		if (browser) {
-			window.location.href = '/home';
-		}
+		goto('/home')
 	}
 
 	let username: string;
-
-	export let data;
-	$: {
-		if (data.username) username = data.username;
-	}
-
 	let isVariantRulesOn: boolean;
     $: {
         isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
     }
 
-	// Save Template
+
 	let isPopupVisible = false;
 	let templateName = '';
 
@@ -68,7 +60,7 @@
 	};
 
 	let playAsWhite = true;
-	// Play Game
+
 	const getFEN = () => {
 		let position = '';
 		for (let i = 0; i < $boardEditor.ranks; i++) {
@@ -129,7 +121,7 @@
 			color: playAsWhite ? 'w' : 'b',
 			sessionId: 'sdf',
 			gameConfig: config,
-			username
+			username:'test'
 		};
 
 		wsStore.newWebSocketConnection(url, params, 'create');

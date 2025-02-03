@@ -123,3 +123,9 @@ func (w *Worker) processJoin(event Event){
 	}
 	
 }
+
+func (w *Worker) processMove(event Event){
+	_ = w.pool.redisClient
+	_  = context.Background()
+	//var mp MovePayload
+}

@@ -4,13 +4,27 @@
     import { wsStore } from '$lib/websocket';
     import PieChart from '$lib/components/charts/PieChart.svelte';
 	import HalfDoughnut from '$lib/components/charts/HalfDoughnut.svelte';
-    
-    let username: string;
-    export let data;
-    $: ({ username } = data);
-    let gameIdInput: string;
+	import { authStore } from '$lib/store/auth';
+	import { onDestroy } from 'svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	
+    let username: string = '';
+    const unsubscribe = authStore.subscribe(state => {
+        username = state.username || '';
+    });
 
-    export async function fetchDashboardData() {
+    onDestroy(() => {
+        unsubscribe(); 
+    });
+
+    //export let data;
+    //$: ({ username } = data);
+    let gameIdInput: string;
+    
+    const createGame = () =>{
+        goto('/editor')
+    }
+    /*export async function fetchDashboardData() {
     try {
         const response = await fetch('/api/dashboard');
         if (!response.ok) throw new Error('Failed to fetch dashboard data');
@@ -36,7 +50,7 @@
         if ($gameId !== null && $wsStore) {
             goto(`/game/${$gameId}/waiting`);
         }
-    }
+    }*/
 </script>
 
 <svelte:head>
@@ -59,14 +73,13 @@
         </div>
     </div>
 
-    <!-- Right Section - Game Actions -->
     <div class="w-full md:w-1/3 p-4">
         <div class="bg-gray-800 text-white p-6 rounded-lg flex flex-col items-center space-y-4 shadow-lg">
             <h2 class="text-xl font-bold mb-4">Play a Game</h2>
             <a href="/editor" class="w-full">
-                <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-2xl flex items-center w-full justify-center">
+                <Button on:click={createGame} class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-2xl flex items-center w-full justify-center">
                     <i class="fa-solid fa-plus mr-2"></i> Create New Game
-                </button>
+                </Button>
             </a>
             <span class="text-white">OR</span>
             <input
@@ -76,12 +89,12 @@
                 placeholder="Enter Room Code"
                 class="border border-gray-600 bg-gray-700 text-white px-4 py-2 rounded-xl w-full"
             />
-            <button
-                on:click={joinGame}
+            <Button
+                on:click={()=>{}}
                 class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-2xl w-full"
             >
                 Join Room
-            </button>
+            </Button>
         </div>
     </div>
 </div>

@@ -17,6 +17,7 @@ import (
 	"vc-core/internal/worker"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 )
 
 func main(){
@@ -35,7 +36,15 @@ func main(){
 	wp := worker.NewWorkerPool(10,dbConn.RedisClient)
 	go dbConn.SetupRedisSubscriber(context.Background(),wp)
 	router := chi.NewRouter()
-
+	corsMiddleware := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://localhost:5173"},
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+        ExposedHeaders:   []string{"Link"},
+        AllowCredentials: true,
+        MaxAge:           300, // Maximum value not ignored by any of major browsers
+    })
+	router.Use(corsMiddleware.Handler)
 	router.Post("/signup", handlers.HandleSignup(dbConn))
 	router.Post("/login", handlers.HandleLogin(dbConn))
 

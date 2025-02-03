@@ -1,38 +1,37 @@
-import { derived, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 
-const TOKEN_KEY = 'token';
+const STORAGE_KEY = 'auth';
 
-const auth = writable({
-	token: window.localStorage.getItem(TOKEN_KEY),
-	isGuest: false
-});
-
-const me = derived(auth, ($auth, set) => {
-	set({
-		...$auth,
-		isAuth: !!$auth.token || $auth.isGuest
-	});
-});
-
-function setToken(token: string) {
-	auth.update(($auth) => {
-		window.localStorage.setItem(TOKEN_KEY, token);
-
-		return {
-			...$auth,
-			token
-		};
-	});
+interface AuthState {
+	username: string | null;
+	accessToken: string | null;
+	refreshToken: string | null;
 }
 
-function loginAsGuest() {
-	auth.update(($auth) => {
-		return { ...$auth, isGuest: true };
-	});
-}
-
-export default {
-	subscribe: me.subscribe,
-	setToken,
-	loginAsGuest
+const defaultState: AuthState = {
+	username: null,
+	accessToken: null,
+	refreshToken: null
 };
+
+const storedAuth = localStorage.getItem(STORAGE_KEY);
+const initialAuth = storedAuth ? JSON.parse(storedAuth) : defaultState;
+
+const authStore = writable<AuthState>(initialAuth);
+
+authStore.subscribe((state) => {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+});
+
+function setAuth(username: string, accessToken: string, refreshToken: string) {
+	authStore.set({ username, accessToken, refreshToken });
+	console.log('setting auth',username,accessToken,refreshToken)
+}
+
+function logout() {
+	authStore.set(defaultState);
+	localStorage.removeItem(STORAGE_KEY);
+}
+
+export { authStore, setAuth, logout };	export type { AuthState };
+

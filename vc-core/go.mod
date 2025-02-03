@@ -20,6 +20,7 @@ require (
 	github.com/go-playground/validator/v10 v10.24.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/holiman/uint256 v1.3.2
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect

@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+/*import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -11,3 +11,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		username: session.user.username
 	};
 };
+*/
+
+export const ssr = false;
