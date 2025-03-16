@@ -54,43 +54,44 @@ func TestGenerateSlideMoves(t *testing.T) {
 
 	src := FileRankToIndex(3, 3, pos.Files)
 	offsets := queenOffsets
-	expectedBitboard := NewBitboard()
+	expectedBitboard := NewBitboard(8)
 	expectedMoves := generateExpectedSlidingMovesUtil(src,offsets,pos.Ranks,pos.Files)
 	sort.Ints(expectedMoves)
 	for _,sq := range expectedMoves{ 
-		ogSrc := SmallToLargeBoardIndex(sq,pos.Files)
+		ogSrc := SmallToLargeBoardIndex(sq,pos.Files,max(pos.Ranks,pos.Files))
 		expectedBitboard.SetBit(ogSrc)
 	}
 
 	moveBitboard := generateSlideMoves(src, pos, false, offsets)
-	require.Equal(t, expectedBitboard.Bits, moveBitboard.Bits, "FEN: %s", fen)
+	require.True(t, expectedBitboard.Equal(moveBitboard), "Bitboards are not equal\nFEN: %s", fen)
 }
 
 
 func TestAttackTable(t *testing.T) {
     ranks, files := 8, 8
-    src := SmallToLargeBoardIndex(27, files)
+	largestDim:= max(ranks,files)
+    src := SmallToLargeBoardIndex(27, files,largestDim)
 
     offsets := queenOffsets
-    bb := ComputeSlideAttacks(src, offsets[0])
-    b1 := ComputeSlideAttacks(src, offsets[1])
-    b2 := ComputeSlideAttacks(src, offsets[2])
-    b3 := ComputeSlideAttacks(src, offsets[3])
-    b4 := ComputeSlideAttacks(src, offsets[4])
-    b5 := ComputeSlideAttacks(src, offsets[5])
-    b6 := ComputeSlideAttacks(src, offsets[6])
-    b7 := ComputeSlideAttacks(src, offsets[7])
+    bb := ComputeSlideAttacks(src, offsets[0],largestDim)
+    b1 := ComputeSlideAttacks(src, offsets[1],largestDim)
+    b2 := ComputeSlideAttacks(src, offsets[2],largestDim)
+    b3 := ComputeSlideAttacks(src, offsets[3],largestDim)
+    b4 := ComputeSlideAttacks(src, offsets[4],largestDim)
+    b5 := ComputeSlideAttacks(src, offsets[5],largestDim)
+    b6 := ComputeSlideAttacks(src, offsets[6],largestDim)
+    b7 := ComputeSlideAttacks(src, offsets[7],largestDim)
 	EnsureTablesInitialized()
     validSquares := GetValidSquares(8, 8)
 	PrintBitboard(validSquares,8,8)
-    bb.Bits.And(bb.Bits,validSquares.Bits)
-    b1.Bits.And(b1.Bits,validSquares.Bits)
-    b2.Bits.And(b2.Bits,validSquares.Bits)
-    b3.Bits.And(b3.Bits,validSquares.Bits)
-    b4.Bits.And(b4.Bits,validSquares.Bits)
-    b5.Bits.And(b5.Bits,validSquares.Bits)
-    b6.Bits.And(b6.Bits,validSquares.Bits)
-    b7.Bits.And(b7.Bits,validSquares.Bits)
+    bb.And(validSquares)
+    b1.And(validSquares)
+    b2.And(validSquares)
+    b3.And(validSquares)
+    b4.And(validSquares)
+    b5.And(validSquares)
+    b6.And(validSquares)
+    b7.And(validSquares)
 
     fmt.Println("bb")
     PrintBitboard(bb, ranks, files)

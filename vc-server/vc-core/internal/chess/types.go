@@ -2,8 +2,6 @@ package chess
 
 import (
 	"fmt"
-
-	"github.com/holiman/uint256"
 )
 
 type Move struct {
@@ -87,43 +85,6 @@ const (
     Jump
 )
 
-func (b *Bitboard) SetBit(index int) {
-	mask := uint256.NewInt(0).SetUint64(1)
-	mask.Lsh(mask, uint(index)) // mask = 1 << index
-	b.Bits.Or(b.Bits, mask) // b.Bits |= mask
-}
-
-
-func (b *Bitboard) ClearBit(index int) {
-	mask := uint256.NewInt(0).SetUint64(1)
-	mask.Lsh(mask, uint(index)) // mask = 1 << index
-	mask.Not(mask)              // mask = ~mask
-	b.Bits.And(b.Bits, mask)    // b.Bits &= mask
-}
-
-func (b *Bitboard) HasBit(index int) bool {
-	mask := uint256.NewInt(0).SetUint64(1)
-	mask.Lsh(mask, uint(index))
-	temp := b.Bits.Clone()
-	return temp.And(b.Bits, mask).Cmp(uint256.NewInt(0)) != 0
-}
-
-func (b *Bitboard) GetSetBits() []int {
-    var positions []int
-    bytes := b.Bits.Bytes32()
-    for byteFileRankToIndex, byteVal := range bytes {
-        if byteVal == 0 {
-            continue
-        }
-        for bitPos := 0; bitPos < 8; bitPos++ {
-            if (byteVal & (1 << bitPos)) != 0 {
-                positions = append(positions, (31-byteFileRankToIndex)*8+bitPos)
-            }
-        }
-    }
-    return positions
-}
-
 
 
 type Position struct {
@@ -134,10 +95,10 @@ type Position struct {
     EnPassant  int
     HalfMove   int
     FullMove   int
-    Pieces     map[rune]*Bitboard
-    Walls      *Bitboard
-    PositionBitBoard *Bitboard
-    ColorBitboards map[Color]*Bitboard
+    Pieces     map[rune]Bitboard
+    Walls      Bitboard
+    PositionBitBoard Bitboard
+    ColorBitboards map[Color]Bitboard
 	CustomPieceRules map[rune][]MovePattern
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 func TestBitboardOperations(t *testing.T) {
-    bb := NewBitboard()
+    bb := NewBitboard(16)
     
     bb.SetBit(10)
     require.True(t, bb.HasBit(10), "Bit should be set")
@@ -123,22 +123,21 @@ func TestGenerateMoveCountForKnight(t *testing.T) {
 		expected  int
 		piece     rune
 	}{
+		{"4rK2/2p1R1n1/5p2/5N1k/2p1pp2/2Q5/8/8 w - - 0 1",1,6,2,'n'},
 		{"8/8/8/3N4/8/8/8/8 w - - 0 1", 3, 3, 8,'N'},  
 		{"8/8/8/8/8/N7/8/8 w - - 0 1", 0, 5, 4,'N'},  
 		{"N7/8/8/8/8/8/8/8 w - - 0 1", 0, 7, 2,'N'},  
 		{"8/2P1P3/1P3P2/3N4/1P2P3/2P2P2/8/8 w - - 0 1", 3, 3, 2,'N'},  
-		{"4rK2/2p1R1n1/5p2/5N1k/2p1pp2/2Q5/8/8 w - - 0 1",6,1,2,'n'},
 		{"8/8/8/3n4/2p1p3/8/8/8 w - - 0 1", 3, 3, 8,'n'},  
 		{"8/2p1R3/1K3p2/3n4/2p1pp2/2Q1N3/8/8 w - - 0 1",3,3,4,'n'},
 		{"5/5/2N2/5/5 w - - 0 1", 2, 2, 8,'N'},  
 		{"10/10/10/10/10/5n4/10/10/10/10 w - - 0 1", 5, 5, 8,'n'},
 	}
 
-	for i, tt := range tests {
+	for _, tt := range tests {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
-		fmt.Println("forcase",i)
-		moves := GenerateMovesForPiece('N', FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
+		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}
 }
@@ -161,7 +160,7 @@ func TestGenerateMoveCountForBishop(t *testing.T) {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
 		fmt.Println("forcase", i)
-		moves := GenerateMovesForPiece('B', FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
+		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}
 }
@@ -194,17 +193,17 @@ func TestFlattenBitboard(t *testing.T) {
 	pos := &Position{
 		Files:      8,
 		Ranks:      8,
-		Pieces:     make(map[rune]*Bitboard),
-		ColorBitboards: map[Color]*Bitboard{
-			White: NewBitboard(),
-			Black: NewBitboard(),
+		Pieces:     make(map[rune]Bitboard),
+		ColorBitboards: map[Color]Bitboard{
+			White: NewBitboard(8),
+			Black: NewBitboard(8),
 		},
-		PositionBitBoard: NewBitboard(),
-		Walls:            NewBitboard(),
+		PositionBitBoard: NewBitboard(8),
+		Walls:            NewBitboard(8),
 	}
 
 	src := FileRankToIndex(3, 3, 8) // d4
-	moveBitboard := NewBitboard()
+	moveBitboard := NewBitboard(8)
 	moveBitboard.SetBit(FileRankToIndex(5, 4, 8)) // f5
 	moveBitboard.SetBit(FileRankToIndex(2, 5, 8)) // c6
 
