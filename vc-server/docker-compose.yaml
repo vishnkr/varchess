@@ -33,7 +33,6 @@ services:
     restart: always
     env_file:
       - ./vc-core/.env
-
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -41,7 +40,14 @@ services:
       - 5000:5000
     networks:
       - vc-network
-
+  db:
+    image: mongo
+    container_name: vc_db
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - vc-network
 networks:
   vc-network:
     driver: bridge
