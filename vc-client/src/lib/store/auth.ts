@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'auth';
 
@@ -14,13 +15,15 @@ const defaultState: AuthState = {
 	refreshToken: null
 };
 
-const storedAuth = localStorage.getItem(STORAGE_KEY);
+const storedAuth = browser ? localStorage.getItem(STORAGE_KEY) : null;
 const initialAuth = storedAuth ? JSON.parse(storedAuth) : defaultState;
 
 const authStore = writable<AuthState>(initialAuth);
 
 authStore.subscribe((state) => {
-	localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+	if(browser){
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+	}
 });
 
 function setAuth(username: string, accessToken: string, refreshToken: string) {
@@ -30,7 +33,10 @@ function setAuth(username: string, accessToken: string, refreshToken: string) {
 
 function logout() {
 	authStore.set(defaultState);
-	localStorage.removeItem(STORAGE_KEY);
+	if(browser){
+		localStorage.removeItem(STORAGE_KEY);
+	}
+	
 }
 
 export { authStore, setAuth, logout };	export type { AuthState };
