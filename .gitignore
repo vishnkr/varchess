@@ -4,10 +4,11 @@ vc-client/node_modules/
 vc-client/.DS_store
 vc-server/vc-server
 .vscode
-*/*/.env
+*/.env
 */*.log
 vc-server/logs
 vc-server/bin
 vc-ws/vc-ws
 vc-core/vc-server
 */mongo-data
+vc-server/script.txt

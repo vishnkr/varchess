@@ -127,6 +127,8 @@ func HandleLogin(database *db.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(bson.M{
 			"username": userID,
+			"accessToken":  token,
+			"refreshToken": refreshToken,
 		})
 	}
 }
