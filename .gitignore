@@ -10,3 +10,4 @@ vc-server/logs
 vc-server/bin
 vc-ws/vc-ws
 vc-core/vc-server
+*/mongo-data

@@ -16,6 +16,7 @@ const (
 	EnvKey = "ENVIRONMENT"
 	jwtSecret = "JWT_SECRET_KEY"
 	redisAddr = "REDIS_ADDR"
+	redisPassword = "REDIS_PASSWORD"
 	
 )
 
@@ -26,6 +27,7 @@ type Config struct{
 	JWTSecret string
 	DBName string
 	RedisAddr string
+	RedisPassword string
 }
 
 type DBConfig struct {
@@ -68,6 +70,7 @@ func Load(file string) (*Config, error) {
 	dbUri := os.Getenv(dbUriEnv)
 	dbName := os.Getenv(dbName)
 	redisAddr := os.Getenv(redisAddr)
+	redisPass := os.Getenv(redisPassword) 
 	/*dbConfig ,err := getDBConfig()
 	if err!=nil{
 		return nil,err
@@ -81,5 +84,6 @@ func Load(file string) (*Config, error) {
 		DBURI: dbUri,
 		DBName: dbName,
 		RedisAddr: redisAddr,
+		RedisPassword: redisPass,
 	},nil
 }

@@ -26,7 +26,7 @@ func main(){
 		log.Fatalf("Error loading config: %v", err)
 	}
 	l := logger.New()
-	dbConn, err := db.Connect(cfg.DBURI,cfg.DBName,cfg.RedisAddr)
+	dbConn, err := db.Connect(cfg)
 	
 	if err != nil {
 		log.Fatalf("Error connecting to db: %v", err)
@@ -42,12 +42,15 @@ func main(){
         AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
         ExposedHeaders:   []string{"Link"},
         AllowCredentials: true,
-        MaxAge:           300, // Maximum value not ignored by any of major browsers
+        MaxAge:           300,
     })
 	router.Use(corsMiddleware.Handler)
 	router.Post("/signup", handlers.HandleSignup(dbConn))
 	router.Post("/login", handlers.HandleLogin(dbConn))
-
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 	api := api.NewAPI(&l,dbConn)
 	_ = router.With(mw.AuthMiddleware).Route("/api", func(r chi.Router) {
 		api.RegisterHandlers(r, dbConn)

@@ -35,6 +35,7 @@ type MoveMessage struct {
 }
 
 type ChatMessage struct {
+	GameId string `json:"gid"`
     Sender  string `json:"sender"`
     Message string `json:"msg"`
 }

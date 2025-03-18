@@ -125,12 +125,13 @@ func (w *Worker) processJoin(event Event){
 }
 
 func (w *Worker) processMove(event Event){
-	_ = w.pool.redisClient
+	r := w.pool.redisClient
 	_  = context.Background()
 	var payload MovePayload
 	if err := json.Unmarshal([]byte(event.Data), &payload); err != nil {
 		log.Println("Invalid move payload:", err)
 		return
 	}
-	
+	//validate move here 
+	r.Publish(context.TODO(), "game_events", payload)
 }

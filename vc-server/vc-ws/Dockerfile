@@ -13,6 +13,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 COPY --from=builder /app/wsserver /app/wsserver
+COPY .env .env 
 EXPOSE 8080
 
 

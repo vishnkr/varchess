@@ -15,7 +15,7 @@ WORKDIR /app
 RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /app/core_server /app/core_server
-COPY vc-core/.env .env 
+COPY .env .env 
 EXPOSE 5000
 
 CMD ["./core_server"]

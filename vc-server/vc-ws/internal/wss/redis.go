@@ -43,8 +43,16 @@ func SubscribeToRedis() {
             }
 
             game,err := hub.GetGame(event.GameID)
-            if err == nil {
+            if err != nil {
+                fmt.Printf("Game not found: %v\n", event.GameID)
+                continue
+            }
+            switch event.Type {
+            case Move, Join, Resign, DrawOffer, DrawAccept, DrawReject, GameOver:
                 game.Broadcast(event)
+
+            default:
+                fmt.Printf("Unhandled event type: %v\n", event.Type)
             }
         }
     }()
@@ -58,4 +66,27 @@ func PublishGameUpdate(redisClient *redis.Client, gameID string, eventType strin
 	}
 	msgJSON, _ := json.Marshal(message)
 	redisClient.Publish(context.TODO(), "game_events", msgJSON)
+}
+
+func PublishMoveForValidation(redisClient *redis.Client, event Event) {
+    msgJSON, err := json.Marshal(event)
+    if err != nil {
+        fmt.Printf("Failed to marshal move: %v\n", err)
+        return
+    }
+    redisClient.XAdd(context.TODO(), &redis.XAddArgs{
+        Stream: "move_validation",
+        Values: map[string]interface{}{"data": msgJSON},
+    })
+}
+
+
+func PublishChatMessage(gameID, playerID, message string) {
+    msg := map[string]interface{}{
+        "gameId": gameID,
+        "player": playerID,
+        "message": message,
+    }
+    msgJSON, _ := json.Marshal(msg)
+    redisClient.Publish(context.Background(), "game_chat", msgJSON)
 }
