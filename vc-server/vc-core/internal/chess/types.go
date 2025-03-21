@@ -77,30 +77,11 @@ type MoveOffset struct {
 	x, y int
 }
 
-
-
 type MoveType int
 const (
     Slide MoveType = iota 
     Jump
 )
-
-
-
-type Position struct {
-    Files      int
-    Ranks      int
-    WhiteToMove bool
-    Castling   uint8
-    EnPassant  int
-    HalfMove   int
-    FullMove   int
-    Pieces     map[rune]Bitboard
-    Walls      Bitboard
-    PositionBitBoard Bitboard
-    ColorBitboards map[Color]Bitboard
-	CustomPieceRules map[rune][]MovePattern
-}
 
 type Color uint8
 const (
