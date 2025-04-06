@@ -1,19 +1,21 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import * as echarts from 'echarts';
+	import { browser } from '$app/environment';
 
+	export let theme;
 	let chartContainer;
+	let chartInstance;
 
-	onMount(() => {
-		const myChart = echarts.init(chartContainer);
-		const option = {
-            title: {
-			    text: 'Games By Result',
-                left: 'center',
-                textStyle: {
-                    color: '#ffffff'
-                }
-            },
+	function getChartOptions(theme) {
+		return {
+			title: {
+				text: 'Games By Result',
+				left: 'center',
+				textStyle: {
+					color: theme === 'dark' ? '#ffffff' : '#000000'
+				}
+			},
 			tooltip: {
 				trigger: 'item'
 			},
@@ -21,7 +23,7 @@
 				bottom: 0,
 				left: 'center',
 				textStyle: {
-					color: '#ffffff'
+					color: theme === 'dark' ? '#ffffff' : '#000000'
 				}
 			},
 			series: [
@@ -30,32 +32,46 @@
 					type: 'pie',
 					radius: ['40%', '70%'],
 					center: ['50%', '70%'],
-                    labelLine: {
-			            show: false
-		            },
-                    label: {
-                        show: false,
-                        position: 'center'
-                    },
+					labelLine: {
+						show: false
+					},
+					label: {
+						show: false,
+						position: 'center'
+					},
 					startAngle: 180,
 					endAngle: 360,
 					data: [
-						{ value: 100, name: 'Win' ,itemStyle: { color: 'green' }},
-                        { value: 5, name: 'Draw' ,itemStyle: { color: 'gray' }},
-						{ value: 73, name: 'Loss' ,itemStyle: { color: 'red' }}
+						{ value: 100, name: 'Win', itemStyle: { color: 'green' }},
+						{ value: 5, name: 'Draw', itemStyle: { color: 'gray' }},
+						{ value: 73, name: 'Loss', itemStyle: { color: 'red' }}
 					]
 				}
 			]
 		};
+	}
 
-		myChart.setOption(option);
-		window.addEventListener('resize', () => {
-			myChart.resize();
-		});
+	function resizeChart() {
+		if (chartInstance) {
+			chartInstance.resize();
+		}
+	}
 
-		return () => {
-			myChart.dispose();
-		};
+	onMount(() => {
+		chartInstance = echarts.init(chartContainer);
+		chartInstance.setOption(getChartOptions(theme));
+		if (browser) {
+			window.addEventListener('resize', resizeChart);
+		}
+	});
+
+	$: if (chartInstance) {
+		chartInstance.setOption(getChartOptions(theme), true);
+	}
+
+	onDestroy(() => {
+		if (chartInstance) chartInstance.dispose();
+		if (browser) window.removeEventListener('resize', resizeChart);
 	});
 </script>
 

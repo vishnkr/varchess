@@ -7,6 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+export const hoverClasses =
+	'dark:hover:bg-gray-700 hover:bg-gray-200 dark:hover:text-white hover:text-black transition-colors';
+
 type FlyAndScaleParams = {
 	y?: number;
 	x?: number;

@@ -11,7 +11,7 @@
 	type ProviderType = (typeof Provider)[number];
 	export let provider: ProviderType;
 
-	export let icon: typeof SvelteComponent | undefined | null = undefined;
+	export let icon: typeof SvelteComponent<any> | undefined | null = undefined;
 	export let label: string | undefined | null = undefined;
 
 	export let loading = false;

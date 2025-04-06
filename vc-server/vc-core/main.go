@@ -47,7 +47,6 @@ func main(){
 	router.Use(corsMiddleware.Handler)
 	router.Post("/signup", handlers.HandleSignup(dbConn))
 	router.Post("/login", handlers.HandleLogin(dbConn))
-	log.Println("setting up routes2")
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("reached")
 		w.WriteHeader(http.StatusOK)

@@ -1,24 +1,33 @@
 import { writable } from 'svelte/store';
 
-export const ALERT_TYPE = {
-	DANGER: 'DANGER',
-	INFO: 'INFO',
-	SUCCESS: 'SUCCESS'
-};
+export type ToastType = 'success' | 'error' | 'warning';
 
-export const alertMessage = writable('');
-export const alertType = writable('');
-
-export const displayAlert = (message: string, type = ALERT_TYPE.INFO, resetTime?: number) => {
-	alertMessage.set(message);
-	alertType.set(type);
-	if (resetTime) {
-		setTimeout(() => {
-			alertMessage.set('');
-		}, resetTime);
-	}
-};
-export function getErrorMessage(error: unknown) {
-	if (error instanceof Error) return error.message;
-	return String(error);
+export interface ToastMessage {
+	id: number;
+	type: ToastType;
+	message: string;
 }
+
+function createToastStore() {
+	const { subscribe, update } = writable<ToastMessage[]>([]);
+
+	let id = 0;
+
+	function show(type: ToastType, message: string, duration = 3000) {
+		const toast = { id: ++id, type, message };
+		update((toasts) => [...toasts, toast]);
+
+		setTimeout(() => {
+			update((toasts) => toasts.filter((t) => t.id !== toast.id));
+		}, duration);
+	}
+
+	return {
+		subscribe,
+		success: (msg: string,duration?:number) => show('success', msg,duration),
+		error: (msg: string,duration?:number) => show('error', msg,duration),
+		warning: (msg: string,duration?:number) => show('warning', msg,duration),
+	};
+}
+
+export const toast = createToastStore();

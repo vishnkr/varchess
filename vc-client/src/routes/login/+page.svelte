@@ -1,99 +1,101 @@
 <script lang="ts">
-	import { login } from '$lib/api/auth';
-	import { logout, authStore } from '$lib/store/auth';
+	import { login, signup } from '$lib/api/auth';
+	import { authStore } from '$lib/store/auth';
 	import { goto } from '$app/navigation';
-	import Github from '$lib/icons/Github.svelte';
-	import Google from '$lib/icons/Google.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import * as Dialog from "$lib/components/ui/dialog";
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { toast } from '$lib/store/alert';
 
 	let username = '';
 	let password = '';
+	let signupEmail = '';
+	let signupUsername = '';
+	let signupPassword = '';
 	let auth;
-
 	$: authStore.subscribe((state) => (auth = state));
+
+	let dialogOpen = false;
+
+	function isValidEmail(email: string) {
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+	}
 
 	async function handleLogin(event: Event) {
 		event.preventDefault();
-
 		const success = await login(username, password);
-		console.log('suc',success)
 		if (!success) {
-			alert('Login failed');
+			//alert('Login failed');
+			toast.error('Login failed. Please check your credentials.');
 			return;
 		}
-
 		await goto('/home');
 	}
 
-	let isModalOpen = false;
-	const openModal = () => (isModalOpen = true);
-	const closeModal = () => (isModalOpen = false);
+
+	async function handleSignup(event: Event) {
+		event.preventDefault();
+		if (!isValidEmail(signupEmail)) {
+			toast.error('Please enter a valid email.');
+			return;
+		}
+		const success = await signup(signupEmail, signupUsername, signupPassword);
+		if (!success) {
+			toast.error('Signup failed. Please try again.');
+			return;
+		}
+		toast.success('Account created! You can now log in.');
+		dialogOpen = false;
+	}
 </script>
 
-<div class="flex flex-col items-center h-full w-full">
-	<h2 class="mt-2 text-center text-3xl text-white font-bold tracking-tight">
-		Sign in to your account
-	</h2>
-	<form class="flex flex-col items-center space-y-2 w-full pt-4" on:submit={handleLogin}>
-		<div class="form-control w-full max-w-md">
-			<label class="label font-medium pb-1">
-				<span class="label-text text-white">Username</span>
-			</label>
-			<Input bind:value={username} type="username" placeholder="username" class="w-full text-black" required/>
-		</div>
-		<div class="form-control w-full max-w-md">
-			<label class="label font-medium pb-1">
-				<span class="label-text text-white">Password</span>
-			</label>
-			<Input type="password" bind:value={password} placeholder="password" class="w-full text-black" required />
-		</div>
-		<Button variant="outline" type="submit" value="Login">Submit</Button>	
+<div class="flex flex-col items-center w-full px-4">
+	<h2 class="mt-8 text-3xl font-bold text-gray-800 dark:text-white text-center">Sign in to your account</h2>
+
+	<form on:submit={handleLogin} class="w-full max-w-md space-y-4 pt-6">
 		<div>
-			<p on:click={openModal} class="cursor-pointer text-blue-500">
-				Don't have an account? Create one
-			</p>
+			<Label for="username" class="text-gray-800 dark:text-white">Username</Label>
+			<Input id="username" bind:value={username} type="text" placeholder="Enter your username" required />
 		</div>
+		<div>
+			<Label for="password" class="text-gray-800 dark:text-white">Password</Label>
+			<Input id="password" bind:value={password} type="password" placeholder="••••••••" required />
+		</div>
+		<Button class="w-full" type="submit">Login</Button>
 	</form>
 
-	{#if isModalOpen}
-		<div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-			<div class="bg-white p-4 rounded-md">
-				<h2 class="text-xl font-bold mb-4 text-black">Sign up</h2>
-				<form method="POST" action="?/signup">
-					<label class="label font-medium pb-1">
-						<span class="label-text text-black">Email</span>
-					</label>
-					<input type="text" name="signup-email" class="text-white input input-bordered w-full mb-2" />
-					<label class="label font-medium pb-1 text-white">
-						<span class="label-text text-black">Username</span>
-					</label>
-					<input type="text" name="signup-username" class="text-white input input-bordered w-full mb-2" />
-					<label class="label font-medium pb-1 text-white">
-						<span class="label-text text-black">Password</span>
-					</label>
-					<input type="password" name="signup-password" class="text-white input input-bordered w-full mb-4" />
-					<div class="flex justify-center items-center space-x-2">
-						<input type="submit" value="Submit" class="bg-orange-600 text-white px-3 py-2 rounded-md cursor-pointer" />
-						<button on:click={closeModal} class="text-blue-500 underline cursor-pointer">Close</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	{/if}
 
-	<div class="w-full max-w-md pt-4 flex flex-col space-y-4">
-		<a href="/login/github">
-			<button class="flex items-center justify-center p-2 w-full bg-white text-black rounded-full">
-				<Github class="mr-2 h-6 w-6" />
-				<span>Continue with GitHub</span>
-			</button>
-		</a>
-		<a href="/login/google">
-			<button class="flex items-center justify-center p-2 w-full bg-white text-black rounded-full">
-				<Google class="mr-2 h-6 w-6" />
-				<span>Continue with Google</span>
-			</button>
-		</a>
-	</div>
+	<Dialog.Root bind:open={dialogOpen}>
+		<Dialog.Trigger class="mt-4 text-blue-400 text-sm hover:underline">
+			Don't have an account? Create one
+		</Dialog.Trigger>
+
+		<Dialog.Content class="sm:max-w-[425px]">
+			<Dialog.Header>
+				<Dialog.Title>Create an account</Dialog.Title>
+				<Dialog.Description>
+					Enter your details below to create your account.
+				</Dialog.Description>
+			</Dialog.Header>
+
+			<form method="POST" on:submit={handleSignup} class="grid gap-4 py-4">
+				<div class="grid grid-cols-4 items-center gap-4">
+					<Label for="signup-email" class="text-right">Email</Label>
+					<Input id="signup-email" name="signup-email" type="email" bind:value={signupEmail} class="col-span-3" required />
+				</div>
+				<div class="grid grid-cols-4 items-center gap-4">
+					<Label for="signup-username" class="text-right">Username</Label>
+					<Input id="signup-username" name="signup-username"bind:value={signupUsername} type="text" class="col-span-3" required />
+				</div>
+				<div class="grid grid-cols-4 items-center gap-4">
+					<Label for="signup-password" class="text-right">Password</Label>
+					<Input id="signup-password" name="signup-password" bind:value={signupPassword} type="password" class="col-span-3" required />
+				</div>
+				<Dialog.Footer>
+					<Button type="submit">Sign up</Button>
+				</Dialog.Footer>
+			</form>
+		</Dialog.Content>
+	</Dialog.Root>
 </div>

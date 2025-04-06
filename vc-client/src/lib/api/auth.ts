@@ -18,9 +18,23 @@ async function login(username: string, password: string): Promise<boolean> {
 	if (!res.ok) return false;
 
 	const data: LoginResponse = await res.json();
-	console.log('res',data);
 	setAuth(data.username, data.accessToken, data.refreshToken);
 	return true;
 }
 
-export { login };
+async function signup(email: string, username: string, password: string): Promise<boolean> {
+	try {
+		const res = await fetch(`${CORE_URL}/signup`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ email, username, password })
+		});
+		return res.ok;
+	} catch (err) {
+		return false;
+	}
+}
+
+export { login, signup };

@@ -31,12 +31,10 @@
 		document.documentElement.style.setProperty('--default-dark-square', dark);
 	}
 </script>
-<div>
+<div class="text-white">
     <h1 class="text-2xl font-bold text-center mb-2">Settings</h1>
     <div class="flex items-start justify-center min-h-screen ">
-
         <div class="flex flex-col bg-gray-800 shadow-md rounded-lg p-8 max-w-md w-full">
-            
             
             <div class="flex items-center">
                 <span class="p-3 text-md font-medium  dark:text-gray-300">Theme: </span>

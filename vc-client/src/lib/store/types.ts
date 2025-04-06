@@ -1,5 +1,5 @@
 import type { Color, Move } from '$lib/board/types';
-import type { SvelteComponent, SvelteComponentTyped } from 'svelte';
+import type { SvelteComponent } from 'svelte';
 
 export interface BoardEditorState {
 	ranks: number;
@@ -25,7 +25,7 @@ export enum MoveType {
 export interface RuleEditorState {
 	variantType: VariantType;
 	isViewVariantRulesOn: boolean;
-	ruleComponent?: typeof SvelteComponent | null
+	ruleComponent?: typeof SvelteComponent<any> | null
 }
 
 export interface MovePattern {

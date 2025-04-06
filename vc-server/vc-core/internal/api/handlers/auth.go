@@ -42,15 +42,21 @@ func HandleSignup(database *db.DB) http.HandlerFunc {
 			http.Error(w, "Email already in use", http.StatusConflict)
 			return
 		}
+		var existingUsername bson.M
+		err = collection.FindOne(context.TODO(), bson.M{"username": req.Username}).Decode(&existingUsername)
+		if err == nil {
+			http.Error(w, "Username already in use", http.StatusConflict)
+			return
+		}
 
-		// Hash the password
+	
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			http.Error(w, "Error hashing password", http.StatusInternalServerError)
 			return
 		}
 
-		// Create user
+
 		user := bson.M{
 			"username": req.Username,
 			"email":    req.Email,
@@ -126,7 +132,8 @@ func HandleLogin(database *db.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(bson.M{
-			"username": userID,
+			"uid": userID,
+			"username": req.Username,
 			"accessToken":  token,
 			"refreshToken": refreshToken,
 		})
