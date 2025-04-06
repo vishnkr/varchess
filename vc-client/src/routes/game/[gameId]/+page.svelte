@@ -10,7 +10,7 @@
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { sendDrawOffer } from '$lib/websocket.js';
-	import chessCore from '$lib/chesscore.worker.js';
+	//import chessCore from '$lib/chesscore.worker.js';
 	import { EventGameResign } from '$lib/store/types.js';
 	import { authStore } from '$lib/store/auth.js';
 	
@@ -32,7 +32,7 @@
 		}
 	};
 
-	async function initWasm(){ await chessCore.initWasm(); isMounted = true;}
+	//async function initWasm(){ await chessCore.initWasm(); isMounted = true;}
 	//initWasm();
 	let auth;
 	$: authStore.subscribe((state) => (auth = state));
@@ -53,10 +53,10 @@
 		if ($configStore) {
 			const config_json = JSON.stringify(camelToSnake($configStore));
 			if (isMounted){
-				chesscore = chessCore.loadPosition(config_json);
-				let moves:Move[] = chessCore.getLegalMoves();
-				console.log(moves)
-				legalMoves.set(moves)
+				//chesscore = chessCore.loadPosition(config_json);
+				//let moves:Move[] = chessCore.getLegalMoves();
+				//console.log(moves)
+				//legalMoves.set(moves)
 			}
 			
 			boardConfig = {
