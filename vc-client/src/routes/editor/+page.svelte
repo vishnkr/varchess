@@ -8,7 +8,7 @@
 	import BoardEditor from '$lib/components/editor/BoardEditor.svelte';
 	import ExpandableCard from '$lib/components/ExpandableCard.svelte';
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
-	import { browser } from '$app/environment';
+	//import { browser } from '$app/environment';
 	import MpEditBoard from '$lib/board/MPEditBoard.svelte';
 	import { goto } from '$app/navigation';
 	import { boardEditor, editorSubTypeSelected, pieceEditor, ruleEditor } from '$lib/store/editor';
@@ -26,9 +26,9 @@
 	};
 
 	onMount(async () => {
-		let stonkfish: typeof import('stonkfish');
-		stonkfish = await import('stonkfish');
-		await stonkfish.default();
+		//let stonkfish: typeof import('stonkfish');
+		//stonkfish = await import('stonkfish');
+		//await stonkfish.default();
 	});
 
 	let clearBoard: () => void;

@@ -1,4 +1,4 @@
-import init, { ChessCoreLib } from 'stonkfish';
+/*import init, { ChessCoreLib } from 'stonkfish';
 
 class ChessCoreWrapper {
     private coreInstance: ChessCoreLib | null = null;
@@ -25,4 +25,4 @@ class ChessCoreWrapper {
   }
   
   const chessCoreWrapper = new ChessCoreWrapper();
-  export default chessCoreWrapper;
+  export default chessCoreWrapper;*/
