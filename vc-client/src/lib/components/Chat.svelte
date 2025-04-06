@@ -1,5 +1,6 @@
-<script lang="ts">
-	import { chats, gameId, wsStore, type ChatMessage, MessageType } from '$lib/store/stores';
+<script lang="ts">/*
+	import { chats, gameId, type ChatMessage, MessageType } from '$lib/store/stores';
+	import {wsStore} from '$lib/websocket';
 	import { EventChatMessage, type ChatParams, type WebSocketMessage } from '$lib/store/types';
 	import { sendWebsocketMsg } from '$lib/websocket';
 
@@ -23,9 +24,9 @@
 	}
 
 	$: chatMessages = $chats;
-
+*/
 </script>
-
+<!--
 <div class="m-2 bg-white">
 	<div class="max-h-60 overflow-y-auto">
 		{#each chatMessages as message}
@@ -55,3 +56,4 @@
 		>
 	</div>
 </div>
+-->
