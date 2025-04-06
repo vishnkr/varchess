@@ -25,4 +25,6 @@ class ChessCoreWrapper {
   }
   
   const chessCoreWrapper = new ChessCoreWrapper();
-  export default chessCoreWrapper;*/
+  export default chessCoreWrapper;
+  		"wasm": "wasm-pack build ./stonkfish --target web"
+  */
