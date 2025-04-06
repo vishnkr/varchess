@@ -1,4 +1,4 @@
-// routes/login/github/callback/+server.ts
+/* 
 import { auth, githubAuth } from '$lib/server/lucia.js';
 import { OAuthRequestError } from '@lucia-auth/oauth';
 import { redirect } from '@sveltejs/kit';
@@ -51,3 +51,4 @@ export const GET = async ({ url, cookies, locals }) => {
 		});
 	}
 };
+*/
