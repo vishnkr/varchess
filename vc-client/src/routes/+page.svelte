@@ -2,12 +2,22 @@
 	import { Motion } from 'svelte-motion';
 	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Board from '$lib/board/Board.svelte';
+	import { isAuthenticated } from '$lib/utils';
+	import { goto } from '$app/navigation';
 
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
 		dimensions: { ranks: 7, files: 9 },
 		boardType: BoardType.View
 	};
+
+	function handlePlayNow() {
+		if (isAuthenticated()) {
+			goto('/home');
+		} else {
+			goto('/login');
+		}
+	}
 
 	const features = [
 		{
@@ -24,7 +34,7 @@
 		},
 		{
 			title: 'Custom Pieces',
-			description: 'Design pieces with unique movement patterns, new tactics, and strategic flair.',
+			description: 'Design pieces with unique movement patterns and master new tactics.',
 			image: '/images/custom-pieces.png',
 			gradient: 'from-[#43e97b] to-[#38f9d7]',
 			boardConfig: {
@@ -36,7 +46,7 @@
 		{
 			title: 'Chess with Walls',
 			description:
-				'Block off zones and reshape the battlefield. Walls introduce rich new tactical depth.',
+				'Block off zones with walls and reshape the battlefield.',
 			image: '/images/walls.png',
 			gradient: 'from-[#ff0844] to-[#ffb199]',
 			boardConfig: {
@@ -48,7 +58,7 @@
 		{
 			title: 'Original Variants',
 			description:
-				'Play experimental game modes like Wormhole and ArcherChess  handcrafted variants with unique twists.',
+				'Play experimental game modes like Wormhole and ArcherChess.',
 			image: '/images/variants.png',
 			gradient: 'from-[#f7971e] to-[#ffd200]'
 		},
@@ -68,9 +78,9 @@
 </script>
 
 <section
-	class="dark:bg-[#0a0c13] bg-lightbg text-gray-800 dark:text-white font-inter overflow-y-scroll snap-y snap-mandatory"
+	class="dark:bg-[#0a0c13] bg-lightbg text-gray-800 dark:text-white font-inter w-full overflow-x-hidden"
 >
-	<div class="snap-start h-screen max-w-7xl mx-auto px-4 py-24">
+	<div class="h-screen max-w-7xl mx-auto px-4 py-24">
 		<div class="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
 			<div>
 				<h1
@@ -89,12 +99,12 @@
 					Create . Customize . Play
 				</p>
 				<div class="mt-8 text-center md:text-left">
-					<a
-						href="/home"
+					<button
+						on:click={handlePlayNow}
 						class="inline-block px-6 py-3 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-full hover:scale-105 transition"
 					>
 						Play Now
-					</a>
+					</button>
 				</div>
 			</div>
 			<Board {boardConfig} />
@@ -109,7 +119,6 @@
 					transition={{ duration: 0.6, delay: i * 0.1 }}
 					class="flex flex-col gap-10 md:flex-row"
 				>
-					<!-- text content -->
 					<div class="w-full md:w-1/2 space-y-6 md:pr-8">
 						<h2
 							class="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r {feature.gradient}"
@@ -121,7 +130,6 @@
 						</p>
 					</div>
 
-					<!-- board content - right aligned on desktop -->
 					{#if feature.boardConfig}
 						<div class="w-full md:w-1/2 max-w-md ml-auto">
 							<Board boardConfig={feature.boardConfig} />

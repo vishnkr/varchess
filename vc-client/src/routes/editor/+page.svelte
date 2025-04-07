@@ -17,6 +17,18 @@
 	import type { Config, CreateParams } from '$lib/store/stores';
 	import { configStore, gameId } from '$lib/store/stores';
 	import { wsStore } from '$lib/websocket.js';
+	import { Button } from '$lib/components/ui/button';
+	import {
+	Dialog,
+	DialogTrigger,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+	DialogClose
+} from '$lib/components/ui/dialog';
+import { Input } from '$lib/components/ui/input';
+
 
 	export let boardConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
@@ -34,15 +46,14 @@
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 	function exitRoom() {
-		goto('/home')
+		goto('/home');
 	}
 
 	let username: string;
 	let isVariantRulesOn: boolean;
-    $: {
-        isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
-    }
-
+	$: {
+		isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
+	}
 
 	let isPopupVisible = false;
 	let templateName = '';
@@ -98,7 +109,9 @@
 		return `${position} ${turn} ${castleRights} ${ep} 0 0`;
 	};
 	let rule;
-	$: { rule = $ruleEditor; }
+	$: {
+		rule = $ruleEditor;
+	}
 	const generateGameConfigJSON = () => {
 		const fen = getFEN();
 
@@ -121,7 +134,7 @@
 			color: playAsWhite ? 'w' : 'b',
 			sessionId: 'sdf',
 			gameConfig: config,
-			username:'test'
+			username: 'test'
 		};
 
 		wsStore.newWebSocketConnection(url, params, 'create');
@@ -131,6 +144,22 @@
 			goto(`/game/${$gameId}/waiting`);
 		}
 	}
+
+	let randomPlaceHolders = [
+		'Chess But Make It Weird',
+		'Knights Gone Wild',
+		'The Great Wall',
+		'ELO from the Other Side',
+		'Bishop Please',
+		'Takes Takes Takes',
+		'Holy Hell',
+		'Google EP',
+		"Chessn't"
+	]
+	const getRandomPlaceholder = () => {
+		return randomPlaceHolders[Math.floor(Math.random() * randomPlaceHolders.length)];
+	}
+
 </script>
 
 <svelte:head>
@@ -144,29 +173,35 @@
 		<div class="text-black rounded-md lg:w-5/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
 			<div class="border-b border-gray-200 dark:border-gray-700 flex flex-col text-center">
 				<div class="flex flex-col justify-center">
-					<div class="m-2 flex">
-						<button
-								class="w-1/3 bg-red-700 hover:bg-red-800 transform transition duration-200 hover:scale-105 text-white rounded-md font-semibold py-2 px-2 mx-2"
-								on:click={exitRoom}
-							>
-								Exit
-						</button>
-						<button
-							class="w-1/3 bg-orange-700 hover:bg-orange-800 transform transition duration-200 hover:scale-105 text-white rounded-md font-semibold py-2 px-2 mx-2"
+					<div class="m-2 flex gap-2 justify-center">
+						<Button
+							on:click={exitRoom}
+							class="flex-1 text-lg px-3 py-2 rounded border font-medium
+			bg-transparent text-red-600 border-red-600 hover:bg-red-500/10"
+						>
+							<i class="fa-solid fa-right-from-bracket mr-2" /> Exit
+						</Button>
+
+						<Button
 							on:click={showPopup}
+							class="flex-1 text-lg px-3 py-2 rounded border font-medium
+			bg-transparent text-yellow-600 border-yellow-600 hover:bg-yellow-500/10"
 						>
-							Save
-						</button>
-						<button
+							<i class="fa-solid fa-floppy-disk mr-2" /> Save
+						</Button>
+
+						<Button
 							on:click={playGame}
-							class="w-1/3 bg-green-700 hover:bg-green-800 transform transition duration-200 hover:scale-105 text-white font-semibold py-2 px-4 rounded-md mx-2"
-							>Play</button
+							class="flex-1 text-lg px-3 py-2 rounded border font-medium
+			bg-transparent text-green-600 border-green-600 hover:bg-green-500/10"
 						>
-						<form action="/?play" />
+							<i class="fa-solid fa-play mr-2" /> Play
+						</Button>
 					</div>
 				</div>
 				<div class="grid grid-cols-2">
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
 					<div
 						class={`flex items-center rounded-md p-4 m-1.5 bg-white hover:bg-gray-500 hover:text-white  border border-gray-200 dark:border-gray-700 cursor-pointer`}
 						on:click={() => (playAsWhite = true)}
@@ -181,6 +216,7 @@
 						<label class="ml-2 cursor-pointer" for="White">Play as White</label>
 					</div>
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
 					<div
 						class="flex items-center rounded-md pl-4 m-1.5 text-white bg-black hover:bg-gray-500 border border-gray-200 dark:border-gray-700 cursor-pointer"
 						on:click={() => (playAsWhite = false)}
@@ -218,25 +254,25 @@
 			{/if}
 		</div>
 	</div>
-	{#if isPopupVisible}
-		<div class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-			<div class="bg-white p-4 rounded-md">
-				<label for="templateName">Enter Template Name:</label>
-				<input
-					type="text"
-					id="templateName"
-					bind:value={templateName}
-					class="border p-1 rounded-md"
-				/>
-				<button on:click={confirmTemplate} class="bg-green-500 text-white px-4 py-2 rounded-md mt-2"
-					>Confirm</button
-				>
-				<button on:click={hidePopup} class="bg-red-500 text-white px-4 py-2 rounded-md mt-2 ml-2"
-					>Cancel</button
-				>
+	<Dialog open={isPopupVisible} onOpenChange={(v) => (isPopupVisible = v)}>
+		<DialogContent class="sm:max-w-md">
+			<DialogHeader>
+				<DialogTitle>Save Template</DialogTitle>
+			</DialogHeader>
+			<div class="grid gap-4 py-4">
+				<label for="templateName" class="text-sm font-medium">Template Name</label>
+				<Input id="templateName" placeholder={getRandomPlaceholder()} bind:value={templateName} />
 			</div>
-		</div>
-	{/if}
+			<DialogFooter class="flex justify-end gap-2">
+				<DialogClose asChild>
+					<Button variant="secondary" on:click={hidePopup}>Cancel</Button>
+				</DialogClose>
+				<Button on:click={confirmTemplate}>Confirm</Button>
+			</DialogFooter>
+		</DialogContent>
+	</Dialog>
+	
+
 </div>
 
 <style>

@@ -9,6 +9,7 @@
 	// @ts-ignore
 	import Switch from 'svelte-switch';
 	import { boardEditor } from '../../store/editor';
+	import { Button } from '../ui/button';
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
@@ -47,14 +48,14 @@
 
 <div>
 	<div>
-		<button
+		<Button
 			class="
-            bg-red-600 rounded-2xl p-2 text-white border-white
+            bg-red-600 font-medium text-lg px-3 py-2 rounded border bg-transparent text-red-600 border-red-600 hover:bg-red-500/10
             transform transition duration-200 hover:scale-105"
 			on:click={() => dispatch('clear')}
 		>
-			<span>Clear Board <i class="fa-solid fa-trash" style="color: #ffffff;" /> </span>
-		</button>
+			<span>Clear Board <i class="fa-solid fa-trash" /> </span>
+		</Button>
 	</div>
 	<div class="grid grid-rows-1 md:grid-cols-2 shadow-md">
 		<div>
@@ -81,41 +82,50 @@
 				/>
 			</div>
 		</div>
-		<div class="flex flex-col justify-between items-center h-auto p-2">
-			<h3 class="text-md md:text-xl">Shift Board</h3>
-			<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
-    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
-    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'up')}
-				><img class=" h-6 w-6" src={up} alt="Shift up" /></button
-			>
-			<div class="flex-1">
-				<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
-    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
-    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'left')}
-					><img class=" h-6 w-6" src={left} alt="Shift left" /></button
-				>
-				<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
-    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
-    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'right')}
-					><img class=" h-6 w-6" src={right} alt="Shift right" /></button
-				>
-			</div>
-			<button class="rounded-md bg-green-600 px-3.5 py-2 my-1 text-lg font-semibold leading-7 
-    text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 
-    focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer" on:click={() => dispatch('shift', 'down')}
-				><img class=" h-6 w-6" src={down} alt="Shift down" /></button
-			>
-		</div>
+		<!-- Shift Board Section -->
+<div class="flex flex-col justify-between items-center h-auto p-2">
+	<h3 class="text-md md:text-xl font-semibold mb-2">Shift Board</h3>
+
+	<Button
+		class="bg-transparent text-green-600 border border-green-600 hover:bg-green-500/10 px-3 py-2 rounded my-1 transition duration-200 transform hover:scale-105"
+		on:click={() => dispatch('shift', 'up')}
+	>
+		<img class="h-5 w-5" src={up} alt="Shift up" />
+	</Button>
+
+	<div class="flex gap-2">
+		<Button
+			class="bg-transparent text-green-600 border border-green-600 hover:bg-green-500/10 px-3 py-2 rounded my-1 transition duration-200 transform hover:scale-105"
+			on:click={() => dispatch('shift', 'left')}
+		>
+			<img class="h-5 w-5" src={left} alt="Shift left" />
+		</Button>
+		<Button
+			class="bg-transparent text-green-600 border border-green-600 hover:bg-green-500/10 px-3 py-2 rounded my-1 transition duration-200 transform hover:scale-105"
+			on:click={() => dispatch('shift', 'right')}
+		>
+			<img class="h-5 w-5" src={right} alt="Shift right" />
+		</Button>
+	</div>
+
+	<Button
+		class="bg-transparent text-green-600 border border-green-600 hover:bg-green-500/10 px-3 py-2 rounded my-1 transition duration-200 transform hover:scale-105"
+		on:click={() => dispatch('shift', 'down')}
+	>
+		<img class="h-5 w-5" src={down} alt="Shift down" />
+	</Button>
+</div>
+
 	</div>
 	<!-- svelte-ignore a11y-label-has-associated-control -->
 	<label class="relative inline-flex items-center cursor-pointer">
-		<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300"
+		<span class="m-3 text-md font-medium text-gray-900"
 			>Toggle Wall Selector</span
 		>
 		<Switch on:change={handleChange} checked={checkedValue} />
 	</label>
 	<div class="flex items-center">
-		<span class="p-3 text-md font-medium text-gray-900 dark:text-gray-300">Theme: </span>
+		<span class="p-3 text-md font-medium text-gray-900">Theme: </span>
 		<select
 			class="bg-white appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
 			bind:value={boardTheme}

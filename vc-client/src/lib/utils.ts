@@ -2,6 +2,8 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
+import { authStore } from "./store/auth";
+import { get } from "svelte/store";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -10,6 +12,11 @@ export function cn(...inputs: ClassValue[]) {
 export const hoverClasses =
 	'dark:hover:bg-gray-700 hover:bg-gray-200 dark:hover:text-white hover:text-black transition-colors';
 
+export function isAuthenticated() {
+	const { accessToken, username } = get(authStore);
+	return !!accessToken && !!username;
+}
+	
 type FlyAndScaleParams = {
 	y?: number;
 	x?: number;

@@ -158,7 +158,6 @@
 							<i class="fa-solid fa-edit mr-1" /> Edit
 						</Button>
 					
-						<!-- Delete Button (slightly red but same style) -->
 						<Button
 							class={`text-sm px-3 py-1.5 rounded border font-medium
 								${theme === 'dark' 
