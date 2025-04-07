@@ -15,20 +15,35 @@
 			description:
 				'Play on custom boards ranging from 5x5 to 16x16. Unleash your creativity in every dimension.',
 			image: '/images/variable-board.png',
-			gradient: 'from-[#4facfe] to-[#00f2fe]'
+			gradient: 'from-[#4facfe] to-[#00f2fe]',
+			boardConfig: {
+				fen: '14Q/15/15/15/15/15/6K1k6/15/15/15/15/2b12',
+				dimensions: { ranks: 12, files: 15 },
+				boardType: BoardType.View
+			}
 		},
 		{
 			title: 'Custom Pieces',
 			description: 'Design pieces with unique movement patterns, new tactics, and strategic flair.',
 			image: '/images/custom-pieces.png',
-			gradient: 'from-[#43e97b] to-[#38f9d7]'
+			gradient: 'from-[#43e97b] to-[#38f9d7]',
+			boardConfig: {
+				fen: 'g4/2K2/d4/5/1J3',
+				dimensions: { ranks: 5, files: 5 },
+				boardType: BoardType.View
+			}
 		},
 		{
 			title: 'Chess with Walls',
 			description:
 				'Block off zones and reshape the battlefield. Walls introduce rich new tactical depth.',
 			image: '/images/walls.png',
-			gradient: 'from-[#ff0844] to-[#ffb199]'
+			gradient: 'from-[#ff0844] to-[#ffb199]',
+			boardConfig: {
+				fen: '7q/.5../.2.2../.2K3./.2...2/..3.2./6.1/1r',
+				dimensions: { ranks: 8, files: 8 },
+				boardType: BoardType.View
+			}
 		},
 		{
 			title: 'Original Variants',
@@ -68,10 +83,12 @@
 						Redefined by You
 					</span>
 				</h1>
-				<p class="mt-6 text-2xl text-gray-600 dark:text-gray-300 max-w-xl mx-auto md:mx-0">
+				<p
+					class="mt-6 text-2xl text-center md:text-left text-gray-600 dark:text-gray-300 max-w-xl mx-auto md:mx-0"
+				>
 					Create . Customize . Play
 				</p>
-				<div class="mt-8">
+				<div class="mt-8 text-center md:text-left">
 					<a
 						href="/home"
 						class="inline-block px-6 py-3 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-full hover:scale-105 transition"
@@ -83,26 +100,35 @@
 			<Board {boardConfig} />
 		</div>
 	</div>
-	{#each features as feature, i}
-		<div class="snap-start flex items-center justify-center px-8">
-			<Motion
-				initial={{ opacity: 0, y: 60 }}
-				transition={{ duration: 0.6, delay: i * 0.1 }}
-				class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
-			>
-				<div class="text-left">
-					<h2
-						class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r {feature.gradient}"
-					>
-						{feature.title}
-					</h2>
-					<p class="text-xl text-gray-600 dark:text-gray-300">
-						{feature.description}
-					</p>
-				</div>
 
-				<Board {boardConfig} />
-			</Motion>
+	{#each features as feature, i}
+		<div class="snap-start py-12 border-t border-gray-300/30 dark:border-white/10">
+			<div class="max-w-6xl w-full mx-auto px-4 sm:px-8">
+				<Motion
+					initial={{ opacity: 0, y: 60 }}
+					transition={{ duration: 0.6, delay: i * 0.1 }}
+					class="flex flex-col gap-10 md:flex-row"
+				>
+					<!-- text content -->
+					<div class="w-full md:w-1/2 space-y-6 md:pr-8">
+						<h2
+							class="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r {feature.gradient}"
+						>
+							{feature.title}
+						</h2>
+						<p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300">
+							{feature.description}
+						</p>
+					</div>
+
+					<!-- board content - right aligned on desktop -->
+					{#if feature.boardConfig}
+						<div class="w-full md:w-1/2 max-w-md ml-auto">
+							<Board boardConfig={feature.boardConfig} />
+						</div>
+					{/if}
+				</Motion>
+			</div>
 		</div>
 	{/each}
 </section>
