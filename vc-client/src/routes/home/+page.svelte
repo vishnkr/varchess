@@ -38,7 +38,7 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard - Varchess</title>
+	<title>Home - Varchess</title>
 </svelte:head>
 
 <div

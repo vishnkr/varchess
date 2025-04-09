@@ -77,6 +77,9 @@
 	];
 </script>
 
+<svelte:head>
+  <title>Varchess - Create Custom Chess Variants</title>
+</svelte:head>
 <section
 	class="dark:bg-[#0a0c13] bg-lightbg text-gray-800 dark:text-white font-inter w-full overflow-x-hidden"
 >

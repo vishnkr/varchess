@@ -50,6 +50,9 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Log In to Varchess</title>
+</svelte:head>
 <div class="flex flex-col items-center w-full px-4">
 	<h2 class="mt-8 text-3xl font-bold text-gray-800 dark:text-white text-center">Sign in to your account</h2>
 
