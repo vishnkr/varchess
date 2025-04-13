@@ -7,6 +7,8 @@ Varchess is a multiplayer chess website where you can create your own chess vari
 
 ![Piece Move Pattern Editor](docs/mpeditor.png)
 
+![Templates] (docs/templates.png)
+
 ## Architecture Overview
 ![architecture](docs/varchess-archnew.png)
 

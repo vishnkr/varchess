@@ -89,6 +89,9 @@
 	};
 </script>
 
+<svelte:head>
+	<title>My Templates - Varchess</title>
+</svelte:head>
 <div class="my-8 relative max-w-7xl mx-auto px-4">
 	<h3
 		class={`text-center text-2xl font-bold mb-6 ${
@@ -98,7 +101,7 @@
 		My Templates
 	</h3>
 	<div class="absolute right-4 top-0 cursor-pointer">
-		<a on:click={goToEditor} data-sveltekit-reload class={buttonVariants({ variant: 'default' })}>
+		<a on:click={goToEditor} class={buttonVariants({ variant: 'default' })}>
 			<i class="fa-solid fa-plus mr-2" />
 			Create Template
 		</a>
