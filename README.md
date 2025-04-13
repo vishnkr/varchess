@@ -3,7 +3,7 @@
 ## Overview
 Varchess is a multiplayer chess website where you can create your own chess variants. Customizations include variable board dimensions, piece placements, walls, game formats/rules and custom pieces with new movement patterns.
 
-![Game Editor](docs/editor.png)
+![Game Editor](docs/editor2.png)
 
 ![Piece Move Pattern Editor](docs/mpeditor.png)
 

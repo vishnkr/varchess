@@ -299,7 +299,7 @@
 					<ExpandableCard svg={pieceSvg} title="Piece Editor">
 						<PieceEditor />
 					</ExpandableCard>
-					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rules Editor">
+					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rule Editor">
 						<RulesEditor />
 					</ExpandableCard>
 				</div>
