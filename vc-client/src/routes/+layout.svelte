@@ -122,13 +122,14 @@
 		<ToastContainer />
 		<main class="flex">
 			{#if auth.accessToken && authRoutes.includes($page.url.pathname)}
-				<div
-					on:mouseenter={handleSidebarHover}
-					on:mouseleave={handleSidebarLeave}
-					class="flex-shrink-0 w-16 hover:w-48 transition-width duration-300 ease-in-out
-                   border-r text-gray-900 dark:text-white border-gray-300 dark:border-gray-600
-                   sticky top-16 self-start min-h-[calc(100vh-4rem)]"
-				>
+			<div
+			on:mouseenter={handleSidebarHover}
+			on:mouseleave={handleSidebarLeave}
+			class="fixed top-16 left-0 h-[calc(100vh-4rem)] 
+				   w-16 hover:w-48 transition-width duration-300 ease-in-out
+				   border-r text-gray-900 dark:text-white border-gray-300 dark:border-gray-600
+				   bg-lightbg dark:bg-darkbg z-40"
+		>
 					<ul class="flex flex-col space-y-4 p-2">
 						{#each sidebarItems as item}
 							<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -150,9 +151,10 @@
 				</div>
 			{/if}
 
-			<div class="flex-grow p-4">
+			<div class={`flex-grow p-4 transition-all duration-300 ${isSidebarOpen ? 'pl-48' : 'pl-16'}`}>
 				<slot />
 			</div>
+			
 		</main>
 	</div>
 	<Footer />

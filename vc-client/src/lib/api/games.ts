@@ -1,5 +1,5 @@
-const CORE_URL = import.meta.env.VITE_CORE_URL;
-import type { Game } from '$lib/types/games';
+import type { Game } from '$lib/types';
+import { CORE_URL } from './config';
 
 export async function fetchGames(): Promise<Game[]> {
     const res = await fetch(`${CORE_URL}/games`);

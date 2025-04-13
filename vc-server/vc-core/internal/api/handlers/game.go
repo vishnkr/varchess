@@ -115,7 +115,7 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			gameConfig = models.GameConfig{
 				VariantType: template.VariantType,
 				Position:    template.Position,
-				Objective:   template.Objective,
+				CustomData:   template.CustomData,
 			}
 		} else if request.GameConfig != nil {
 			gameConfig = *request.GameConfig

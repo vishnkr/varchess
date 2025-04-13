@@ -1,8 +1,8 @@
 import { writable } from 'svelte/store';
-import { Role, Status, chats, configStore, gameId, gameState, members, type ConnectParams, type ConnectType } from './store/stores';
-import { EventChatMessage, EventGameDrawOffer, EventGameMakeMove, EventGameResign, EventJoinGame, EventStartGame, EventUserConnect, type EventType, type WSParams, type WebSocketMessage, EventUserDisconnect } from './store/types';
+import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType } from './store/stores';
 import { camelToSnake } from './utils/index';
-import type { Move } from './board/types';
+import type { EventType, WSParams, Move} from './types';
+import { EventGameDrawOffer, EventGameResign, EventUserConnect, EventUserDisconnect, EventChatMessage, EventJoinGame, EventStartGame, EventGameMakeMove } from './types';
 
 interface UserJoin {
 	id: number;
@@ -103,7 +103,7 @@ function createWebSocketStore(ws: WebSocket | null) {
 				console.log('close called');
 				set(null);
 				gameId.set(null);
-				configStore.removeConfig();
+				templateStore.removeTemplate();
 			};
 			ws.onerror = (e) => {
 				console.error('WebSocket connection error:', e);
@@ -142,7 +142,7 @@ function createWebSocketStore(ws: WebSocket | null) {
 									status: Status.InProgress
 								};
 							});
-							configStore.setConfig(data.result.game_config);
+							templateStore.setTemplate(data.result.game_config);
 							console.log('updating state', gameState);
 							break;
 						case EventGameMakeMove:

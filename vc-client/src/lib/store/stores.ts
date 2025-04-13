@@ -1,10 +1,6 @@
 import { writable, type Writable } from 'svelte/store';
-import type {
-  VariantType,
-  MovePattern
-} from './types';
 
-import type { IPiece, Move } from '$lib/board/types';
+import { type IPiece,type Move, type Template } from '$lib/types';
 
 export enum Role {
 	Viewer,
@@ -36,32 +32,22 @@ export interface User {
 	username?: string;
 }
 
-export interface Config {
-	variantType: VariantType;
-	dimensions: {
-		ranks: number;
-		files: number;
-	};
-	fen: string;
-	pieceProps: Record<string, MovePattern>;
-	additionalData?: object;
-}
 
 const roomId = writable<string | null>(null);
 const members = writable<Member[]>([]);
 
-function newConfigStore() {
-	const { subscribe, set, update } = writable<Config | null>(null);
-	const setConfig = (config: Config) => {
-		set(config);
+function newTemplateStore() {
+	const { subscribe, set, update } = writable<Template | null>(null);
+	const setTemplate = (template: Template) => {
+		set(template);
 	};
 
-	const removeConfig = () => {
+	const removeTemplate = () => {
 		set(null);
 	};
 	return {
-		setConfig,
-		removeConfig,
+		setTemplate,
+		removeTemplate,
 		update,
 		subscribe
 	};
@@ -106,7 +92,7 @@ function newChatStore() {
 	};
 }
 
-const configStore = newConfigStore();
+const templateStore = newTemplateStore();
 const chats = newChatStore();
 
 export interface ConnectParams {
@@ -116,7 +102,7 @@ export interface ConnectParams {
 }
 
 export interface CreateParams extends ConnectParams {
-	gameConfig?: Config;
+	gameConfig?: Template;
 	color: string;
 }
 export type ConnectType = 'create' | 'join';
@@ -233,7 +219,7 @@ export {
 	members,
 	roomId,
 	chats,
-	configStore,
+	templateStore,
 	gameId,
 	gameState,
 	moveSelector,

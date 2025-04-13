@@ -24,13 +24,17 @@
 
 	async function handleLogin(event: Event) {
 		event.preventDefault();
-		const success = await login(username, password);
-		if (!success) {
-			//alert('Login failed');
-			toast.error('Login failed. Please check your credentials.');
-			return;
+		try{
+			const success = await login(username, password);
+			if (!success) {
+				toast.error('Login failed. Please check your credentials.');
+				return;
+			}
+			await goto('/home');
+		} catch (error){
+			toast.error('Server is not reachable. Please try again later.');
 		}
-		await goto('/home');
+		
 	}
 
 

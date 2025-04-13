@@ -46,6 +46,14 @@
 		$editorMaxBoard = maxBoardState;
 	};
 
+	export function getBoardData() {
+		return {
+			position,
+			maxBoardState,
+			dimensions: boardConfig.dimensions
+		};
+	}
+
 	export const shift = (direction: string): void => {
 		let [lastCol, lastRow, afterLastCol, afterLastRow] = [
 			boardConfig.dimensions.files - 1,

@@ -4,15 +4,16 @@
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import { onMount } from 'svelte';
-	import { configStore, gameState, gameId, moveSelector, Status } from '$lib/store/stores';
+	import { templateStore, gameState, gameId, moveSelector, Status } from '$lib/store/stores';
 	import {sendWebsocketMsg, wsStore} from '$lib/websocket';
 	import { camelToSnake } from '$lib/utils/index';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { sendDrawOffer } from '$lib/websocket.js';
 	//import chessCore from '$lib/chesscore.worker.js';
-	import { EventGameResign } from '$lib/store/types.js';
+
 	import { authStore } from '$lib/store/auth.js';
+	import { EventGameResign } from '$lib/types';
 	
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
@@ -50,8 +51,8 @@
 	let chesscore;
 	const {legalMoves } = moveSelector;
 	$: {
-		if ($configStore) {
-			const config_json = JSON.stringify(camelToSnake($configStore));
+		if ($templateStore) {
+			const config_json = JSON.stringify(camelToSnake($templateStore));
 			if (isMounted){
 				//chesscore = chessCore.loadPosition(config_json);
 				//let moves:Move[] = chessCore.getLegalMoves();
@@ -60,8 +61,8 @@
 			}
 			
 			boardConfig = {
-				fen: $configStore.fen,
-				dimensions: $configStore.dimensions,
+				fen: $templateStore.fen,
+				dimensions: $templateStore.dimensions,
 				boardType: isPlayer ? BoardType.GameBoard : BoardType.View
 			};
 		}
@@ -80,7 +81,7 @@
 	
 	function clearStores(){
 		wsStore.set(null);
-		configStore.removeConfig();
+		templateStore.removeTemplate();
 		gameId.set(null);
 		gameState.updateStatus(Status.Completed)
 	}
@@ -94,7 +95,7 @@
 			cancel();
 			} else {
 				wsStore.set(null);
-				configStore.removeConfig();
+				templateStore.removeConfig();
 				gameId.set(null);
         	}*/
 		}

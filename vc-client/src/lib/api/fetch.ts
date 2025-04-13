@@ -1,4 +1,5 @@
 import { authStore, setAuth, logout } from '$lib/store/auth';
+import { get } from 'svelte/store';
 
 async function refreshAccessToken(): Promise<boolean> {
 	let refreshToken: string | null = null;
@@ -34,12 +35,8 @@ async function refreshAccessToken(): Promise<boolean> {
 	return true;
 }
 
-async function customFetch(url: string, options: RequestInit = {}) {
-	let accessToken: string | null = null;
-
-	authStore.subscribe((state) => {
-		accessToken = state.accessToken;
-	})();
+async function customFetch(url: string, options: RequestInit = {}, retry = true) {
+	const { accessToken } = get(authStore);
 
 	const headers = new Headers(options.headers || {});
 	if (accessToken) {
@@ -48,10 +45,10 @@ async function customFetch(url: string, options: RequestInit = {}) {
 
 	const res = await fetch(url, { ...options, headers, credentials: 'include' });
 
-	if (res.status === 401) {
+	if (res.status === 401 && retry) {
 		const refreshed = await refreshAccessToken();
 		if (refreshed) {
-			return customFetch(url, options);
+			return customFetch(url, options, false);
 		}
 	}
 

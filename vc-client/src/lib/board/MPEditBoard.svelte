@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { pieceEditor } from '$lib/store/editor';
-	import { MoveType } from '$lib/store/types';
+	import { MoveType } from '$lib/types';
+
 	import Board from './Board.svelte';
 	import { BoardType, type BoardConfig, Color } from './types';
 

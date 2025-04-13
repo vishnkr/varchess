@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 </script>
 
-<div class="w-full h-full text-white flex flex-col justify-center items-center">
+<div class="w-full h-full text-black dark:text-white flex flex-col justify-center items-center">
 	<h1 class="text-3xl block">404 Error: illegal move</h1>
 	<p class="text-lg block">
 		The requested page <code

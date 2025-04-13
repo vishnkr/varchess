@@ -2,7 +2,6 @@ package chess
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -156,10 +155,9 @@ func TestGenerateMoveCountForBishop(t *testing.T) {
 		{"8/2p1P3/1K3p2/3B4/2p1pp2/2Q1N3/8/8 w - - 0 1", 3, 3, 8,'B'},
 	}
 
-	for i, tt := range tests {
+	for _, tt := range tests {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
-		fmt.Println("forcase", i)
 		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}

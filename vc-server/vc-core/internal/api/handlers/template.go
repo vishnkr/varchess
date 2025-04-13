@@ -18,6 +18,16 @@ import (
 
 
 func HandleGetTemplates(database *db.DB) http.HandlerFunc {
+	type responseItem struct {
+		Name 		string `json:"name" bson:"name"`
+		ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+		UserId      primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
+		VariantType string             `json:"variantType" bson:"variantType"`
+		Dimensions     models.Dimensions                  `json:"dimensions" bson:"dimensions"`
+		FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
+		PieceProps     map[string]models.PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		page, pageSize := utils.GetPaginationParams(r)
 		opts := utils.GetPaginationOptions(page, pageSize)
@@ -30,7 +40,7 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 		}
 		defer cursor.Close(r.Context())
 
-		var templates []models.Template
+		var templates []responseItem
 		if err := cursor.All(r.Context(), &templates); err != nil {
 			http.Error(w, "Failed to decode templates", http.StatusInternalServerError)
 			return
@@ -44,7 +54,7 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 
 		totalPages := utils.CalculateTotalPages(totalCount, int64(pageSize))
 
-		response := models.PaginatedResponse[models.Template]{
+		response := models.PaginatedResponse[responseItem]{
 			Items:      templates,
 			TotalCount: totalCount,
 			Page:       page,
@@ -86,10 +96,21 @@ func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 }
 
 func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
+	type request struct {
+		Name 		string `json:"name" bson:"name"`
+		ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+		UserId      primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
+		VariantType string             `json:"variantType" bson:"variantType"`
+		Dimensions     models.Dimensions                  `json:"dimensions" bson:"dimensions"`
+		FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
+		PieceProps     map[string]models.PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserIDFromContext(r)
 
-		var template models.Template
+		var template request
 		if err := json.NewDecoder(r.Body).Decode(&template); err != nil {
 			http.Error(w, "Invalid template structure", http.StatusBadRequest)
 			return
@@ -154,8 +175,11 @@ func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 func HandleDeleteTemplate(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateID := chi.URLParam(r, "id")
-		userID := middleware.GetUserIDFromContext(r)
-
+		userID,err := middleware.GetUserObjIDFromContext(r)
+		if err!=nil{
+			http.Error(w,err.Error(),http.StatusBadRequest)
+			return
+		}
 		objID, err := primitive.ObjectIDFromHex(templateID)
 		if err != nil {
 			http.Error(w, "Invalid template ID", http.StatusBadRequest)
@@ -164,7 +188,7 @@ func HandleDeleteTemplate(database *db.DB) http.HandlerFunc {
 
 		collection := database.Collection("templates")
 
-		result, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objID, "user_id": userID})
+		result, err := collection.DeleteOne(context.TODO(), bson.M{"_id": objID, "userId": userID})
 		if err != nil || result.DeletedCount == 0 {
 			http.Error(w, "Template not found", http.StatusNotFound)
 			return

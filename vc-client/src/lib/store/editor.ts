@@ -1,17 +1,14 @@
-import {
-	type BoardEditorState,
-	type PieceEditorState,
-	VariantType,
-	type RuleEditorState
-} from './types';
-import { writable } from 'svelte/store';
-import { EditorSubType } from '$lib/components/types';
-import { Color, type Position } from '$lib/board/types';
+import { EditorSubType } from "$lib/components/types";
+import type { BoardEditorState, PieceEditorState, RuleEditorState} from "$lib/types";
+import { Color, VariantType } from "$lib/types";
+import { get, writable } from "svelte/store";
+
+
 
 function newPieceEditorStore() {
 	const { subscribe, set, update } = writable<PieceEditorState>({
 		movePatterns: {},
-		pieceSelection: { pieceType: 'pawn',notation:'p', color: Color.WHITE, group: 'standard' }
+		pieceSelection: { piece: {pieceType: 'pawn',notation:'p', color: Color.WHITE }, group: 'standard'}
 	});
 	const addJumpPattern = (piece: string, offset: number[]) => {
 		update((editorState) => {
@@ -136,12 +133,38 @@ function newRuleStore() {
 }
 
 function newPositionStore() {
-	const { set, update, subscribe } = writable<Position>({ piecePositions: {}, walls: {} });
+	const { set, update, subscribe } = writable<string>("{ piecePositions: {}, walls: {} }");
 	return { set, update, subscribe };
 }
 
 export const editorSubTypeSelected = writable<EditorSubType>(EditorSubType.Board);
 export const pieceEditor = newPieceEditorStore();
 export const boardEditor = newBoardEditorStore();
-export const positionStore = newPositionStore();
+//export const positionStore = newPositionStore();
 export const ruleEditor = newRuleStore();
+
+export function resetEditorStores() {
+	pieceEditor.set({
+		movePatterns: {},
+		pieceSelection: {
+			piece: {
+				pieceType: 'pawn',
+				notation: 'p',
+				color: Color.WHITE
+			},
+			group: 'standard'
+		}
+	});
+
+	boardEditor.set({
+		ranks: 8,
+		files: 8,
+		theme: 'standard',
+		isWallSelectorOn: false
+	});
+
+	ruleEditor.set({
+		variantType: VariantType.Checkmate,
+		isViewVariantRulesOn: false
+	});
+}

@@ -42,7 +42,7 @@
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.1",
 		"storybook": "^7.4.0",
-		"svelte": "^4.0.0",
+		"svelte": "^4.2.19",
 		"svelte-check": "^3.5.1",
 		"tailwind-merge": "^1.14.0",
 		"tailwind-variants": "^0.3.1",

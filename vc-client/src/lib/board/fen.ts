@@ -7,6 +7,24 @@ import {
 	type Position
 } from './types';
 
+const pieceNameMap: Record<string, string> = {
+	p: 'pawn',
+	k: 'king',
+	q: 'queen',
+	b: 'bishop',
+	n: 'knight',
+	r: 'rook',
+	d: 'dolphin',
+	i: 'ninja',
+	u: 'unicorn',
+	a: 'tower',
+	g: 'giraffe',
+	j: 'juicer',
+	s: 'astronaut',
+	v: 'phage',
+	z: 'zebra'
+};
+
 export const convertFenToPosition = (
 	fen: string
 ):
@@ -64,7 +82,8 @@ export const convertFenToPosition = (
 			} else {
 				const piece = {
 					color: char.toLowerCase() === char ? Color.BLACK : Color.WHITE,
-					pieceType: char
+					notation: char,
+					pieceType: pieceNameMap[char.toLowerCase()]
 				};
 				maxBoardState[row][col] = { isPiecePresent: true, piece };
 				position.piecePositions[idx] = piece;

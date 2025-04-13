@@ -28,7 +28,7 @@
 	
 	export let nonPieceSvg: string | null = null;
 	function getPieceClass(piece: IPiece) {
-		return piece.color.charAt(0).toLowerCase() + piece.pieceType.charAt(0).toLowerCase();
+		return piece.color.charAt(0).toLowerCase() + piece.notation.toLowerCase();
 	}
 
 	let pieceEl: HTMLElement;
@@ -68,7 +68,7 @@
 			drag = true;
 		}
 		if (isEditor(boardType)){
-				piece = $pieceEditor.pieceSelection;
+				piece = $pieceEditor.pieceSelection.piece;
 				if($boardEditor.isWallSelectorOn){
 					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {isPiecePresent: false,wall: true,});
 				} else {
@@ -114,25 +114,24 @@
 					if ($pieceEditor.pieceSelection)
 						editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 							isPiecePresent: piece ? false : true,
-							piece: piece ? null : $pieceEditor.pieceSelection
-						});
-				}
+							piece: piece ? null : $pieceEditor.pieceSelection.piece
+						});				}
 	}
-	
+
 	function handleMPEditorClick(){
 		if (piece) {return;}
 		let selectedPiece = $pieceEditor.pieceSelection;
 		let jumpOffset = [squareData.row - 4, squareData.column - 4];
 		if (selectedPiece) {
 			const isJumpOffsetPresent =
-				$pieceEditor.movePatterns[selectedPiece.pieceType] &&
-				$pieceEditor.movePatterns[selectedPiece.pieceType].jumpOffsets.some(
+				$pieceEditor.movePatterns[selectedPiece.piece.pieceType] &&
+				$pieceEditor.movePatterns[selectedPiece.piece.pieceType].jumpOffsets.some(
 					(o) => o[0] === jumpOffset[0] && o[1] === jumpOffset[1]
 				);
 			if (isJumpOffsetPresent) {
-				pieceEditor.removeJumpPattern(selectedPiece.pieceType, jumpOffset);
+				pieceEditor.removeJumpPattern(selectedPiece.piece.pieceType, jumpOffset);
 			} else {
-				pieceEditor.addJumpPattern(selectedPiece.pieceType, jumpOffset);
+				pieceEditor.addJumpPattern(selectedPiece.piece.pieceType, jumpOffset);
 			}
 		}
 	}
@@ -152,7 +151,7 @@
 		}
 	}
 
-	function handleClick(e: MouseEvent) {
+	function handleClick(e: MouseEvent|KeyboardEvent) {
 		e.preventDefault();
 		switch (boardType) {
 			case BoardType.Editor:
@@ -192,7 +191,7 @@
 	
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
+
 <div
 	class={`relative
 	${isMarkedTarget ? 'marked-target' : ''} 
@@ -204,6 +203,14 @@
 	data-square
 	id={`${boardId}-s-${squareData.squareIndex}`}
 	class:hover
+	role="button"
+	tabindex="0"
+	aria-label={`Square ${squareData.squareIndex}`}
+	on:keydown={(e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			handleClick(e);
+		}
+	}}
 	
 	bind:this={squareEl}
 	on:mouseenter={handleMouseEnter}
@@ -221,6 +228,7 @@
 				piece
 			)}`}
 			draggable={isDraggable}
+			role="img" aria-label="Game piece"
 			id={`${boardId}-p-${squareData.squareIndex}`}
 			bind:this={pieceEl}			
 			on:dragstart={handleDragStart}
@@ -228,13 +236,11 @@
 		/>
 	{:else if wall}
 		<div class="absolute inset-0 flex items-center justify-center bg-red-400">
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<img draggable={isEditor(boardType)} src={wallSvg} class="w-full h-full" />
+			<img alt="wall" draggable={isEditor(boardType)} src={wallSvg} class="w-full h-full" />
 		</div>
 	{:else if nonPieceSvg}
 		<div class="absolute inset-0 flex items-center justify-center">
-			<!-- svelte-ignore a11y-missing-attribute -->
-			<img draggable={false} src={nonPieceSvg} class="w-full h-full" />
+			<img alt="nonpiece" draggable={false} src={nonPieceSvg} class="w-full h-full" />
 		</div>
 		<slot />
 	{:else}

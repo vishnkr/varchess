@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { ruleEditor } from "$lib/store/editor";
-	import { VariantType } from "$lib/store/types";
+
 	import Checkmate from "./rules/Checkmate.svelte";
 	import Antichess from "./rules/Antichess.svelte";
 	import NCheck from "./rules/NCheck.svelte";
+	import { VariantType } from "$lib/types";
 
 	const variantTypes = [
 		{ 	name: 'Checkmate', 

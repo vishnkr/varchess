@@ -72,7 +72,7 @@ func (b *Bitboard64) GetSetBits() []int {
     var positions []int
     for i := 0; i < 64; i++ {
         if b.HasBit(i) {
-            positions = append(positions, i)
+            positions = append(positions,63-i)
         }
     }
     return positions

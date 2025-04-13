@@ -7,8 +7,9 @@
 	import type { BoardConfig, Move } from './types';
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
-	import { MoveType } from '$lib/store/types';
+	
 	import { moveSelector } from '$lib/store/stores';
+	import { MoveType } from '$lib/types';
 
 	export let boardConfig: BoardConfig;
 	export let isFlipped:boolean = false;

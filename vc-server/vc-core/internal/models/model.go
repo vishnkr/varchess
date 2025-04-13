@@ -8,17 +8,18 @@ type Player struct {
 }
 
 type Template struct {
+	Name 		string `json:"name" bson:"name"`
 	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	UserId      primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
 	VariantType string             `json:"variantType" bson:"variantType"`
 	Position    Position           `json:"position" bson:"position"`
-	Objective   Objective          `json:"objective" bson:"objective"`
+	CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
 }
 
 type GameConfig struct {
 	VariantType string    `json:"variantType" bson:"variantType"`
 	Position    Position  `json:"position" bson:"position"`
-	Objective   Objective `json:"objective" bson:"objective"`
+	CustomData   map[string]interface{} `json:"customData" bson:"customData"`
 }
 
 type Position struct {
@@ -35,7 +36,7 @@ type Dimensions struct {
 
 type PieceProps struct {
 	SlideOffsets []Coordinate `json:"slideOffsets,omitempty" bson:"slideOffsets,omitempty"`
-	JumpProps    []JumpProps  `json:"jumpProps,omitempty" bson:"jumpProps,omitempty"`
+	JumpProps    []Coordinate  `json:"jumpOffsets,omitempty" bson:"jumpOffsets,omitempty"`
 	PromoProps   *PromoProps  `json:"promoProps,omitempty" bson:"promoProps,omitempty"`
 }
 

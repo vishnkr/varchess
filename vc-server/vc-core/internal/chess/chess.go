@@ -125,7 +125,7 @@ func GetValidSquares(ranks, files int) Bitboard {
     bb := NewBitboard(max(ranks,files))
     rankMask, fileMask := GetRankFileMasks(ranks,files)
 
-    bb.And(rankMask,fileMask)
+    bb.Or(rankMask,fileMask)
     PrintBitboard(bb,8,8)
     //PrintBitboard(bb,16,16)
     return bb
@@ -167,8 +167,8 @@ func CreateGame(gameConfig models.GameConfig) (*GameState,error){
 
 func GenerateMovesForPiece(piece rune, src int, position *Position, canCaptureKing bool) []Move {
     var moves []Move
-    var largestDimension int = max(position.Ranks,position.Files)
-    moveBitboard := NewBitboard(largestDimension)
+    //var largestDimension int = max(position.Ranks,position.Files)
+    //moveBitboard := NewBitboard(largestDimension)
     standardPieces := map[rune]bool{
         'p': true,
         'k': true,
@@ -180,15 +180,15 @@ func GenerateMovesForPiece(piece rune, src int, position *Position, canCaptureKi
     if _,ok := standardPieces[unicode.ToLower(piece)]; ok {
         switch unicode.ToLower(piece) {
         case 'n':
-            moveBitboard = generateJumpMoves(src, position, canCaptureKing, knightOffsets)
+            generateJumpMoves(src,piece, position, canCaptureKing, knightOffsets,&moves)
         case 'b':
-            generateSlideMoves(src, piece, position, canCaptureKing, bishopOffsets,&moves)
+            generateSlideMoves2(src, piece, position, canCaptureKing, bishopOffsets,&moves)
         case 'r':
-            generateSlideMoves(src, piece,position, canCaptureKing, rookOffsets,&moves)
+            generateSlideMoves2(src, piece,position, canCaptureKing, rookOffsets,&moves)
         case 'q':
-            generateSlideMoves(src,piece, position, canCaptureKing, queenOffsets,&moves)
+            generateSlideMoves2(src,piece, position, canCaptureKing, queenOffsets,&moves)
         case 'k':
-            moveBitboard = generateKingMoves(src, position, canCaptureKing)
+            generateKingMoves(src, position, canCaptureKing,&moves)
         case 'p':
             generatePawnMoves(src, position, canCaptureKing,&moves)
         }
@@ -196,19 +196,19 @@ func GenerateMovesForPiece(piece rune, src int, position *Position, canCaptureKi
         if patterns, exists := position.CustomPieceRules[piece]; exists {
             for _,pattern := range patterns{
                 if pattern.MoveType==Jump{
-                    moveBitboard = generateJumpMoves(src, position, canCaptureKing, pattern.MoveOffsets)
+                    generateJumpMoves(src,piece, position, canCaptureKing, pattern.MoveOffsets,&moves)
                 } else if pattern.MoveType == Slide{
-                    generateSlideMoves(src,piece, position, canCaptureKing, pattern.MoveOffsets,&moves)
+                    generateSlideMoves2(src,piece, position, canCaptureKing, pattern.MoveOffsets,&moves)
                 }
             }        
         }
     }
-    var opponentBitboard Bitboard
+    /*var opponentBitboard Bitboard
     if unicode.IsLower(piece){
         opponentBitboard = position.ColorBitboards[White]
     } else { opponentBitboard = position.ColorBitboards[Black]}
 
-    moves = flattenBitboard(src,position,moveBitboard, opponentBitboard, piece)
+    moves = flattenBitboard(src,position,moveBitboard, opponentBitboard, piece)*/
     return moves
 }
 
@@ -275,7 +275,7 @@ func abs(x int) int {
 
 
 
-func generateKingMoves(src int, p *Position, canCaptureKing bool,)Bitboard{
+func generateKingMoves(src int, p *Position, canCaptureKing bool,moves *[]Move)Bitboard{
     b := NewBitboard(max(p.Ranks,p.Files))
     return b
 }
@@ -376,51 +376,53 @@ func (p *Position) getPieceAt(src int) rune{
     return -1
 }
 
-func generateSlideMoves(src int,piece rune, p *Position, canCaptureKing bool, offsets []*MoveOffset,moves *[]Move){
-
+func generateSlideMoves2(src int,piece rune, p *Position, canCaptureKing bool, offsets []*MoveOffset,moves *[]Move){
     moveBitboard := NewBitboard(p.LargestDimension)
-    EnsureTablesInitialized()
-    ogSrc := SmallToLargeBoardIndex(src,p.Files,p.LargestDimension)
-    validBB := GetValidSquares(p.Ranks,p.Files)
-    attackTables := GetAttackTables(p.LargestDimension)
-    for _, dir := range offsets {
-        dirKey := *dir
-        attackMask, exists := attackTables[dirKey][ogSrc]
-        if !exists {
-            continue
-        }
-        
-        blockers := NewBitboard(p.LargestDimension)
-        //PrintBitboard(p.PositionBitBoard,p.Ranks,p.Files)
-        //PrintBitboard(p.PositionBitBoard,16,16)
-        //PrintBitboard(attackMask,p.Ranks,p.Files)
-        //PrintBitboard(attackMask,16,16)
-        blockers.And(attackMask,p.PositionBitBoard)
-        //PrintBitboard(blockers,p.Ranks,p.Files)
-        //PrintBitboard(blockers,16,16)
-        blockerBit := blockers.Clone()
-        blockerBit.And(blockerBit, blockerBit.Neg())
-        limit := blockerBit.Clone()
-        limit.Sub(limit.One())
-        legalMoves := NewBitboard(p.LargestDimension)
-        legalMoves.And(attackMask, limit)
-        //PrintBitboard(legalMoves,p.Ranks,p.Files)
-        //PrintBitboard(legalMoves,16,16)
-        firstBlockerIdx := blockers.FirstSetBit()
-        if firstBlockerIdx != -1 {
-            isWhite := p.ColorBitboards[White].HasBit(firstBlockerIdx)
-            isSameColor := p.ColorBitboards[White].HasBit(src) == isWhite
-            targetPiece := p.getPieceAt(firstBlockerIdx)
+    x, y := src%p.Files, src/p.Files
 
-            isOpponentKing := targetPiece == 'k' || targetPiece == 'K'
-            if !isSameColor && (!isOpponentKing || (canCaptureKing && isOpponentKing)) {
-                legalMoves.SetBit(firstBlockerIdx)
+    for _, offset := range offsets {
+        nx, ny := x, y
+        for {
+            nx += offset.x
+            ny += offset.y
+
+            if nx < 0 || ny < 0 || nx >= p.Files || ny >= p.Ranks {
+                break
             }
+
+            newPos := ny*p.Files + nx
+
+            if p.Walls.HasBit(newPos) {
+                break
+            }
+
+            isOccupied := p.PositionBitBoard.HasBit(newPos)
+
+            if !isOccupied {
+                moveBitboard.SetBit(newPos)
+                continue
+            }
+
+            var targetPiece rune
+            for piece, bb := range p.Pieces {
+                if bb.HasBit(newPos) {
+                    targetPiece = piece
+                    break
+                }
+            }
+
+            isWhite := p.ColorBitboards[White].HasBit(newPos)
+            isSameColor := p.ColorBitboards[White].HasBit(src) == isWhite
+            isOpponentKing := targetPiece == 'k' || targetPiece == 'K'
+
+            if !isSameColor && (!isOpponentKing || (canCaptureKing && isOpponentKing)) {
+                moveBitboard.SetBit(newPos)
+            }
+
+            break
         }
-        moveBitboard.Or(moveBitboard, legalMoves)
     }
-    //PrintBitboard(moveBitboard,p.Ranks,p.Files)
-    //PrintBitboard(moveBitboard,16,16)
+    validBB := GetValidSquares(p.Ranks,p.Files)
     moveBitboard.And(validBB,moveBitboard)
     targets := moveBitboard.GetSetBits()
     for _,target := range targets{
@@ -439,46 +441,112 @@ func generateSlideMoves(src int,piece rune, p *Position, canCaptureKing bool, of
             ClassicMoveType: moveType,
         })
     }
-    
 }
 
-
-func generateJumpMoves(src int, position *Position,canCaptureKing bool, offsets []*MoveOffset) Bitboard {
-    largestDimension := max(position.Ranks,position.Files)
+func generateSlideMoves(src int, piece rune,p *Position, canCaptureKing bool, offsets []*MoveOffset, moves *[]Move) Bitboard{
+    largestDimension := max(p.Ranks,p.Files)
     moveBitboard := NewBitboard(largestDimension)
-
-    x, y := src%position.Files, src/position.Files
-    for _, offset := range offsets {
-        nx, ny := x+offset.x, y+offset.y
-        if nx < 0 || ny < 0 || nx >= position.Files || ny >= position.Ranks {
+    EnsureTablesInitialized()
+    ogSrc := SmallToLargeBoardIndex(src,p.Files,largestDimension)
+    validBB := GetValidSquares(p.Ranks,p.Files)
+    attackTables := GetAttackTables(largestDimension)
+    for _, dir := range offsets {
+        dirKey := *dir
+        attackMask, exists := attackTables[dirKey][ogSrc]
+        if !exists {
             continue
         }
-        pos := FileRankToIndex(ny,nx,position.Files)
-        newPos := SmallToLargeBoardIndex(pos,position.Files,largestDimension)// ny*position.Files + nx
-        isOccupied := position.PositionBitBoard.HasBit(newPos) 
+        
+        blockers := NewBitboard(largestDimension)
+        PrintBitboard(p.PositionBitBoard,p.Ranks,p.Files)
+        //PrintBitboard(p.PositionBitBoard,16,16)
+        PrintBitboard(attackMask,p.Ranks,p.Files)
+        //PrintBitboard(attackMask,16,16)
+        blockers.And(attackMask,p.PositionBitBoard)
+        PrintBitboard(blockers,p.Ranks,p.Files)
+        //PrintBitboard(blockers,16,16)
+        blockerBit := blockers.Clone()
+        blockerBit.And(blockerBit, blockerBit.Neg())
+        PrintBitboard(blockerBit,p.Ranks,p.Files)
+        
+        limit := blockerBit.Clone()
+        limit.Sub(limit.One())
+        PrintBitboard(limit,p.Ranks,p.Files)
+        legalMoves := NewBitboard(largestDimension)
+        legalMoves.And(attackMask, limit)
+        PrintBitboard(legalMoves,p.Ranks,p.Files)
+        //PrintBitboard(legalMoves,16,16)
+        firstBlockerIdx := blockers.FirstSetBit()
+        if firstBlockerIdx != -1 {
+            isWhite := p.ColorBitboards[White].HasBit(firstBlockerIdx)
+            isSameColor := p.ColorBitboards[White].HasBit(src) == isWhite
+            targetPiece := p.getPieceAt(firstBlockerIdx)
+
+            isOpponentKing := targetPiece == 'k' || targetPiece == 'K'
+            if !isSameColor && (canCaptureKing || !isOpponentKing) {
+                legalMoves.SetBit(firstBlockerIdx)
+            }
+        }
+        moveBitboard.Or(moveBitboard, legalMoves)
+    }
+    PrintBitboard(moveBitboard,p.Ranks,p.Files)
+    PrintBitboard(moveBitboard,16,16)
+    moveBitboard.And(validBB,moveBitboard)
+    return moveBitboard
+}
+
+func generateJumpMoves(src int,piece rune, p *Position,canCaptureKing bool, offsets []*MoveOffset, moves *[]Move) {
+    largestDimension := max(p.Ranks,p.Files)
+    moveBitboard := NewBitboard(largestDimension)
+    //ogSrc := SmallToLargeBoardIndex(src,p.Files,largestDimension)
+    x, y := src%p.Files, src/p.Files
+    for _, offset := range offsets {
+        nx, ny := x+offset.x, y+offset.y
+        if nx < 0 || ny < 0 || nx >= p.Files || ny >= p.Ranks {
+            continue
+        }
+        pos := FileRankToIndex(ny,nx,p.Files)
+        newPos := SmallToLargeBoardIndex(pos,p.Files,largestDimension)// ny*position.Files + nx
+        isOccupied := p.PositionBitBoard.HasBit(newPos) 
         if !isOccupied {
             moveBitboard.SetBit(newPos)
             continue
         }
 
         var targetPiece rune
-        for piece, bb := range position.Pieces {
+        for piece, bb := range p.Pieces {
             if bb.HasBit(newPos) {
                 targetPiece = piece
                 break
             }
         }
 
-        isWhite := position.ColorBitboards[White].HasBit(newPos)
-        isSameColor := position.ColorBitboards[White].HasBit(src) == isWhite
+        isWhite := p.ColorBitboards[White].HasBit(newPos)
+        isSameColor := p.ColorBitboards[White].HasBit(src) == isWhite
         isOpponentKing := targetPiece == 'k' || targetPiece == 'K'
 
-        if !isSameColor && (canCaptureKing || !isOpponentKing) {
+        if !isSameColor && (!isOpponentKing || (canCaptureKing && isOpponentKing)) {
             moveBitboard.SetBit(newPos)
         }
     }
+    validBB := GetValidSquares(p.Ranks,p.Files)
+    moveBitboard.And(validBB)
+    targets := moveBitboard.GetSetBits()
+    for _,target := range targets{
+    
+        isCapture := p.PositionBitBoard.HasBit(target)
 
-    return moveBitboard
+        moveType := QuietMove
+        if isCapture {
+            moveType = CaptureMove
+        }
+        *moves = append(*moves, Move{
+            Piece: piece,
+            From: src,
+            To: target,
+            Capture: isCapture,
+            ClassicMoveType: moveType,
+        })
+    }
+
 }
-
-

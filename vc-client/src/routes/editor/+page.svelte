@@ -10,67 +10,77 @@
 	import RulesEditor from '$lib/components/editor/RulesEditor.svelte';
 	//import { browser } from '$app/environment';
 	import MpEditBoard from '$lib/board/MPEditBoard.svelte';
-	import { goto } from '$app/navigation';
-	import { boardEditor, editorSubTypeSelected, pieceEditor, ruleEditor } from '$lib/store/editor';
+	import { beforeNavigate, goto } from '$app/navigation';
+	import {
+		boardEditor,
+		editorSubTypeSelected,
+		pieceEditor,
+		resetEditorStores,
+		ruleEditor
+	} from '$lib/store/editor';
 	import { editorMaxBoard } from '$lib/board/board';
 	import { onMount } from 'svelte';
-	import type { Config, CreateParams } from '$lib/store/stores';
-	import { configStore, gameId } from '$lib/store/stores';
+	import type { CreateParams } from '$lib/store/stores';
+	import { templateStore, gameId } from '$lib/store/stores';
 	import { wsStore } from '$lib/websocket.js';
 	import { Button } from '$lib/components/ui/button';
 	import {
-	Dialog,
-	DialogTrigger,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogFooter,
-	DialogClose
-} from '$lib/components/ui/dialog';
-import { Input } from '$lib/components/ui/input';
+		Dialog,
+		DialogContent,
+		DialogHeader,
+		DialogTitle,
+		DialogFooter,
+		DialogClose
+	} from '$lib/components/ui/dialog';
+	import { Input } from '$lib/components/ui/input';
+	import { type Template } from '$lib/types';
+	import { get } from 'svelte/store';
+	import { toast } from '$lib/store/alert';
+	import { createTemplate } from '$lib/api/template';
 
-
-	export let boardConfig: BoardConfig = {
+	const defaultConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
 		dimensions: { ranks: 8, files: 8 },
 		isFlipped: false,
 		boardType: BoardType.Editor
 	};
 
-	onMount(async () => {
+	export let boardConfig: BoardConfig = defaultConfig;
+	onMount(() => {
+		resetEditorStores();
+		boardConfig = defaultConfig;
 		//let stonkfish: typeof import('stonkfish');
 		//stonkfish = await import('stonkfish');
 		//await stonkfish.default();
 	});
 
+	let boardRef: any;
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 	function exitRoom() {
 		goto('/home');
 	}
 
-	let username: string;
 	let isVariantRulesOn: boolean;
 	$: {
 		isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
 	}
 
 	let isPopupVisible = false;
+	let playAsWhite = true;
 	let templateName = '';
 
-	const showPopup = () => {
-		isPopupVisible = true;
-	};
+	const showPopup = () => (isPopupVisible = true);
+	const hidePopup = () => (isPopupVisible = false);
 
-	const hidePopup = () => {
-		isPopupVisible = false;
-	};
-	const confirmTemplate = () => {
-		templateName = '';
+	const confirmTemplate = async () => {
+		await saveTemplate();
 		hidePopup();
 	};
 
-	let playAsWhite = true;
+	beforeNavigate(() => {
+		boardConfig = defaultConfig;
+	});
 
 	const getFEN = () => {
 		let position = '';
@@ -88,8 +98,8 @@ import { Input } from '$lib/components/ui/input';
 					} else {
 						position +=
 							square.piece?.color == Color.BLACK
-								? square.piece?.pieceType
-								: square.piece?.pieceType.toUpperCase();
+								? square.piece?.notation
+								: square.piece?.notation.toUpperCase();
 					}
 				} else {
 					empty_count += 1;
@@ -112,10 +122,10 @@ import { Input } from '$lib/components/ui/input';
 	$: {
 		rule = $ruleEditor;
 	}
-	const generateGameConfigJSON = () => {
+	const generateGameTemplate = () => {
 		const fen = getFEN();
-
-		const gameConfig: Config = {
+		const gameConfig: Template = {
+			name: templateName,
 			variantType: $ruleEditor.variantType,
 			dimensions: {
 				ranks: $boardEditor.ranks,
@@ -124,11 +134,12 @@ import { Input } from '$lib/components/ui/input';
 			fen,
 			pieceProps: $pieceEditor.movePatterns
 		};
-		configStore.setConfig(gameConfig);
+		templateStore.setTemplate(gameConfig);
 		return gameConfig;
 	};
+
 	const playGame = () => {
-		const config = generateGameConfigJSON();
+		const config = generateGameTemplate();
 		const url = `ws://${import.meta.env.VITE_WS_HOST}/ws`;
 		const params: CreateParams = {
 			color: playAsWhite ? 'w' : 'b',
@@ -155,11 +166,35 @@ import { Input } from '$lib/components/ui/input';
 		'Holy Hell',
 		'Google EP',
 		"Chessn't"
-	]
+	];
 	const getRandomPlaceholder = () => {
 		return randomPlaceHolders[Math.floor(Math.random() * randomPlaceHolders.length)];
+	};
+
+	// save template related functions
+	export function getTemplatePayload(): Omit<Template, 'createdBy'> {
+		const boardData = generateGameTemplate();
+		const rules = get(ruleEditor);
+		return {
+			name: templateName,
+			variantType: rules.variantType,
+			dimensions: boardData.dimensions,
+			fen: boardData.fen,
+			pieceProps: {},
+			customData: {}
+		};
 	}
 
+	const saveTemplate = async () => {
+		const payload = getTemplatePayload();
+		try {
+			const created = await createTemplate(payload);
+			toast.success(`Template "${created.name}" saved successfully!`);
+		} catch (err) {
+			console.error(err);
+			toast.error('Failed to save template. Please try again.');
+		}
+	};
 </script>
 
 <svelte:head>
@@ -250,7 +285,12 @@ import { Input } from '$lib/components/ui/input';
 			{#if $editorSubTypeSelected === EditorSubType.MovePattern}
 				<MpEditBoard />
 			{:else}
-				<EditableBoard {boardConfig} bind:shift={shiftBoard} bind:clear={clearBoard} />
+				<EditableBoard
+					bind:this={boardRef}
+					{boardConfig}
+					bind:shift={shiftBoard}
+					bind:clear={clearBoard}
+				/>
 			{/if}
 		</div>
 	</div>
@@ -271,8 +311,6 @@ import { Input } from '$lib/components/ui/input';
 			</DialogFooter>
 		</DialogContent>
 	</Dialog>
-	
-
 </div>
 
 <style>

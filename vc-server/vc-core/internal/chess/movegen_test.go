@@ -19,7 +19,7 @@ func TestMoveGenerationFromStartPos(t *testing.T) {
     pseudoMoves := v.GetPseudoLegalMoves(White, false)
     legalMoves := v.GetLegalMoves()
 
-    require.GreaterOrEqual(t, len(pseudoMoves), 20, "Expected at least 20 pseudo-legal moves for White")
+    require.Equal(t, 20,len(pseudoMoves), "Expected at least 20 pseudo-legal moves for White")
 
 
     require.Equal(t, 20, len(legalMoves), "Expected exactly 20 legal moves from starting position")
@@ -62,8 +62,8 @@ func TestGenerateSlideMoves(t *testing.T) {
 		expectedBitboard.SetBit(ogSrc)
 	}
     var moves []Move
-	generateSlideMoves(src,'Q', pos, false, offsets,&moves)
-	//require.True(t, expectedBitboard.Equal(moveBitboard), "Bitboards are not equal\nFEN: %s", fen)
+	generateSlideMoves2(src,'Q', pos, false, offsets,&moves)
+	require.Equal(t, len(expectedMoves),len(moves), "Number of expected moves not matching \nFEN: %s", fen)
 }
 
 

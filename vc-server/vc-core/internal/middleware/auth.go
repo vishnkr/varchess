@@ -2,9 +2,12 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"vc-server/vc-core/internal/utils"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserIDKey struct{}
@@ -39,4 +42,13 @@ func GetUserIDFromContext(r *http.Request) string {
 		return userID
 	}
 	return ""
+}
+
+func GetUserObjIDFromContext(r *http.Request) (primitive.ObjectID,error) {
+	if userID, ok := r.Context().Value(UserIDKey{}).(string); ok {
+		if objId, ok2 := primitive.ObjectIDFromHex(userID); ok2==nil{
+			return objId,nil
+		}
+	}
+	return primitive.ObjectID{},fmt.Errorf("invalid user id")
 }
