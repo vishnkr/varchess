@@ -2,13 +2,14 @@ vc-client/node_modules/
 .gitignore
 .DS_Store
 vc-client/.DS_store
-vc-server/vc-server
 .vscode
 *.env
 */*.log
 vc-server/logs
 vc-server/bin
 vc-ws/vc-ws
+vc-server/vc-server
+vc-server/vc-core
 vc-core/vc-server
 */mongo-data
 vc-server/script.txt

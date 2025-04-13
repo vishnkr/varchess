@@ -14,19 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-
-
 func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 	type responseItem struct {
-		Name 		string `json:"name" bson:"name"`
-		ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-		UserId      primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
-		VariantType string             `json:"variantType" bson:"variantType"`
-		Dimensions     models.Dimensions                  `json:"dimensions" bson:"dimensions"`
-		FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps     map[string]models.PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
-		CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
+		Name        string                       `json:"name" bson:"name"`
+		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
+		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
+		VariantType string                       `json:"variantType" bson:"variantType"`
+		Dimensions  models.Dimensions            `json:"dimensions" bson:"dimensions"`
+		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
+		PieceProps  map[string]models.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		page, pageSize := utils.GetPaginationParams(r)
@@ -69,12 +66,14 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 	}
 }
 
-
 func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateID := chi.URLParam(r, "id")
-		userID := middleware.GetUserIDFromContext(r)
-
+		userID, err := middleware.GetUserObjIDFromContext(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		objID, err := primitive.ObjectIDFromHex(templateID)
 		if err != nil {
 			http.Error(w, "Invalid template ID", http.StatusBadRequest)
@@ -84,7 +83,7 @@ func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 		collection := database.Collection("templates")
 
 		var template bson.M
-		err = collection.FindOne(context.TODO(), bson.M{"_id": objID, "user_id": userID}).Decode(&template)
+		err = collection.FindOne(context.TODO(), bson.M{"_id": objID, "userId": userID}).Decode(&template)
 		if err != nil {
 			http.Error(w, "Template not found", http.StatusNotFound)
 			return
@@ -97,14 +96,14 @@ func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 
 func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 	type request struct {
-		Name 		string `json:"name" bson:"name"`
-		ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-		UserId      primitive.ObjectID `json:"userId,omitempty" bson:"userId,omitempty"`
-		VariantType string             `json:"variantType" bson:"variantType"`
-		Dimensions     models.Dimensions                  `json:"dimensions" bson:"dimensions"`
-		FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps     map[string]models.PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
-		CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
+		Name        string                       `json:"name" bson:"name"`
+		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
+		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
+		VariantType string                       `json:"variantType" bson:"variantType"`
+		Dimensions  models.Dimensions            `json:"dimensions" bson:"dimensions"`
+		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
+		PieceProps  map[string]models.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -116,8 +115,8 @@ func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 			return
 		}
 
-		userObjectId,err := primitive.ObjectIDFromHex(userID)
-		if err!=nil{
+		userObjectId, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
 			http.Error(w, "Invalid user id", http.StatusBadRequest)
 			return
 		}
@@ -140,8 +139,11 @@ func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateID := chi.URLParam(r, "id")
-		userID := middleware.GetUserIDFromContext(r)
-
+		userID, err := middleware.GetUserObjIDFromContext(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		objID, err := primitive.ObjectIDFromHex(templateID)
 		if err != nil {
 			http.Error(w, "Invalid template ID", http.StatusBadRequest)
@@ -158,7 +160,7 @@ func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 
 		result, err := collection.UpdateOne(
 			context.TODO(),
-			bson.M{"_id": objID, "user_id": userID},
+			bson.M{"_id": objID, "userId": userID},
 			bson.M{"$set": updates},
 		)
 		if err != nil || result.MatchedCount == 0 {
@@ -167,7 +169,7 @@ func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"message": "Template updated successfully"})
+		json.NewEncoder(w).Encode(result)
 	}
 }
 
@@ -175,9 +177,9 @@ func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 func HandleDeleteTemplate(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templateID := chi.URLParam(r, "id")
-		userID,err := middleware.GetUserObjIDFromContext(r)
-		if err!=nil{
-			http.Error(w,err.Error(),http.StatusBadRequest)
+		userID, err := middleware.GetUserObjIDFromContext(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		objID, err := primitive.ObjectIDFromHex(templateID)

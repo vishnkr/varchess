@@ -38,6 +38,7 @@ export async function updateTemplate(id: string, updates: Partial<Template>): Pr
 		body: JSON.stringify(updates)
 	});
 	if (!res.ok) throw new Error('Failed to update template');
+	return res.json();
 }
 
 export async function deleteTemplate(id: string): Promise<void> {

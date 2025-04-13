@@ -117,7 +117,9 @@ function newBoardEditorStore() {
 	return {
 		set,
 		update,
-		subscribe
+		subscribe,
+		setDimensions: (ranks: number, files: number) =>
+			update(state => ({ ...state, ranks, files }))
 	};
 }
 

@@ -7,15 +7,16 @@
 	import { convertFenToPosition, createEmptyMaxBoardState } from './fen';
 	import Board from './Board.svelte';
 	import { editorMaxBoard } from './board';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	export let boardConfig: BoardConfig;
 
 	let { squares } = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
 	const convertedPos = convertFenToPosition(boardConfig.fen);
 	let position: Position = { piecePositions: {}, walls: {} };
+
 	let maxBoardState: PiecePresentInfo[][] = $editorMaxBoard;
-	if ($editorMaxBoard.every((row) => row.length === 0) && convertedPos) {
+	if (convertedPos) {
 		({ position, maxBoardState } = convertedPos);
 		editorMaxBoard.set(maxBoardState);
 	}
@@ -27,10 +28,8 @@
 		squares = squareMaps.squares;
 	}
 
-	$: {
-		boardConfig.dimensions;
-		updateBoardState();
-	}
+	$: updateBoardState();
+
 
 	$: {
 		maxBoardState;

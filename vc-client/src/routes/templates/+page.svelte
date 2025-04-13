@@ -62,11 +62,15 @@
 	let currentPage = 1;
 	const itemsPerPage = 30;
 	const goToEditor = () => goto('/editor');
+	const goToTemplateEditor = (template) => {
+		const id = getTemplateId(template);
+		goto(`/editor?tid=${id}`);
+	};
 
 	$: filteredTemplates = templates.filter(
 		(template) =>
 			template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			template.variantType.toLowerCase().includes(searchQuery.toLowerCase()) 
+			template.variantType.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
 	$: paginatedTemplates = filteredTemplates.slice(
@@ -94,12 +98,12 @@
 		My Templates
 	</h3>
 	<div class="absolute right-4 top-0 cursor-pointer">
-		<a on:click={goToEditor} class={buttonVariants({ variant: 'default' })}>
+		<a on:click={goToEditor} data-sveltekit-reload class={buttonVariants({ variant: 'default' })}>
 			<i class="fa-solid fa-plus mr-2" />
 			Create Template
 		</a>
 	</div>
-	
+
 	<div class="mb-6 flex justify-center">
 		<input
 			type="text"
@@ -152,6 +156,7 @@
 						</Button>
 
 						<Button
+							on:click={goToTemplateEditor(template)}
 							class={`text-sm px-3 py-1.5 rounded border font-medium
 								${
 									theme === 'dark'
