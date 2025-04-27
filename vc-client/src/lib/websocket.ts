@@ -47,41 +47,6 @@ export function sendResign(ws:WebSocket, gameId:string){
 	)))
 }
 
-export const createWebSocket = (wsServerUrl: string) => {
-	return new Promise((resolve, reject) => {
-		const ws = new WebSocket(wsServerUrl);
-
-		ws.onmessage = function (event) {
-			const { type, data } = JSON.parse(event.data);
-			switch (type) {
-				case 'UserJoin':
-					handleUserJoin(data);
-					break;
-				case 'UserLeave':
-					chats.userLeave(data.username);
-					members.update((value) => value.filter((member) => data.username !== member.username));
-					break;
-				case 'ChatMessage':
-					chats.updateChat(data.username, data.content);
-					break;
-			}
-		};
-
-		ws.onerror = function (error) {
-			console.error('WebSocket connection error:', error);
-			reject(error);
-		};
-
-		ws.onopen = function () {
-			wsStore.set(ws);
-			resolve(ws);
-		};
-		ws.onclose = function () {
-			wsStore.set(null);
-			resolve(ws);
-		};
-	});
-};
 
 function createWebSocketStore(ws: WebSocket | null) {
 	const { subscribe, set, update } = writable<WebSocket | null>(ws);
@@ -94,8 +59,13 @@ function createWebSocketStore(ws: WebSocket | null) {
 			const ws = await new WebSocket(wsServerUrl);
 	
 			ws.onopen = () => {
-				const wsMessage = { event: `game.${connectType}_game`, params: params };
-				const json = JSON.stringify(camelToSnake(wsMessage));
+				
+				const wsMessage = {
+					token: params.token,
+					colorPref: params.colorPref 
+				}
+				//const wsMessage = { event: `game.${connectType}_game`, params: connectPayload };
+				const json = JSON.stringify(wsMessage);
 				ws.send(json);
 				console.log('WebSocket connection success');
 			};
@@ -111,48 +81,9 @@ function createWebSocketStore(ws: WebSocket | null) {
 			};
 			ws.onmessage = (e) => {
 				const data = JSON.parse(e.data);
-				console.log('got message', data);
-				if (data.success && data.result) {
-					switch (data?.event) {
-						case EventUserConnect:
-							gameId.set(data.result.game_id);
-							handleUserJoin(data);
-							break;
-						case EventUserDisconnect:
-							chats.userLeave(data.username);
-							members.update((value) => value.filter((member) => data.username !== member.username));
-							break;
-						case EventChatMessage:
-							chats.updateChat(data.result.username, data.result.message);
-							break;
-						case EventJoinGame:
-							//gameState.setGameConfig(data.result.game_config)
-	
-							/*gameId.set(data.result.game_id);
-				gameState.setGameConfig(data.result.game_config)*/
-							break;
-						case EventStartGame:
-							gameState.update((oldState) => {
-								return {
-									...oldState,
-									players: {
-										playerBlack: data.result.players.black,
-										playerWhite: data.result.players.white
-									},
-									status: Status.InProgress
-								};
-							});
-							templateStore.setTemplate(data.result.game_config);
-							console.log('updating state', gameState);
-							break;
-						case EventGameMakeMove:
-	
-							break;
-						default:
-							console.log('invalid msg type');
-					}
-				}
-			};
+				console.log('[WebSocket] Received:', data);
+				handleMessage(data);
+			};			
 			set(ws);
 		},
 		subscribe,
@@ -169,6 +100,39 @@ function createWebSocketStore(ws: WebSocket | null) {
 			}
 		}
 	};
+}
+
+function handleMessage(data: any) {
+	console.log('got',data)
+	if (!data?.d) return;
+	const eventData = data.d;
+	switch (data.t) {
+		case EventUserConnect:
+			gameId.set(data.result.game_id);
+			handleUserJoin(data.result);
+			break;
+		case EventUserDisconnect:
+			chats.userLeave(data.result.username);
+			members.update((m) => m.filter((mem) => mem.username !== data.result.username));
+			break;
+		case EventChatMessage:
+			chats.updateChat(data.result.username, data.result.message);
+			break;
+		case EventJoinGame:
+			// gameState.setGameConfig(data.result.game_config);
+			break;
+		case EventStartGame:
+			console.log('data',eventData);
+			gameState.setPlayers(eventData.players.b,eventData.players.w);
+			gameState.updateStatus(Status.InProgress)
+			//templateStore.setTemplate(data.gameConfig);
+			break;
+		case EventGameMakeMove:
+			// Handle moves
+			break;
+		default:
+			console.warn('[WebSocket] Unknown event:', data.event);
+	}
 }
 
 const wsStore = createWebSocketStore(null);

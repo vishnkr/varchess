@@ -67,11 +67,11 @@
 		goto(`/editor?tid=${id}`);
 	};
 
-	$: filteredTemplates = templates.filter(
+	$: filteredTemplates = templates?.filter(
 		(template) =>
 			template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			template.variantType.toLowerCase().includes(searchQuery.toLowerCase())
-	);
+	) || [];
 
 	$: paginatedTemplates = filteredTemplates.slice(
 		(currentPage - 1) * itemsPerPage,

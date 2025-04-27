@@ -96,9 +96,9 @@ const templateStore = newTemplateStore();
 const chats = newChatStore();
 
 export interface ConnectParams {
-	sessionId: string;
-	gameId?: string;
-	username: string;
+	token: string;
+	userId: string;
+	colorPref?: string;
 }
 
 export interface CreateParams extends ConnectParams {
@@ -132,6 +132,7 @@ export interface Players {
 }
 
 export enum Status {
+	None,
 	Waiting,
 	InProgress,
 	Completed
@@ -142,11 +143,12 @@ export interface GameState {
 	//chesscore : ChessCoreLib,
 	turn: 'w' | 'b';
 	players?: Players;
+	
 }
 
 function newGameState() {
 	const { subscribe, update } = writable<GameState>({
-		status: Status.Waiting,
+		status: Status.None,
 		turn: 'w'
 	});
 

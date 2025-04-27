@@ -5,12 +5,14 @@ const STORAGE_KEY = 'auth';
 
 interface AuthState {
 	username: string | null;
+	userId: string | null;
 	accessToken: string | null;
 	refreshToken: string | null;
 }
 
 const defaultState: AuthState = {
 	username: null,
+	userId:null,
 	accessToken: null,
 	refreshToken: null
 };
@@ -26,8 +28,8 @@ authStore.subscribe((state) => {
 	}
 });
 
-function setAuth(username: string, accessToken: string, refreshToken: string) {
-	authStore.set({ username, accessToken, refreshToken });
+function setAuth(username: string,userId:string, accessToken: string, refreshToken: string) {
+	authStore.set({ username,userId, accessToken, refreshToken });
 	console.log('setting auth',username,accessToken,refreshToken)
 }
 

@@ -21,7 +21,8 @@
 	import { editorMaxBoard } from '$lib/board/board';
 	import { onMount } from 'svelte';
 	import type { CreateParams } from '$lib/store/stores';
-	import { templateStore, gameId } from '$lib/store/stores';
+	import { templateStore, gameId, Status, gameState } from '$lib/store/stores';
+	import { authStore } from '$lib/store/auth.js';
 	import { wsStore } from '$lib/websocket.js';
 	import { Button } from '$lib/components/ui/button';
 	import {
@@ -38,6 +39,8 @@
 	import { toast } from '$lib/store/alert';
 	import { createTemplate, getTemplate, updateTemplate } from '$lib/api/template';
 	import { page } from '$app/stores';
+	import { createGame } from '$lib/api/games';
+	import { color } from 'echarts';
 
 	const defaultConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
@@ -49,7 +52,13 @@
 	let isEditMode = false;
 	let templateId: string | null = null;
 	let boardConfig: BoardConfig;
+
 	onMount(async () => {
+		const auth = localStorage.getItem('auth');
+		if (!auth) {
+			goto('/login');
+			return;
+		}
 		resetEditorStores();
 		const url = new URL(window.location.href);
 		templateId = url.searchParams.get('tid');
@@ -154,8 +163,7 @@
 		templateStore.setTemplate(gameConfig);
 		return gameConfig;
 	};
-
-	const playGame = () => {
+	/*const playGame = () => {
 		const config = generateGameTemplate();
 		const url = `ws://${import.meta.env.VITE_WS_HOST}/ws`;
 		const params: CreateParams = {
@@ -166,12 +174,12 @@
 		};
 
 		wsStore.newWebSocketConnection(url, params, 'create');
-	};
-	$: {
+	};*/
+	/*$: {
 		if ($gameId !== null) {
-			goto(`/game/${$gameId}/waiting`);
+			goto(`/play/${$gameId}`);
 		}
-	}
+	}*/
 
 	let randomPlaceHolders = [
 		'Chess But Make It Weird',
@@ -203,6 +211,10 @@
 	}
 
 	const saveTemplate = async () => {
+		if(templateName.length==0){
+			toast.error('Template name cannot be empty.');
+			return
+		}
 		const payload = getTemplatePayload();
 		try {
 			if (isEditMode && templateId) {
@@ -217,6 +229,39 @@
 			toast.error('Failed to save template. Please try again.');
 		}
 	};
+
+	const playGame = async () =>{
+		const authStr = localStorage.getItem('auth');
+		if (!authStr) {
+			goto('/login');
+			return;
+		}
+		const auth = JSON.parse(authStr);
+		const userId = get(authStore).userId;
+		const accessToken = auth?.accessToken;
+		if (!userId || !accessToken) return;
+		const gameConfig = getTemplatePayload();
+		const payload = {gc: gameConfig, templateId: templateId}
+		try{
+			console.log('cr payload',payload)
+			let { gameId } = await createGame(payload);
+			console.log('ggame',gameId)
+			let colorPref = playAsWhite ? 'w' : 'b';
+			gameState.updateStatus(Status.Waiting);
+			const url = `ws://${import.meta.env.VITE_WS_HOST}/play/${gameId}`;
+			
+			const connectPayload = {
+				token: accessToken,
+				userId: userId,
+				colorPref: colorPref
+			}
+			await wsStore.newWebSocketConnection(url,connectPayload,'create')
+			goto(`/play/${gameId}`);
+		} catch(err){
+			console.log(err)
+			toast.error('Unable to start game. Please try again later.');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -324,7 +369,7 @@
 				</DialogHeader>
 				<div class="grid gap-4 py-4">
 					<label for="templateName" class="text-sm font-medium">Template Name</label>
-					<Input id="templateName" placeholder={getRandomPlaceholder()} bind:value={templateName} />
+					<Input id="templateName" required placeholder={getRandomPlaceholder()} bind:value={templateName} />
 				</div>
 				<DialogFooter class="flex justify-end gap-2">
 					<DialogClose asChild>

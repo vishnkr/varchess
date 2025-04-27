@@ -11,10 +11,12 @@
 	import { browser } from '$app/environment';
 	import { sendDrawOffer } from '$lib/websocket.js';
 	//import chessCore from '$lib/chesscore.worker.js';
-
+	import { get } from 'svelte/store';
 	import { authStore } from '$lib/store/auth.js';
 	import { EventGameResign } from '$lib/types';
-	
+	import { page } from '$app/stores';
+	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
 	let activeItem = 'Chat';
@@ -32,24 +34,47 @@
 			goto('/home');
 		}
 	};
+	let copiedToClipboard = false;
+	let currentGameId: string|null;
 
-	//async function initWasm(){ await chessCore.initWasm(); isMounted = true;}
-	//initWasm();
-	let auth;
+	$: players = $gameState.players;
+
+	$: {
+		if ($authStore?.username && $gameState?.players) {
+			username = $authStore.username;
+			const { playerWhite, playerBlack } = $gameState.players;
+			isPlayer = username === playerWhite || username === playerBlack;
+			isFlipped = username === playerBlack;
+		}
+	}
 	$: authStore.subscribe((state) => (auth = state));
 	$: {
-		if (!$wsStore) {
+		if (!$wsStore || $gameState.status===Status.Completed) {
 			goHome()
 		}
 	}
+
+	const copyToClipboard = () => {
+		copiedToClipboard = true;
+		setTimeout(() => copiedToClipboard = false, 2000);
+		if(currentGameId)
+		navigator.clipboard.writeText(currentGameId);
+	};
+
+	let auth;
+	
 	onMount(() => {
-		const accessToken = localStorage.getItem('accessToken');
-		if (!accessToken) {
-			goto('/login');
+		currentGameId = $page.params.gameId;
+		const auth = localStorage.getItem('auth');
+		console.log(auth,currentGameId,'f')
+		if (!auth || !currentGameId) {
+			goto('/home');
 		}
+		
+		gameId.set(currentGameId);
 	});
-	let chesscore;
-	const {legalMoves } = moveSelector;
+	//let chesscore;
+	//const {legalMoves } = moveSelector;
 	$: {
 		if ($templateStore) {
 			const config_json = JSON.stringify(camelToSnake($templateStore));
@@ -63,42 +88,32 @@
 			boardConfig = {
 				fen: $templateStore.fen,
 				dimensions: $templateStore.dimensions,
-				boardType: isPlayer ? BoardType.GameBoard : BoardType.View
+				boardType: BoardType.GameBoard
 			};
 		}
 	}
-
-	onMount(async () => {
-		//initWasm();
-		
-		if($gameState?.players?.playerBlack === username){
-			isPlayer = true
-			isFlipped=true
-		} else if ($gameState?.players?.playerWhite === username){
-			isPlayer = true
-		}
-	});
 	
 	function clearStores(){
 		wsStore.set(null);
 		templateStore.removeTemplate();
 		gameId.set(null);
-		gameState.updateStatus(Status.Completed)
+		gameState.updateStatus(Status.None)
 	}
 	let dirty = true;
 	
 	beforeNavigate(({ cancel }) => {
 		clearStores()
-		if (dirty) {
-			/*const confirmMessage = "Exiting this page results in loss. Are you sure you want to leave?";
+		/*if (dirty) {
+			const confirmMessage = "Exiting this page results in loss. Are you sure you want to leave?";
 			if (!confirm(confirmMessage)) {
 			cancel();
 			} else {
 				wsStore.set(null);
-				templateStore.removeConfig();
+				//templateStore.removeConfig();
 				gameId.set(null);
-        	}*/
-		}
+				gameState.updateStatus(Status.None);
+        	}
+		}*/
 	});
 
 	const handleDraw = ()=>{
@@ -116,6 +131,26 @@
 </svelte:head>
 
 <div class="font-inter text-zinc-90 flex-grow">
+	{#if $gameState.status === Status.Waiting}
+		<div class="fixed inset-0 z-10 overflow-y-auto">
+			<div class="flex items-center justify-center min-h-screen">
+				<div class="dark:bg-darkbg bg-lightbg2 p-8 rounded-md shadow-md">
+					<h1 class="text-xl dark:text-white text-gray-800 mb-4">Waiting for opponent...</h1>
+					<div class="mb-4 flex flex-col items-center">
+						<label for="shareableUrl" class="dark:text-white text-gray-800 mb-2">Share Game ID</label>
+						<div class="flex items-center gap-2">
+							<Input id="gameId" bind:value={currentGameId} type="text" readonly />
+							<Button on:click={copyToClipboard} class="text-sm px-3 py-1.5 rounded border font-medium
+								bg-transparent dark:text-white dark:border-white dark:hover:bg-white/10 text-black border-black hover:bg-black/10">Copy</Button>
+						</div>
+						{#if copiedToClipboard}
+							<p class="dark:text-white text-black mt-2">Copied to clipboard</p>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</div>
+	{:else if $gameState.status === Status.InProgress}
 	<div class="flex m-4 lg:flex-row flex-col">
 		<div class="text-white rounded-md lg:w-8/12 p-3">
 			<div class="max-w-[90%]">
@@ -176,4 +211,7 @@
 			</div>
 		</div>
 	</div>
+	{:else}
+		<div>{$gameState.status}</div>
+	{/if}
 </div>

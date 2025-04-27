@@ -4,10 +4,11 @@ import { get } from 'svelte/store';
 async function refreshAccessToken(): Promise<boolean> {
 	let refreshToken: string | null = null;
 	let username: string | null = null;
-
+	let userId: string | null = null;
 	authStore.subscribe((state) => {
 		refreshToken = state.refreshToken;
 		username = state.username;
+		userId = state.userId;
 	})();
 
 	if (!refreshToken) {
@@ -28,8 +29,8 @@ async function refreshAccessToken(): Promise<boolean> {
 	}
 
 	const { accessToken } = await res.json();
-	if (username) {
-		setAuth(username, accessToken, refreshToken);
+	if (username && userId) {
+		setAuth(username,userId, accessToken, refreshToken);
 	}
 
 	return true;

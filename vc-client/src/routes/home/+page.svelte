@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { type ConnectParams, gameId } from '$lib/store/stores';
+	import { type ConnectParams, gameId, gameState, Status } from '$lib/store/stores';
 	import { wsStore } from '$lib/websocket';
 	import PieChart from '$lib/components/charts/PieChart.svelte';
 	import HalfDoughnut from '$lib/components/charts/HalfDoughnut.svelte';
@@ -9,6 +9,8 @@
 	import {Button} from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { toast } from '$lib/store/alert';
+	import { get } from 'svelte/store';
 	let username: string = '';
 	const unsubscribe = authStore.subscribe((state) => {
 		username = state.username || '';
@@ -35,10 +37,34 @@
 	const createGame = () => {
 		goto('/editor');
 	};
-	const joinRoom = () => {
-		if (gameIdInput.trim()) {
-			gameId.set(gameIdInput.trim());
-			goto('/game');
+	const joinRoom = async () => {
+		const authStr = localStorage.getItem('auth');
+		if (!authStr) {
+			goto('/login');
+			return;
+		}
+		const auth = JSON.parse(authStr);
+		const userId = get(authStore).userId;
+		const accessToken = auth?.accessToken;
+		if (!userId || !accessToken) return;
+		const validGameId = gameIdInput.trim();
+		console.log(validGameId,'vg')
+		if (validGameId) {
+			try{
+				const url = `ws://${import.meta.env.VITE_WS_HOST}/play/${validGameId}`;
+				gameId.set(validGameId);
+				gameState.updateStatus(Status.Waiting);
+				const connectPayload = {
+					token: accessToken,
+					userId: userId,
+				}
+				await wsStore.newWebSocketConnection(url,connectPayload,'join')
+				goto(`/play/${validGameId}`);
+			} catch(err){
+				console.log(err)
+				toast.error('Unable to join game.');
+			}
+			
 		}
 	};
 </script>
@@ -82,7 +108,7 @@
 				<Input id="gameId" placeholder="Enter Room Code" bind:value={gameIdInput} class="w-full" />
 			</div>
 
-			<Button class="w-full" variant="secondary" on:click={joinRoom}>Join Room</Button>
+			<Button class="w-full" on:click={joinRoom}>Join Room</Button>
 		</div>
 	</div>
 </div>

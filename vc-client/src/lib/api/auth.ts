@@ -3,6 +3,7 @@ const CORE_URL = import.meta.env.VITE_CORE_URL;
 
 interface LoginResponse {
 	username: string;
+	uid: string;
 	accessToken: string;
 	refreshToken: string;
 }
@@ -18,7 +19,7 @@ async function login(username: string, password: string): Promise<boolean> {
 	if (!res.ok) return false;
 
 	const data: LoginResponse = await res.json();
-	setAuth(data.username, data.accessToken, data.refreshToken);
+	setAuth(data.username,data.uid, data.accessToken, data.refreshToken);
 	return true;
 }
 

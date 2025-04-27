@@ -207,7 +207,7 @@ export type EventType =
 	| 'game.offer_draw'
 	| 'game.draw_result'
 	| 'game.resign'
-	| 'game.start_game'
+	| 'start'
 	| 'Error';
 
 export const EventChatMessage: EventType = 'chat.message';
@@ -221,7 +221,7 @@ export const EventGameMakeMove: EventType = 'game.make_move';
 export const EventGameDrawOffer: EventType = 'game.offer_draw';
 export const EventGameDrawResult: EventType = 'game.draw_result';
 export const EventGameResign: EventType = 'game.resign';
-export const EventStartGame: EventType = 'game.start_game';
+export const EventStartGame: EventType = 'start';
 export const EventError: EventType = 'Error';
 
 export interface WebSocketMessage{
