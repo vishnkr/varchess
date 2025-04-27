@@ -5,13 +5,12 @@
 	import { EditorSubType } from '../types';
 	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	// @ts-ignores
-	import Switch from 'svelte-switch';
 	import type { PieceSelection } from '$lib/types';
-
-
-	const standardPieces : {name:string,notation:string}[] = [
+	import { Button } from '../ui/button';
+	import { Switch } from '../ui/switch';
+	const standardPieces: { name: string; notation: string }[] = [
 		{ name: 'Pawn', notation: 'p' },
 		{ name: 'King', notation: 'k' },
 		{ name: 'Queen', notation: 'q' },
@@ -19,19 +18,22 @@
 		{ name: 'Knight', notation: 'n' },
 		{ name: 'Rook', notation: 'r' }
 	];
-	const customPieces : {name:string,notation:string}[] = [
+	const customPieces: { name: string; notation: string }[] = [
 		{ name: 'Dolphin', notation: 'd' },
 		{ name: 'Ninja', notation: 'i' },
 		{ name: 'Unicorn', notation: 'u' },
-		{ name: 'Tower', notation: 'a' },
+		{ name: 'Tower', notation: 't' },
 		{ name: 'Giraffe', notation: 'g' },
 		{ name: 'Juicer', notation: 'j' },
-		{ name: 'Astronaut', notation: 's' },
+		{ name: 'Astronaut', notation: 'a' },
 		{ name: 'Phage', notation: 'v' },
 		{ name: 'Zebra', notation: 'z' }
 	];
 	let color: Color = Color.WHITE;
-	let selectedPiece: PieceSelection = {piece:{ notation: 'p',pieceType: 'pawn',color:color},group:'standard'};
+	let selectedPiece: PieceSelection = {
+		piece: { notation: 'p', pieceType: 'pawn', color: color },
+		group: 'standard'
+	};
 	let slideDirections = {
 		North: [-1, 0],
 		East: [0, 1],
@@ -55,17 +57,17 @@
 		toggleSetMP();
 	};
 
-	const selectPiece = (pieceType:string, notation:string, group:string) => {
-		
-		selectedPiece = { ...selectedPiece, 
+	const selectPiece = (pieceType: string, notation: string, group: string) => {
+		selectedPiece = {
+			...selectedPiece,
 			piece: {
-				notation:notation, 
-				pieceType:pieceType,
-				color:color
+				notation: notation,
+				pieceType: pieceType,
+				color: color
 			},
-			group: group 
+			group: group
 		};
-		('selected piece',selectedPiece)
+		console.log('selected piece', selectedPiece);
 		pieceEditor.update((val) => ({
 			...val,
 			pieceSelection: {
@@ -74,7 +76,7 @@
 					color,
 					notation: selectedPiece.piece.notation
 				},
-				group: selectedPiece.group,
+				group: selectedPiece.group
 			}
 		}));
 	};
@@ -82,131 +84,185 @@
 		pieceEditor.updateColor(newColor);
 		color = newColor;
 	};
+
+	let selectedSlideDirections: string[] = [];
+
+	function toggleDirection(direction: string) {
+		if (selectedSlideDirections.includes(direction)) {
+			selectedSlideDirections = selectedSlideDirections.filter((d) => d !== direction);
+		} else {
+			selectedSlideDirections = [...selectedSlideDirections, direction];
+		}
+	}
 </script>
-
-<div>
+<div class="bg-white dark:bg-darkbg2 text-black dark:text-white p-4 rounded-lg">
 	<div class="grid grid-rows">
-		<div class="grid grid-rows">
-			{#if !setMovePattern}
-				<div class="grid grid-cols-2 gap-2 my-2">
-					<!-- svelte-ignore a11y-click-events-have-key-events -->
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
-					<div
-						class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
-							color === Color.WHITE ? 'border-green-500' : 'border-gray-800'
-						} bg-white`}
-						on:click={() => updateColor(Color.WHITE)}
+	  <div class="grid grid-rows">
+		{#if !setMovePattern}
+		  <div class="grid grid-cols-2 gap-2 my-2">
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<div
+			  class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
+				color === Color.WHITE ? 'border-green-500' : 'border-gray-800'
+			  } bg-white dark:bg-gray-700`}
+			  on:click={() => updateColor(Color.WHITE)}
+			>
+			  <span class="text-black font-semibold dark:text-white">White</span>
+			</div>
+  
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<div
+			  class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
+				color === Color.BLACK ? 'border-green-500' : 'border-gray-800'
+			  } bg-black dark:bg-gray-600`}
+			  on:click={() => updateColor(Color.BLACK)}
+			>
+			  <span class="text-white font-semibold dark:text-gray-200">Black</span>
+			</div>
+		  </div>
+  
+		  <div class="grid grid-cols-2">
+			{#each standardPieces as piece}
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			  <div
+				class="flex items-center rounded-md pl-4 m-1.5 bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer dark:bg-gray-800"
+				on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'standard')}
+			  >
+				<input
+				  class="cursor-pointer text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+				  type="radio"
+				  name="piece"
+				  value={piece.notation}
+				  bind:group={selectedPiece.piece.notation}
+				/>
+				<label
+				  for={piece.notation}
+				  class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white"
+				>
+				  {piece.name}
+				</label>
+				<img src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`} alt="piece" />
+			  </div>
+			{/each}
+		  </div>
+  
+		  <div class="px-2 m-1.5 py-2">
+			<h3 class="text-xl dark:text-white">Custom Pieces</h3>
+			<Button
+			  disabled={selectedPiece.group !== 'custom'}
+			  class="p-2 m-2 bg-transparent text-black border-black dark:text-white dark:border-white hover:bg-orange-700/10 dark:hover:bg-orange-400/20 text-md rounded border font-medium disabled:bg-slate-600"
+			  on:click={toggleSetMP}
+			>
+			  Set Move Pattern
+			</Button>
+			<div class="relative grid grid-cols-1">
+			  {#each customPieces as piece}
+			  <!-- svelte-ignore a11y-click-events-have-key-events -->
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<div
+				  class="flex flex-cols items-center rounded-md
+				  bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer my-1 dark:bg-gray-800"
+				  on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'custom')}
+				>
+				  <div class="w-2/3">
+					<input
+					  class="text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+					  type="radio"
+					  name="piece"
+					  value={piece.notation}
+					  bind:group={selectedPiece.piece.notation}
+					/>
+					<label
+					  for={piece.notation}
+					  class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white"
 					>
-						<span class="text-black font-semibold">White</span>
-					</div>
-
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
-					<!-- svelte-ignore a11y-click-events-have-key-events -->
-					<div
-						class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
-							color === Color.BLACK ? 'border-green-500' : 'border-gray-800'
-						} bg-black`}
-						on:click={() => updateColor(Color.BLACK)}
-					>
-						<span class="text-white font-semibold">Black</span>
-					</div>
-				</div>
-
-				<div class="grid grid-cols-2">
-					{#each standardPieces as piece}
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<div
-							class="flex items-center rounded-md pl-4 m-1.5 bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer"
-							on:click={() => selectPiece(piece.name?.toLowerCase(),piece.notation,"standard")}
-						>
-							<input
-								class="cursor-pointer text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-								type="radio"
-								name="piece"
-								value={piece.notation}
-								bind:group={selectedPiece.piece.notation}
-							/>
-							<label
-								for={piece.notation}
-								class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer"
-							>
-								{piece.name}
-							</label>
-							<img src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`} alt="piece" />
-						</div>
-					{/each}
-				</div>
-				<div class="px-2 m-1.5 py-2">
-					<h3>Custom Pieces</h3>
-					<button
-						disabled={selectedPiece.group !== 'custom'}
-						class="p-2 m-2 bg-orange-500 text-white text-md rounded-md disabled:bg-slate-600"
-						on:click={toggleSetMP}>Set Move Pattern</button
-					>
-					<div class="relative grid grid-cols-1">
-						{#each customPieces as piece}
-							<!-- svelte-ignore a11y-click-events-have-key-events -->
-							<!-- svelte-ignore a11y-no-static-element-interactions -->
-							<div
-								class="flex flex-cols items-center rounded-md
-							 bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer my-1"
-								on:click={() => selectPiece(piece.name?.toLowerCase(),piece.notation,"custom")}
-							>
-								<div class="w-2/3">
-									<input
-										class="text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-										type="radio"
-										name="piece"
-										value={piece.notation}
-										bind:group={selectedPiece.piece.notation}
-									/>
-									<label
-										for={piece.notation}
-										class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer"
-									>
-										{piece.name}
-									</label>
-								</div>
-								<img
-									class="w-1/3 max-h-12"
-									src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`}
-									alt="piece"
-								/>
-							</div>
-						{/each}
-					</div>
-				</div>
-			{:else}
-				<div class="px-2 m-1.5 py-2 flex flex-col">
-					<h1 class="text-xl font-bold">Set Move Pattern</h1>
-					<div class="flex items-center">
-						<span class="w-4 h-4 inline-block bg-blue-600 rounded-sm" />
-						<p class="text-lg font-semibold ml-2">Slide Pattern:</p>
-					</div>
-					<TagInput {slideDirections} dropDownText="Select Directions" />
-					<div class="flex items-center">
-						<span class="w-4 h-4 inline-block bg-red-600 rounded-sm" />
-						<p class="text-lg font-semibold ml-2">Jump Pattern:</p>
-					</div>
-					<!-- svelte-ignore a11y-label-has-associated-control -->
-					<label class="relative inline-flex items-center cursor-pointer">
-						<span class="m-3 text-md font-medium text-gray-900 dark:text-gray-300"
-							>Select Jump Moves</span
-						>
-						<!-- svelte-ignore missing-declaration -->
-						<Switch checked={false} />
+					  {piece.name}
 					</label>
-					<button
-						class="p-2 m-2 bg-green-500 text-white text-md rounded-md hover:bg-slate-400"
-						on:click={toggleSetMP}>Save Pattern</button
-					>
-					<button
-						class="p-2 m-2 bg-red-500 text-white text-md rounded-md hover:bg-slate-400"
-						on:click={cancel}>Cancel</button
-					>
+				  </div>
+				  <img
+					class="w-1/3 max-h-12"
+					src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`}
+					alt="piece"
+				  />
 				</div>
-			{/if}
-		</div>
+			  {/each}
+			</div>
+		  </div>
+		{:else}
+		  <div class="px-2 m-1.5 py-2 flex flex-col gap-4">
+			<h1 class="text-xl font-bold dark:text-white">Set Move Pattern</h1>
+	
+			<!-- Slide Pattern -->
+			<div class="flex flex-col gap-1">
+			  <div class="flex items-center gap-2">
+				<span class="w-4 h-4 bg-blue-600 rounded-sm" />
+				<p class="text-lg font-semibold dark:text-white">Slide Pattern:</p>
+	
+				<DropdownMenu.Root>
+				  <DropdownMenu.Trigger
+					class="inline-flex items-center justify-center rounded-md bg-white px-3 py-1 text-sm font-medium text-black shadow-sm border border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+				  >
+					Select
+				  </DropdownMenu.Trigger>
+	
+				  <DropdownMenu.Content class="w-56 bg-white text-black border border-gray-200 shadow-md dark:bg-gray-800 dark:text-white dark:border-gray-700">
+					<DropdownMenu.Label class="text-gray-700 dark:text-gray-300">Slide Pattern</DropdownMenu.Label>
+					<DropdownMenu.Separator class="bg-gray-200" />
+	
+					{#each Object.keys(slideDirections) as direction}
+					  <DropdownMenu.CheckboxItem
+						checked={selectedSlideDirections.includes(direction)}
+						on:click={() => toggleDirection(direction)}
+					  >
+						{direction}
+					  </DropdownMenu.CheckboxItem>
+					{/each}
+				  </DropdownMenu.Content>
+				</DropdownMenu.Root>
+			  </div>
+			  <p class="text-sm text-gray-600 ml-6 dark:text-gray-400">
+				Select directions where the piece can slide continuously.
+			  </p>
+			</div>
+	
+			<!-- Jump Pattern -->
+			<div class="flex flex-col gap-1">
+			  <div class="flex items-center gap-2">
+				<span class="w-4 h-4 bg-red-600 rounded-sm" />
+				<div class="flex items-center space-x-2">
+				  <Label for="jump-pattern" class="text-lg font-semibold dark:text-white">
+					Jump Pattern
+				  </Label>
+				  <Switch id="jump-pattern"/>
+				</div>
+			  </div>
+			  <p class="text-sm text-gray-600 ml-6 dark:text-gray-400">
+				Enable this to click squares and define custom jump moves.
+			  </p>
+			</div>
+	
+			<!-- Save / Cancel -->
+			<div class="flex gap-2 items-end justify-center mt-4">
+			  <Button
+				on:click={toggleSetMP}
+				class="p-2 bg-transparent rounded border font-medium text-md text-green-600 border-green-600 hover:bg-green-600/10"
+			  >
+				Save
+			  </Button>
+	
+			  <Button
+				on:click={cancel}
+				class="p-2 bg-transparent rounded border font-medium text-md text-red-600 border-red-600 hover:bg-red-600/10"
+			  >
+				Cancel
+			  </Button>
+			</div>
+		  </div>
+		{/if}
+	  </div>
 	</div>
-</div>
+  </div>
+  

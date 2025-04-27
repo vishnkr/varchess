@@ -5,6 +5,7 @@
 	import Antichess from "./rules/Antichess.svelte";
 	import NCheck from "./rules/NCheck.svelte";
 	import { VariantType } from "$lib/types";
+	import { Button } from "../ui/button";
 
 	const variantTypes = [
 		{ 	name: 'Checkmate', 
@@ -63,9 +64,10 @@
 	}
 </script>
 
-<div>
+<div class="text-black dark:text-white">
 	<div class="flex justify-center items-center m-2 space-x-2">
-		<button on:click={viewVariantRules} class="p-2 bg-orange-600 hover:bg-blue-600 rounded-md text-white">View Variant Rules</button>
+		<!-- svelte-ignore missing-declaration -->
+		<Button on:click={viewVariantRules} class="p-2 bg-transparent border border-black text-black dark:border-white dark:text-white dark:hover:bg-blue-600/10 hover:bg-blue-600/10 rounded-md ">View Variant Rules</Button>
 	</div>
 	<div class="m-2">
 		<h3 class="font-bold md:text-md sm:text-lg">Select Variant Type</h3>

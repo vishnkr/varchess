@@ -1,6 +1,6 @@
 <script lang="ts">
-	import pieceSvg from '$lib/assets/svg/piece.svg';
-	import boardSvg from '$lib/assets/svg/board.svg';
+	import PieceIcon from '$lib/assets/svg/PieceIcon.svelte';
+	import BoardIcon from '$lib/assets/svg/BoardIcon.svelte';
 	import { BoardType, type BoardConfig, Color } from '$lib/board/types';
 	import { EditorSubType } from '$lib/components/types';
 	import EditableBoard from '$lib/board/EditableBoard.svelte';
@@ -280,7 +280,7 @@
 							<Button
 								on:click={exitRoom}
 								class="flex-1 text-lg px-3 py-2 rounded border font-medium
-			bg-transparent text-red-600 border-red-600 hover:bg-red-500/10"
+			bg-transparent text-red-600 border-red-600 hover:bg-red-600/10"
 							>
 								<i class="fa-solid fa-right-from-bracket mr-2" /> Exit
 							</Button>
@@ -334,14 +334,14 @@
 							<label class="ml-2 cursor-pointer" for="Black">Play as Black</label>
 						</div>
 					</div>
-					<ExpandableCard svg={boardSvg} title="Board Editor">
+					<ExpandableCard svg={BoardIcon} title="Board Editor">
 						<BoardEditor
 							bind:dimensions={boardConfig.dimensions}
 							on:shift={(e) => shiftBoard(e.detail)}
 							on:clear={() => clearBoard()}
 						/>
 					</ExpandableCard>
-					<ExpandableCard svg={pieceSvg} title="Piece Editor">
+					<ExpandableCard svg={PieceIcon} title="Piece Editor">
 						<PieceEditor />
 					</ExpandableCard>
 					<ExpandableCard iconClass="fa-solid fa-clipboard-list fa-lg" title="Rule Editor">
