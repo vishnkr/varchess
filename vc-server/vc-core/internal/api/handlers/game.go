@@ -114,7 +114,10 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 
 			gameConfig = models.GameConfig{
 				VariantType: template.VariantType,
-				Position:    template.Position,
+				Name:    template.Name,
+				PieceProps: template.Position.PieceProps,
+				PieceLocations: template.Position.PieceLocations,
+				FEN: template.Position.FEN,
 				CustomData:   template.CustomData,
 			}
 		} else if request.GameConfig != nil {
@@ -133,7 +136,10 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			Moves: make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)
-		database.RedisClient.Set(context.TODO(), "game."+shortID, gameJSON, 30*time.Minute)
+		_,err := database.RedisClient.SetEx(context.TODO(), "game."+shortID, gameJSON, 30*time.Minute).Result()
+		if err!=nil{
+			fmt.Println("err creating key")
+		}
 		response.GameID = shortID
 		json.NewEncoder(w).Encode(response)
 	}

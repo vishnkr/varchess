@@ -115,7 +115,7 @@ func (w *Worker) processJoin(event Event){
 			log.Println("Error serializing game start event:", err)
 			return
 		}
-		if err := r.Publish(ctx, "game_updates", eventJSON).Err(); err != nil {
+		if err := r.Publish(ctx, SystemAction, eventJSON).Err(); err != nil {
 			log.Println("Error publishing game start event:", err)
 		} else {
 			log.Printf("Game %s started: %s", event.GameID, eventJSON)
@@ -133,5 +133,5 @@ func (w *Worker) processMove(event Event){
 		return
 	}
 	//validate move here 
-	r.Publish(context.TODO(), "game_events", payload)
+	r.Publish(context.TODO(), UserAction, payload)
 }

@@ -13,8 +13,8 @@ var (
 	redisClient *redis.Client
 )
 
-func InitRedis() {
-    cfg := config.LoadConfig()
+func InitRedis(cfg *config.Config) {
+    
     redisClient = redis.NewClient(&redis.Options{
         Addr: cfg.RedisAddr,
     })
@@ -32,7 +32,7 @@ func GetRedisClient() *redis.Client {
 }
 
 func SubscribeToRedis() {
-    pubsub := redisClient.Subscribe(context.Background(), "game_updates")
+    pubsub := redisClient.Subscribe(context.Background(), SystemAction)
     ch := pubsub.Channel()
 
     go func() {
@@ -48,7 +48,7 @@ func SubscribeToRedis() {
                 continue
             }
             switch event.Type {
-            case Move, Join, Resign, DrawOffer, DrawAccept, DrawReject, GameOver:
+            case Move,Start, Join, Resign, DrawOffer, DrawAccept, DrawReject, GameOver:
                 game.Broadcast(event)
 
             default:
@@ -65,7 +65,7 @@ func PublishGameUpdate(redisClient *redis.Client, gameID string, eventType strin
 		"data":   data,
 	}
 	msgJSON, _ := json.Marshal(message)
-	redisClient.Publish(context.TODO(), "game_events", msgJSON)
+	redisClient.Publish(context.TODO(), UserAction, msgJSON)
 }
 
 func PublishMoveForValidation(redisClient *redis.Client, event Event) {

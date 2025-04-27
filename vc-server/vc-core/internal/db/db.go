@@ -112,7 +112,7 @@ func (db *DB) ListenAndPublishMessages(ctx context.Context,ch string) {
 }
 
 func (db *DB) SetupRedisSubscriber(ctx context.Context,wp *worker.WorkerPool){
-	ch := []string{"game_events","moves"}
+	ch := []string{worker.UserAction}
 	sub := db.RedisClient.Subscribe(ctx, ch...)
 	defer sub.Close()
 

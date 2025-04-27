@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -37,112 +36,44 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-func RequestLogger(l logger.Logger) func(http.Handler) http.Handler {
+func RequestLogger() func(http.Handler) http.Handler {
+	baseLogger := logger.New().Logger
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			requestID, correlationID := getOrCreateIDs(r)
-			reqLogger := l.With().Str("requestID", requestID).Str("correlationID", correlationID).Logger()
-			ctx := r.Context()
-			ctx = context.WithValue(ctx, logger.LoggerKey, reqLogger)
+			reqLogger := baseLogger.With().
+				Str("requestID", requestID).
+				Str("correlationID", correlationID).
+				Str("method", r.Method).
+				Str("url", r.URL.Path).
+				Logger()
+
+			ctx := context.WithValue(r.Context(), logger.LoggerKey, reqLogger)
 			r = r.WithContext(ctx)
 			lrw := newLoggingResponseWriter(w)
 
 			defer func() {
 				logLevel := zerolog.InfoLevel
-				panicVal := recover()
-				if panicVal != nil {
-					lrw.statusCode = http.StatusInternalServerError
-					panic(panicVal)
-				}
-
-				if lrw.statusCode >= http.StatusInternalServerError {
+				if lrw.statusCode >= 500 {
 					logLevel = zerolog.ErrorLevel
-				} else if lrw.statusCode >= http.StatusBadRequest {
+				} else if lrw.statusCode >= 400 {
 					logLevel = zerolog.WarnLevel
-				}
-				queryString := ""
-				if r.URL.RawQuery != "" {
-					queryString = "?" + r.URL.RawQuery
 				}
 
 				reqLogger.WithLevel(logLevel).
 					Dur("duration", time.Since(start)).
-					Str("info", fmt.Sprintf("[%v] %s: %s%s", lrw.statusCode, r.Method, r.URL.RequestURI(), queryString)).Msg("Request processed")
+					Int("status", lrw.statusCode).
+					Msg("request completed")
 			}()
+
 			next.ServeHTTP(lrw, r)
 		})
 	}
 }
 
+
 const keyUserID int = 0
-
-/*func Auth(userService user.Service) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer") {
-				utils.WriteError(w, http.StatusUnauthorized, "Missing token")
-				return
-			}
-			token := strings.TrimPrefix(authHeader, "Bearer ")
-			userId, err := userService.ValidateSession(ctx, token)
-			fmt.Println("got userid", userId)
-			if err != nil {
-				logger := logger.FromContext(ctx)
-				logger.Error().Msg(fmt.Sprintf("missing session auth token: %w", err))
-				utils.WriteError(w, http.StatusUnauthorized, "Invalid Session")
-				return
-			}
-			r = r.WithContext(context.WithValue(ctx, keyUserID, userId))
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-/*
-func verifyJWT(endpointHandler func(writer http.ResponseWriter, request *http.Request))  http.HandlerFunc{
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.Header["Token"] != nil {
-			token, err := jwt.Parse(request.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
-				_, ok := token.Method.(*jwt.SigningMethodHS256)
-				if !ok {
-					writer.WriteHeader(http.StatusUnauthorized)
-					_, err := writer.Write([]byte("You're Unauthorized!"))
-					if err != nil {
-						return nil, err
-
-					}
-				}
-				return "", nil
-
-			})
-			if err != nil {
-				writer.WriteHeader(http.StatusUnauthorized)
-				_, err2 := writer.Write([]byte("You're Unauthorized due to error parsing the JWT"))
-				if err2 != nil {
-					return
-				}
-			}
-			if token.Valid {
-				endpointHandler(writer, request)
-			} else {
-				writer.WriteHeader(http.StatusUnauthorized)
-				_, err := writer.Write([]byte("You're Unauthorized due to invalid token"))
-				if err != nil {
-					return
-				}
-			}
-		} else {
-			writer.WriteHeader(http.StatusUnauthorized)
-			_, err := writer.Write([]byte("You're Unauthorized due to No token in the header"))
-			if err != nil {
-				return
-			}
-		}
-	})
-}*/
 
 func Cors() func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{

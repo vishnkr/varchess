@@ -18,7 +18,11 @@ type Template struct {
 
 type GameConfig struct {
 	VariantType string    `json:"variantType" bson:"variantType"`
-	Position    Position  `json:"position" bson:"position"`
+	Name string				`json:"name,omitempty"`
+	Dimensions     Dimensions                  `json:"dimensions" bson:"dimensions"`
+	FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
+	PieceProps     map[string]PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+	PieceLocations map[string]map[string][]int `json:"pieceLocations,omitempty" bson:"pieceLocations,omitempty"` // Maps color -> piece type -> piece locations
 	CustomData   map[string]interface{} `json:"customData" bson:"customData"`
 }
 

@@ -156,8 +156,7 @@ func HandleValidateAuth(database *db.DB) http.HandlerFunc {
 			return
 		}
 		response := map[string]string{
-			"status": "ok",
-			"user_id": userID,
+			"userId": userID,
 			"username": user["username"].(string),
 		}
 

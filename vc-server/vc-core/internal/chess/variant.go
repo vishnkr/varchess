@@ -53,7 +53,7 @@ func (v *variant) SwitchTurn(){
 func NewVariant(gameConfig models.GameConfig) (Variant, error) {
 	var variantType = Checkmate
 	var newVariant Variant
-    fen := gameConfig.Position.FEN
+    fen := gameConfig.FEN
 	position, err := ParseFEN(fen)
 	if err != nil {
 		return nil, err

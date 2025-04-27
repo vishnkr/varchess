@@ -16,6 +16,9 @@ type Event struct {
 	Timestamp int64     `json:"ts"`
 }
 
+const SystemAction = "system_action"
+const UserAction = "user_action"
+
 const (
 	Start EventType = "start" // one directional vc-core-> vc-ws
 

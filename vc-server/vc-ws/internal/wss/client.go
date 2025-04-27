@@ -13,6 +13,9 @@ type Client struct {
 	userId string
     game *Game
 	send chan []byte
+    gameID       string
+    colorPref    string
+    authenticated bool
 }
 
 func (c *Client) ReadPump() {

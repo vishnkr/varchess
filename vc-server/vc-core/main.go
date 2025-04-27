@@ -13,6 +13,7 @@ import (
 	"vc-server/vc-core/internal/config"
 	"vc-server/vc-core/internal/db"
 	"vc-server/vc-core/internal/logger"
+	"vc-server/vc-core/internal/middleware"
 	mw "vc-server/vc-core/internal/middleware"
 	"vc-server/vc-core/internal/worker"
 
@@ -45,6 +46,7 @@ func main(){
         MaxAge:           300,
     })
 	router.Use(corsMiddleware.Handler)
+	router.Use(middleware.RequestLogger())
 	router.Post("/signup", handlers.HandleSignup(dbConn))
 	router.Post("/login", handlers.HandleLogin(dbConn))
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
