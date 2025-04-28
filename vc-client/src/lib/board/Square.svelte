@@ -112,6 +112,7 @@
 						return;
 					}
 					if ($pieceEditor.pieceSelection)
+					console.log('pp',$pieceEditor.pieceSelection)
 						editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 							isPiecePresent: piece ? false : true,
 							piece: piece ? null : $pieceEditor.pieceSelection.piece

@@ -82,6 +82,9 @@
 .bv {
 	background-image: url('/src/lib/assets/pieces/black/v.svg');
 }
+.bz {
+	background-image: url('/src/lib/assets/pieces/black/z.svg');
+}
 
 .wa {
 	background-image: url('/src/lib/assets/pieces/white/a.svg');
@@ -137,4 +140,8 @@
 
 .wv {
 	background-image: url('/src/lib/assets/pieces/white/v.svg');
+}
+
+.wz {
+	background-image: url('/src/lib/assets/pieces/white/z.svg');
 }

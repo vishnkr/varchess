@@ -22,7 +22,6 @@
 		{ name: 'Dolphin', notation: 'd' },
 		{ name: 'Ninja', notation: 'i' },
 		{ name: 'Unicorn', notation: 'u' },
-		{ name: 'Tower', notation: 't' },
 		{ name: 'Giraffe', notation: 'g' },
 		{ name: 'Juicer', notation: 'j' },
 		{ name: 'Astronaut', notation: 'a' },
@@ -95,8 +94,13 @@
 		}
 	}
 </script>
-<div class="bg-white dark:bg-darkbg2 text-black dark:text-white p-4 rounded-lg">
+<div class="bg-white dark:bg-darkbg2 text-black dark:text-lightbg p-4 rounded-lg">
 	<div class="grid grid-rows">
+		<div class="mb-4 text-center">
+			<p class="text-sm text-gray-600 dark:text-gray-400">
+				Select a color and piece, then click on the board to place it.
+			</p>
+		</div>
 	  <div class="grid grid-rows">
 		{#if !setMovePattern}
 		  <div class="grid grid-cols-2 gap-2 my-2">
@@ -105,10 +109,10 @@
 			<div
 			  class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
 				color === Color.WHITE ? 'border-green-500' : 'border-gray-800'
-			  } bg-white dark:bg-gray-700`}
+			  } bg-white`}
 			  on:click={() => updateColor(Color.WHITE)}
 			>
-			  <span class="text-black font-semibold dark:text-white">White</span>
+			  <span class="text-black font-semibold">White</span>
 			</div>
   
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -116,10 +120,10 @@
 			<div
 			  class={`flex items-center justify-center rounded-md mx-2 p-4 cursor-pointer border-2 transition-all duration-150 ${
 				color === Color.BLACK ? 'border-green-500' : 'border-gray-800'
-			  } bg-black dark:bg-gray-600`}
+			  } bg-black`}
 			  on:click={() => updateColor(Color.BLACK)}
 			>
-			  <span class="text-white font-semibold dark:text-gray-200">Black</span>
+			  <span class="text-white font-semibold">Black</span>
 			</div>
 		  </div>
   
@@ -127,25 +131,20 @@
 			{#each standardPieces as piece}
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			  <div
-				class="flex items-center rounded-md pl-4 m-1.5 bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer dark:bg-gray-800"
-				on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'standard')}
-			  >
-				<input
-				  class="cursor-pointer text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-				  type="radio"
-				  name="piece"
-				  value={piece.notation}
-				  bind:group={selectedPiece.piece.notation}
-				/>
-				<label
-				  for={piece.notation}
-				  class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white"
-				>
-				  {piece.name}
-				</label>
-				<img src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`} alt="piece" />
-			  </div>
+			<div
+			class={`flex items-center rounded-md pl-4 m-1.5 cursor-pointer border-2 transition dark:bg-gray-700
+			  ${selectedPiece.piece.notation === piece.notation && selectedPiece.group === 'standard' 
+				? 'border-green-500 bg-green-100 dark:bg-green-800/20'
+				: 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/30'}
+			`}
+			on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'standard')}
+		  >
+			<label class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white">
+			  {piece.name}
+			</label>
+			<img src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`} alt="piece" />
+		  </div>
+		  
 			{/each}
 		  </div>
   
@@ -158,36 +157,26 @@
 			>
 			  Set Move Pattern
 			</Button>
-			<div class="relative grid grid-cols-1">
+			<div class="relative grid grid-cols-2">
 			  {#each customPieces as piece}
 			  <!-- svelte-ignore a11y-click-events-have-key-events -->
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
-				<div
-				  class="flex flex-cols items-center rounded-md
-				  bg-gray-300 border border-gray-200 dark:border-gray-700 cursor-pointer my-1 dark:bg-gray-800"
-				  on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'custom')}
-				>
-				  <div class="w-2/3">
-					<input
-					  class="text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-					  type="radio"
-					  name="piece"
-					  value={piece.notation}
-					  bind:group={selectedPiece.piece.notation}
-					/>
-					<label
-					  for={piece.notation}
-					  class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white"
-					>
-					  {piece.name}
-					</label>
-				  </div>
-				  <img
-					class="w-1/3 max-h-12"
-					src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`}
-					alt="piece"
-				  />
-				</div>
+			<div
+			class={`flex items-center rounded-md p-2 m-1 cursor-pointer border-2 transition dark:bg-gray-700
+			  ${selectedPiece.piece.notation === piece.notation && selectedPiece.group === 'custom' 
+				? 'border-green-500 bg-green-100 dark:bg-green-800/20'
+				: 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/30'}
+			`}
+			on:click={() => selectPiece(piece.name?.toLowerCase(), piece.notation, 'custom')}
+		  >
+			<div class="w-2/3">
+			  <!-- svelte-ignore a11y-label-has-associated-control -->
+			  <label class="w-full py-4 ml-2 text-md font-medium text-gray-900 cursor-pointer dark:text-white">
+				{piece.name}
+			  </label>
+			</div>
+			<img class="w-1/3 max-h-12" src={`/src/lib/assets/pieces/${color}/${piece.notation}.svg`} alt="piece" />
+		  </div>
 			  {/each}
 			</div>
 		  </div>

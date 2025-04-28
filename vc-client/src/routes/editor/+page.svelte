@@ -211,9 +211,9 @@
 	}
 
 	const saveTemplate = async () => {
-		if(templateName.length==0){
+		if (templateName.length == 0) {
 			toast.error('Template name cannot be empty.');
-			return
+			return;
 		}
 		const payload = getTemplatePayload();
 		try {
@@ -230,7 +230,7 @@
 		}
 	};
 
-	const playGame = async () =>{
+	const playGame = async () => {
 		const authStr = localStorage.getItem('auth');
 		if (!authStr) {
 			goto('/login');
@@ -241,27 +241,27 @@
 		const accessToken = auth?.accessToken;
 		if (!userId || !accessToken) return;
 		const gameConfig = getTemplatePayload();
-		const payload = {gc: gameConfig, templateId: templateId}
-		try{
-			console.log('cr payload',payload)
+		const payload = { gc: gameConfig, templateId: templateId };
+		try {
+			console.log('cr payload', payload);
 			let { gameId } = await createGame(payload);
-			console.log('ggame',gameId)
+			console.log('ggame', gameId);
 			let colorPref = playAsWhite ? 'w' : 'b';
 			gameState.updateStatus(Status.Waiting);
 			const url = `ws://${import.meta.env.VITE_WS_HOST}/play/${gameId}`;
-			
+
 			const connectPayload = {
 				token: accessToken,
 				userId: userId,
 				colorPref: colorPref
-			}
-			await wsStore.newWebSocketConnection(url,connectPayload,'create')
+			};
+			await wsStore.newWebSocketConnection(url, connectPayload, 'create');
 			goto(`/play/${gameId}`);
-		} catch(err){
-			console.log(err)
+		} catch (err) {
+			console.log(err);
 			toast.error('Unable to start game. Please try again later.');
 		}
-	}
+	};
 </script>
 
 <svelte:head>
@@ -302,38 +302,46 @@
 							</Button>
 						</div>
 					</div>
-					<div class="grid grid-cols-2">
+					<!-- "Play as" Section -->
+					<div class="flex items-center justify-center my-4 gap-4">
+						<!-- Play as Text -->
+						<div class="text-md dark:text-white font-semibold">Play as</div>
+
+						<!-- Play as Buttons -->
 						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<div
-							class={`flex items-center rounded-md p-4 m-1.5 bg-white hover:bg-gray-500 hover:text-white  border border-gray-200 dark:border-gray-700 cursor-pointer`}
-							on:click={() => (playAsWhite = true)}
-						>
-							<input
-								class="cursor-pointer w-4 h-4 text-black-600 bg-white border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-								type="radio"
-								value="White"
-								name="color"
-								checked={playAsWhite}
-							/>
-							<label class="ml-2 cursor-pointer" for="White">Play as White</label>
-						</div>
-						<!-- svelte-ignore a11y-click-events-have-key-events -->
-						<!-- svelte-ignore a11y-no-static-element-interactions -->
-						<div
-							class="flex items-center rounded-md pl-4 m-1.5 text-white bg-black hover:bg-gray-500 border border-gray-200 dark:border-gray-700 cursor-pointer"
-							on:click={() => (playAsWhite = false)}
-						>
-							<input
-								class="cursor-pointer w-4 h-4 text-white bg-black border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-								type="radio"
-								value="Black"
-								name="color"
-								checked={!playAsWhite}
-							/>
-							<label class="ml-2 cursor-pointer" for="Black">Play as Black</label>
+						<div class="flex gap-2">
+							<!-- Play as White -->
+							<div
+								class={`flex items-center justify-center rounded-md px-4 py-2 border cursor-pointer transition text-sm
+									${
+										playAsWhite
+											? 'border-green-500 bg-green-100 dark:bg-green-800/20 text-black dark:text-white'
+											: 'border-gray-300 dark:border-gray-600 bg-white text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/30'
+									}
+								`}
+								on:click={() => (playAsWhite = true)}
+							>
+								<label class="cursor-pointer" for="White">White</label>
+							</div>
+
+							<!-- Play as Black -->
+							<!-- svelte-ignore a11y-click-events-have-key-events -->
+							<div
+								class={`flex items-center justify-center rounded-md px-4 py-2 border cursor-pointer transition text-sm
+									${
+										!playAsWhite
+											? 'border-green-500 bg-green-100 dark:bg-green-800/20 text-black dark:text-white'
+											: 'border-gray-300 dark:border-gray-600 bg-black text-white hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/30'
+									}
+								`}
+								on:click={() => (playAsWhite = false)}
+							>
+								<label class="cursor-pointer" for="Black">Black</label>
+							</div>
 						</div>
 					</div>
+
 					<ExpandableCard svg={BoardIcon} title="Board Editor">
 						<BoardEditor
 							bind:dimensions={boardConfig.dimensions}
@@ -369,7 +377,12 @@
 				</DialogHeader>
 				<div class="grid gap-4 py-4">
 					<label for="templateName" class="text-sm font-medium">Template Name</label>
-					<Input id="templateName" required placeholder={getRandomPlaceholder()} bind:value={templateName} />
+					<Input
+						id="templateName"
+						required
+						placeholder={getRandomPlaceholder()}
+						bind:value={templateName}
+					/>
 				</div>
 				<DialogFooter class="flex justify-end gap-2">
 					<DialogClose asChild>

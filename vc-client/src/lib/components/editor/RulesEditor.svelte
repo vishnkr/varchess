@@ -10,35 +10,35 @@
 	const variantTypes = [
 		{ 	name: 'Checkmate', 
 			type: VariantType.Checkmate, 
-			desc: 'Check the king and attack all of its escape squares to win',
+			desc: 'You know the rules.',
 			ruleComponent: Checkmate
 		},
 		{ 	name: 'Antichess',
 			type: VariantType.Antichess,
-			desc: 'Sacrifice all of your pieces on the board to win',
+			desc: 'Try to lose all your pieces faster than your opponent.',
 			ruleComponent: Antichess
 		},
 		{ 	name: 'n-Check', 
 			type: VariantType.NCheck, 
-			desc: 'Check the opponent king n-times to win',
+			desc: "Check the king n times. Because one check is never enough.",
 			ruleComponent: NCheck 
 		},
 		{
 			name: 'GoalChess',
 			type: VariantType.GoalChess,
-			desc: 'Move one of your selected pieces to a target square on the board to win'
+			desc: "Forget kings, just race your piece to the goal square."
 		},
 		{ 	name: 'Duck Chess', 
 			type: VariantType.DuckChess,
-			desc: 'Move a duck along with a piece' 
+			desc: "Like classic chess, but there's an immortal duck blocking the board."
 		},
 		{ 	name: 'Wormhole', 
 			type: VariantType.Wormhole, 
-			desc: 'Chess with teleportation' 
+			desc: 'Teleport across the board because walking is overrated.' 
 		},
 		{ 	name: 'Archer Chess', 
 			type: VariantType.ArcherChess,
-			desc: 'Chess with ranged attacks' 
+			desc: 'Why move next to your enemies when you can just shoot them from across the board?' 
 		}
 	];
 
@@ -72,34 +72,24 @@
 	<div class="m-2">
 		<h3 class="font-bold md:text-md sm:text-lg">Select Variant Type</h3>
 		<div class="relative flex flex-col" id="goal">
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			{#each variantTypes as variant, index}
-				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<div
-					class="p-1 m-1 flex lg:flex-row flex-col items-center space-x-3 cursor-pointer
-                    {variant.type === $ruleEditor.variantType
-						? 'border-indigo-900 border-solid border-2 rounded'
-						: 'border-gray-300'}"
-					on:click={()=>setVariant(variant.type)}
-				>
-					<input
-						type="radio"
-						class="form-radio text-indigo-600 h-4 w-4"
-						value={variant.name}
-						checked={$ruleEditor.variantType === variant.type}
-					/>
-					<h5 class="font-semibold text-md">{variant.name}</h5>
-					<h6 class="text-sm">{variant.desc}</h6>
-				</div>
-			{/each}
-			{#if loggedIn}
-				<div
-					class="absolute inset-0 flex flex-col bg-black opacity-70 rounded items-center justify-center"
-				>
-					<!-- Content for the overlay div -->
-					<i class="fa-solid fa-lock" style="color: #ffffff;" />
-					<p class="text-white md:text-2xl text-lg px-2">Login to modify objective</p>
-				</div>
-			{/if}
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div
+		class="p-3 m-2 flex flex-col lg:flex-row items-center justify-center text-center lg:text-left space-y-2 lg:space-y-0 lg:space-x-3 cursor-pointer rounded-xl border-2 transition
+		{variant.type === $ruleEditor.variantType
+			? 'border-green-500 bg-green-100 dark:bg-green-800/20'
+			: 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700/30'}"
+		on:click={() => setVariant(variant.type)}
+	>
+		<div class="flex flex-col flex-1">
+			<h5 class="font-semibold text-md">{variant.name}</h5>
+			<h6 class="text-sm text-gray-600 dark:text-gray-400">{variant.desc}</h6>
+		</div>
+	</div>
+{/each}
+
 		</div>
 	</div>
 </div>
