@@ -46,11 +46,11 @@ export enum VariantMoveType {
   }
   
 export interface Move {
-	src: number,
-	dest: number,
-	classic_move_type: ClassicMoveType,
-	variant_move_type?: VariantMoveType,
-	piece: IPiece
+	from: number,
+	to: number,
+	additionalData?: Object,
+	variantMoveType?: VariantMoveType,
+	piece: string
 }
 
 export enum BoardType {
@@ -203,7 +203,7 @@ export type EventType =
 	| 'game.disconnect_user'
 	| 'game.set_players'
 	| 'game.result'
-	| 'game.make_move'
+	| 'move'
 	| 'game.offer_draw'
 	| 'game.draw_result'
 	| 'game.resign'
@@ -217,7 +217,7 @@ export const EventJoinGame: EventType = 'game.join_game';
 export const EventUserDisconnect: EventType = 'game.disconnect_user';
 export const EventSetPlayers: EventType = 'game.set_players';
 export const EventGameResult: EventType = 'game.result';
-export const EventGameMakeMove: EventType = 'game.make_move';
+export const EventGameMakeMove: EventType = 'move';
 export const EventGameDrawOffer: EventType = 'game.offer_draw';
 export const EventGameDrawResult: EventType = 'game.draw_result';
 export const EventGameResign: EventType = 'game.resign';

@@ -124,6 +124,7 @@
 		<ToastContainer />
 		<main class="flex">
 			{#if auth.accessToken && authRoutes.includes($page.url.pathname)}
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div
 			on:mouseenter={handleSidebarHover}
 			on:mouseleave={handleSidebarLeave}
@@ -133,8 +134,10 @@
 				   bg-lightbg dark:bg-darkbg z-40"
 		>
 					<ul class="flex flex-col space-y-4 p-2">
+						<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 						{#each sidebarItems as item}
 							<!-- svelte-ignore a11y-click-events-have-key-events -->
+							<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 							<li
 								class="group flex items-center space-x-4 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
 								on:click={() => goto(item.route)}

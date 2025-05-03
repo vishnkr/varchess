@@ -43,13 +43,6 @@ export enum VariantMoveType {
 	Duck = "Duck"
   }
   
-export interface Move {
-	src: number,
-	dest: number,
-	classic_move_type: ClassicMoveType,
-	variant_move_type?: VariantMoveType,
-	piece: IPiece
-}
 
 export enum BoardType {
 	// Editor: clicks on squares adds/removes pieces/walls

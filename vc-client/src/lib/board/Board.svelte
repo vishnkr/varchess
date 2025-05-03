@@ -4,7 +4,7 @@
 	import slide from '$lib/assets/svg/slide.svg';
 	import jump from '$lib/assets/svg/jump.svg';
 	import './board-styles.css';
-	import type { BoardConfig, Move } from './types';
+	import type { BoardConfig } from './types';
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
 	
@@ -20,32 +20,13 @@
 
 	export let customBoardId = 'board';
 	export let position: Position;
+	export let markedTargets: number[] = [];
 	export let mpSquares: Record<number, MoveType> | null = null;
 	function isCursorBoardType(bType: BoardType): boolean {
 		return bType !== BoardType.MovePatternView && bType != BoardType.View;
 	}
-	let markedTargets: number[] = [];
 
 	$: squares = generateSquareMaps(boardConfig.dimensions, isFlipped).squares;
-
-	$: {
-		if($src && $moveSelectorPiece){
-		//set marked targets
-		markedTargets = $legalMoves
-		.filter((move: Move)=> move.src===$src)// && $piece?.pieceType===move.piece.pieceType})
-		.map((move:Move)=> move.dest)
-		markedTargets.forEach((target)=>{ squares[target].isMarkedTarget = true;})
-		} else { 
-			markedTargets = []; 
-			for (let square in squares){
-				squares[square].isMarkedTarget = false;
-			}
-		}
-	}
-
-	$: if($dest && isGameBoard(boardConfig.boardType)){
-		console.log('dest ',$dest,$src,$moveSelectorPiece)
-	}
 	
 
 	const isMPSquareOcc = (idx:number)=> isMovePatternEditor(boardConfig.boardType) && mpSquares && mpSquares[idx] !== undefined;
@@ -65,6 +46,7 @@
 					piece={position.piecePositions[idx] ?? null}
 					wall={position.walls[idx] ?? false}
 					boardType={boardConfig.boardType}
+					isMarkedTarget={markedTargets.includes(idx)}
 					nonPieceSvg={isMPSquareOcc(idx) && mpSquares ? mpSquares[idx] === MoveType.Slide ? slide : jump : null}
 				/>
     	{/each}

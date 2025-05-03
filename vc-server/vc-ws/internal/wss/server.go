@@ -177,21 +177,3 @@ func getPlayerColor(game *Game, colorPref string) string {
     return ""
 }
 
-func (c *Client) listenForMessages() {
-    defer func(){
-        c.game.handleDisconnect(c)
-        c.conn.Close()
-    }()
-    for {
-        _, message, err := c.conn.ReadMessage()
-        if err != nil {
-            fmt.Println("WebSocket read error:", err)
-            return
-        }
-        processMessage(c, message)
-    }
-}
-
-func processMessage(c *Client, msg []byte) {
-    // TODO: Validate move with core server via Redis
-}

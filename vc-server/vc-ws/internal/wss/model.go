@@ -30,7 +30,7 @@ type WSMessage struct {
     Payload interface{} `json:"p"`
 }
 
-type MoveMessage struct {
+type MovePayload struct {
     Move string `json:"m"`
 }
 

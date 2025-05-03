@@ -1,9 +1,10 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType, positionStore, fen, dimensions } from './store/stores';
 import { camelToSnake } from './utils/index';
-import type { EventType, WSParams, Move} from './types';
+import type { EventType, Move, WSParams} from './types';
 import { EventGameDrawOffer, EventGameResign, EventUserConnect, EventUserDisconnect, EventChatMessage, EventJoinGame, EventStartGame, EventGameMakeMove } from './types';
 import { convertFenToPosition } from './board/fen';
+import { toast } from './store/alert';
 
 interface UserJoin {
 	id: number;
@@ -49,59 +50,73 @@ export function sendResign(ws:WebSocket, gameId:string){
 }
 
 
-function createWebSocketStore(ws: WebSocket | null) {
-	const { subscribe, set, update } = writable<WebSocket | null>(ws);
-	return {
-		newWebSocketConnection: async (
-			wsServerUrl: string,
-			params: ConnectParams,
-			connectType: ConnectType = 'join'
-		) => {
-			const ws = await new WebSocket(wsServerUrl);
-	
-			ws.onopen = () => {
-				
-				const wsMessage = {
-					token: params.token,
-					colorPref: params.colorPref 
-				}
-				//const wsMessage = { event: `game.${connectType}_game`, params: connectPayload };
-				const json = JSON.stringify(wsMessage);
-				ws.send(json);
-				console.log('WebSocket connection success');
+function createWebSocketStore() {
+	const socket = writable<WebSocket | null>(null);
+
+	function newWebSocketConnection(
+		wsServerUrl: string,
+		params: ConnectParams,
+		connectType: ConnectType = 'join'
+	) {
+		const newWs = new WebSocket(wsServerUrl);
+
+		newWs.onopen = () => {
+			const wsMessage = {
+				token: params.token,
+				colorPref: params.colorPref
 			};
-			ws.onclose = () => {
-				console.log('close called');
-				set(null);
-				gameId.set(null);
-				templateStore.removeTemplate();
-			};
-			ws.onerror = (e) => {
-				console.error('WebSocket connection error:', e);
-				return;
-			};
-			ws.onmessage = (e) => {
-				const data = JSON.parse(e.data);
-				console.log('[WebSocket] Received:', data);
-				handleMessage(data);
-			};			
-			set(ws);
-		},
-		subscribe,
-		set,
-		update,
-		sendMove: (move:Move)=>{
-			if (ws && ws.readyState === WebSocket.OPEN) {
-				ws.send(JSON.stringify(move));
-			}
-		},
-		close: () => {
-			if (ws) {
-				ws.close();
-			}
+			newWs.send(JSON.stringify(wsMessage));
+			console.log('WebSocket connected');
+		};
+
+		newWs.onclose = () => {
+			console.log('WebSocket closed');
+			socket.set(null);
+			gameId.set(null);
+			templateStore.removeTemplate();
+		};
+
+		newWs.onerror = (e) => {
+			toast.error('Websocket error',3000);
+			console.error('WebSocket error:', e);
+		};
+
+		newWs.onmessage = (e) => {
+			const data = JSON.parse(e.data);
+			console.log('[WebSocket] Received:', data);
+			handleMessage(data);
+		};
+
+		socket.set(newWs);
+	}
+
+	function sendMove(move: Move) {
+		const ws = get(socket);
+		if (ws && ws.readyState === WebSocket.OPEN) {
+			const msg = { t: 'move', p: { m: move } };
+			console.log('Sending move:', msg);
+			ws.send(JSON.stringify(msg));
+		} else {
+			console.warn('WebSocket not open. Cannot send move.');
 		}
+	}
+
+	function close() {
+		const ws = get(socket);
+		if (ws) {
+			ws.close();
+		}
+	}
+
+	return {
+		subscribe: socket.subscribe,
+		newWebSocketConnection,
+		sendMove,
+		close,
+		set: socket.set
 	};
 }
+
 
 function handleMessage(data: any) {
 	console.log('got',data)
@@ -135,13 +150,15 @@ function handleMessage(data: any) {
 			break;
 		case EventGameMakeMove:
 			// Handle moves
+			const move = eventData.m
+			positionStore.makeMove(move);
 			break;
 		default:
 			console.warn('[WebSocket] Unknown event:', data.event);
 	}
 }
 
-const wsStore = createWebSocketStore(null);
+const wsStore = createWebSocketStore();
 export {
 	createWebSocketStore,
 	wsStore

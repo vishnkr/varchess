@@ -1,6 +1,8 @@
 package wss
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -19,19 +21,48 @@ type Client struct {
     authenticated bool
 }
 
-func (c *Client) ReadPump() {
-    defer func() {
-        c.game.UnregisterClient(c)
+func (c *Client) listenForMessages() {
+    defer func(){
+        c.game.handleDisconnect(c)
         c.conn.Close()
     }()
     for {
-        _, msg, err := c.conn.ReadMessage()
+        _, message, err := c.conn.ReadMessage()
         if err != nil {
-            c.game.UnregisterClient(c)
-            break
+            fmt.Println("WebSocket read error:", err)
+            return
         }
-        c.game.HandleMessage(c, msg)
+        processMessage(c, message)
     }
+}
+
+func processMessage(c *Client, msg []byte) {
+    // TODO: Validate move with core server via Redis
+    var wsMsg WSMessage
+	json.Unmarshal(msg, &wsMsg)
+
+	switch wsMsg.Type {
+	case "move":
+		moveEvent := Event{GameID: c.gameID, UserID: c.userId, Type: Move, Data: wsMsg.Payload}
+		//var move MovePayload
+		//json.Unmarshal(wsMsg.Payload, &move)
+		//r. .Moves = append(r.gameState.Moves, move)
+
+		//hub.SaveGameStateToRedis(r.gameID, r.gameState)
+        moveJson,err := json.Marshal(moveEvent)
+		//r.Broadcast(msg)
+		err = redisClient.Publish(context.Background(), UserAction, moveJson).Err()
+		if err != nil {
+			fmt.Println("Error publishing join event to Redis:", err)
+			return
+		}
+	case "chat":
+		//r.Broadcast(msg)
+	case "resign":
+		//r.Broadcast(msg)
+	case "draw_offer":
+		//r.Broadcast(msg)
+	}
 }
 
 func (c *Client) listenForWrites() {

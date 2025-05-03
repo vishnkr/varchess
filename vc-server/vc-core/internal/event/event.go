@@ -36,5 +36,5 @@ type JoinPayload struct {
 }
 
 type MovePayload struct{
-	Move chess.Move `json:"m"`
+	Move chess.MoveJSON `json:"m"`
 }

@@ -16,14 +16,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-
-
 type WorkerPool struct {
-	workers   []*Worker
+	workers      []*Worker
 	EventChannel chan e.Event
-	wg        sync.WaitGroup
-	db *db.DB
-	
+	wg           sync.WaitGroup
+	db           *db.DB
 }
 
 type Worker struct {
@@ -31,25 +28,23 @@ type Worker struct {
 	pool *WorkerPool
 }
 
-
-
-func NewWorkerPool(workerCount int,db *db.DB) *WorkerPool{
+func NewWorkerPool(workerCount int, db *db.DB) *WorkerPool {
 	wp := &WorkerPool{
 		EventChannel: make(chan e.Event, 100),
-		db: db,
+		db:           db,
 	}
 	wp.startPool(workerCount)
 	return wp
 }
 
 func (wp *WorkerPool) ConsumeEvent(event interface{}) {
-    specificEvent, ok := event.(e.Event)
-    if !ok {
-        log.Println("Invalid event type received")
-        return
-    }
-    
-    wp.EventChannel <- specificEvent
+	specificEvent, ok := event.(e.Event)
+	if !ok {
+		log.Println("Invalid event type received")
+		return
+	}
+
+	wp.EventChannel <- specificEvent
 }
 
 func (w *Worker) start() {
@@ -94,7 +89,7 @@ func (w *Worker) processEvent(event e.Event) {
 	}
 }
 
-func (w *Worker) processJoin(event e.Event){
+func (w *Worker) processJoin(event e.Event) {
 	r := w.pool.db.RedisClient
 	ctx := context.Background()
 	var payload e.JoinPayload
@@ -123,8 +118,8 @@ func (w *Worker) processJoin(event e.Event){
 		log.Println("Invalid color:", payload.Color)
 		return
 	}
-	player,err:= w.pool.getUserDetailsFromId(event.UserID)
-	if err!=nil{
+	player, err := w.pool.getUserDetailsFromId(event.UserID)
+	if err != nil {
 		return
 	}
 	activeGame.Players[payload.Color] = player
@@ -132,10 +127,10 @@ func (w *Worker) processJoin(event e.Event){
 	playerB, okB := activeGame.Players["b"]
 	canStart := okW && okB && playerW != playerB
 
-	if canStart{
+	if canStart {
 		activeGame.State = models.InProgress
 	}
-	
+
 	updatedGameStateJSON, err := json.Marshal(activeGame)
 	if err != nil {
 		log.Println("Error serializing updated game state:", err)
@@ -165,36 +160,39 @@ func (w *Worker) processJoin(event e.Event){
 			log.Printf("Game %s started: %s", event.GameID, eventJSON)
 		}
 	}
-	
+
 }
 
-func (w *Worker) processMove(event e.Event){
+func (w *Worker) processMove(event e.Event) {
 	r := w.pool.db.RedisClient
-	_  = context.Background()
+	_ = context.Background()
 	var payload e.MovePayload
 	if err := json.Unmarshal([]byte(event.Data), &payload); err != nil {
 		log.Println("Invalid move payload:", err)
 		return
 	}
-	//validate move here 
-	r.Publish(context.TODO(), e.UserAction, payload)
+	//validate move here
+	event.Type = e.Move
+	eventJSON, err := json.Marshal(event)
+	if err != nil {
+		log.Println("Error serializing game start event:", err)
+		return
+	}
+	r.Publish(context.TODO(), e.SystemAction, eventJSON)
 }
 
-func (wp *WorkerPool) getUserDetailsFromId(userId string)(models.Player,error){
+func (wp *WorkerPool) getUserDetailsFromId(userId string) (models.Player, error) {
 	dbClient := wp.db
 	collection := dbClient.Collection("users")
 	ctx := context.Background()
 	//defer cancel()
-	
 
 	userIdHex, err := primitive.ObjectIDFromHex(userId)
 	if err != nil {
 		return models.Player{}, fmt.Errorf("invalid user ID format: %w", err)
 	}
-	
 
 	var user models.Player
-	
 
 	err = collection.FindOne(ctx, bson.M{"_id": userIdHex}).Decode(&user)
 	if err != nil {
@@ -203,7 +201,7 @@ func (wp *WorkerPool) getUserDetailsFromId(userId string)(models.Player,error){
 		}
 		return models.Player{}, fmt.Errorf("error finding user: %w", err)
 	}
-	
+
 	return user, nil
-	
+
 }

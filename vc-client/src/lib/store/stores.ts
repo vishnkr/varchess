@@ -200,17 +200,40 @@ function newGameState() {
 
 const gameState = newGameState();
 
-export function createPositionStore(initialPosition:Position) {
-	const { subscribe, update, set } = writable(initialPosition);
+export function createPositionStore(initialPosition:Position|null) {
+	const { subscribe, update, set } = writable<Position|null>(null);
   
 	return {
 	  subscribe,
 	  set,
 	  update,
-	  reset: () => set(initialPosition)
+	  reset: () => set(initialPosition),
+	  makeMove: (move: Move) => {
+		update((pos) => {
+			if (!pos) return pos;
+
+			const { from, to } = move;
+			const piece = pos.piecePositions[from];
+
+			if (!piece) {
+				console.warn(`No piece at source square ${src}`);
+				return pos;
+			}
+
+			const newPiecePositions = { ...pos.piecePositions };
+
+			delete newPiecePositions[from];
+			newPiecePositions[to] = piece;
+
+			return {
+				...pos,
+				piecePositions: newPiecePositions
+			};
+		});
+	}
 	};
   }
-  export const positionStore = writable<Position | null>(null);
+  export const positionStore = createPositionStore(null);
 
   export const fen = writable<string|null>(null);
   export const dimensions = writable<{ ranks: number; files: number }|null>(null);

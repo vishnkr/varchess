@@ -16,12 +16,12 @@ type Move struct {
 }
 
 type MoveJSON struct {
-    Piece           string `json:"p"`
-    From           int    `json:"f"`
-    To             int    `json:"t"`
-    Capture        bool   `json:"capture"`
+    Piece           string `json:"piece"`
+    From           int    `json:"from"`
+    To             int    `json:"to"`
+    Capture        bool   `json:"capture,omitempty"`
     Promotion      string `json:"promotion,omitempty"`
-    ClassicMoveType classicMoveType `json:"classic_move_type"`
+    ClassicMoveType classicMoveType `json:"classic_move_type,omitempty"`
     VariantMoveType string `json:"variant_move_type,omitempty"`
     AdditionalData interface{} `json:"additional_data,omitempty"`
 }

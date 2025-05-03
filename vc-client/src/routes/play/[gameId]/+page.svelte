@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Board from '$lib/board/Board.svelte';
-	import { BoardType, type BoardConfig, type Move } from '$lib/board/types';
+	import { BoardType, type BoardConfig } from '$lib/board/types';
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import { onMount } from 'svelte';
@@ -76,23 +76,7 @@
 	});
 	//let chesscore;
 	//const {legalMoves } = moveSelector;
-	$: {
-		if ($templateStore) {
-			const config_json = JSON.stringify(camelToSnake($templateStore));
-			if (isMounted){
-				//chesscore = chessCore.loadPosition(config_json);
-				//let moves:Move[] = chessCore.getLegalMoves();
-				//console.log(moves)
-				//legalMoves.set(moves)
-			}
-			
-			/*boardConfig = {
-				fen: $templateStore.fen,
-				dimensions: $templateStore.dimensions,
-				boardType: BoardType.GameBoard
-			};*/
-		}
-	}
+
 	
 	function clearStores(){
 		wsStore.set(null);
