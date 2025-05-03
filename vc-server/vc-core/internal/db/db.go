@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 	"vc-server/vc-core/internal/config"
-	"vc-server/vc-core/internal/worker"
+	e "vc-server/vc-core/internal/event"
 
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,9 +16,13 @@ import (
 )
 
 type DB struct {
-	client *mongo.Client
+	Client *mongo.Client
 	dbName string
 	RedisClient *redis.Client
+}
+
+type EventConsumer interface {
+    ConsumeEvent(event interface{})
 }
 
 func Connect(cfg *config.Config) (*DB, error) {
@@ -85,11 +89,11 @@ func ensureCollections(client *mongo.Client, dbName string, collections []string
 }
 
 func (db *DB) Close() error {
-	return db.client.Disconnect(context.Background())
+	return db.Client.Disconnect(context.Background())
 }
 
 func (db *DB) Collection(name string) *mongo.Collection {
-	return db.client.Database(db.dbName).Collection(name)
+	return db.Client.Database(db.dbName).Collection(name)
 }
 
 func (db *DB) ListenAndPublishMessages(ctx context.Context,ch string) {
@@ -111,8 +115,8 @@ func (db *DB) ListenAndPublishMessages(ctx context.Context,ch string) {
 	}
 }
 
-func (db *DB) SetupRedisSubscriber(ctx context.Context,wp *worker.WorkerPool){
-	ch := []string{worker.UserAction}
+func (db *DB) SetupRedisSubscriber(ctx context.Context,consumer EventConsumer){
+	ch := []string{e.UserAction}
 	sub := db.RedisClient.Subscribe(ctx, ch...)
 	defer sub.Close()
 
@@ -123,31 +127,32 @@ func (db *DB) SetupRedisSubscriber(ctx context.Context,wp *worker.WorkerPool){
 			continue
 		}
 
-		var event worker.Event
+		var event e.Event
 		if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
 			log.Println("Invalid event format:", err)
 			continue
 		}
 		switch event.Type {
-		case worker.Join:
-			var joinData worker.JoinPayload
+		case e.Join:
+			var joinData e.JoinPayload
 			if err := json.Unmarshal(event.Data, &joinData); err != nil {
 				log.Println("Failed to unmarshal Join data:", err)
 				continue
 			}
 			fmt.Printf("Join Event: %+v\n", joinData)
 
-		case worker.Move:
+		case e.Move:
 			
 			fmt.Printf("Move Event\n")
 
 		default:
 			log.Println("Unknown event type:", event.Type)
 		}
-		wp.EventChannel <- event
+		//wp.EventChannel <- event
+		consumer.ConsumeEvent(event)
 	}
 }
-func (db *DB) ListenForMoveValidation(ctx context.Context, wp *worker.WorkerPool) {
+func (db *DB) ListenForMoveValidation(ctx context.Context, consumer EventConsumer) {
     for {
         res, err := db.RedisClient.XRead(ctx, &redis.XReadArgs{
             Streams: []string{"move_validation", "$"},
@@ -162,12 +167,12 @@ func (db *DB) ListenForMoveValidation(ctx context.Context, wp *worker.WorkerPool
 
         for _, stream := range res {
             for _, msg := range stream.Messages {
-                var event worker.Event
+                var event e.Event
                 if err := json.Unmarshal([]byte(msg.Values["data"].(string)), &event); err != nil {
                     log.Println("Invalid move data:", err)
                     continue
                 }
-                wp.EventChannel <- event
+                consumer.ConsumeEvent(event)
             }
         }
     }

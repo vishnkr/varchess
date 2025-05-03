@@ -146,7 +146,7 @@ func (c *Client) joinGame() {
         Type:   Join,
         Data:   eventData,
     }
-
+    c.game=game
     data, err := json.Marshal(joinEvent)
     if err != nil {
         fmt.Println("Error marshalling join event:", err)

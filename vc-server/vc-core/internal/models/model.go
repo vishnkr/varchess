@@ -3,8 +3,8 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Player struct {
-	UserId primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Color  string             `json:"color" bson:"color"`
+	UserId primitive.ObjectID `json:"userId" bson:"_id"`
+	Name 		string `json:"name" bson:"username"`
 }
 
 type Template struct {
@@ -94,12 +94,13 @@ const (
 
 type ActiveGame struct {
 	ID      string                        `json:"id"`
-	Players map[string]string `json:"players"`
+	Players map[string]Player `json:"players"`
 	Config  GameConfig                    `json:"gameConfig"`
 	Moves   []string                      `json:"moves"`
 	State   ActiveGameState                `json:"state"`
 	Turn    string                        `json:"turn"`
 }
+
 
 type PaginatedResponse[T any] struct {
 	Items      []T   `json:"items"`
@@ -107,4 +108,9 @@ type PaginatedResponse[T any] struct {
 	Page       int   `json:"page"`
 	PageSize   int   `json:"page_size"`
 	TotalPages int   `json:"total_pages"`
+}
+
+type User struct{
+	UserId string `json:"userId"`
+	Name string `json:"name"`
 }

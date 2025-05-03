@@ -132,7 +132,7 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			ID:    	shortID,
 			Config: gameConfig,
 			State:  models.Waiting,
-			Players: make(map[string]string),
+			Players: make(map[string]models.Player),
 			Moves: make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)

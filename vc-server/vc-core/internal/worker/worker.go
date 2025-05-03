@@ -6,18 +6,24 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"vc-server/vc-core/internal/db"
+	e "vc-server/vc-core/internal/event"
 	"vc-server/vc-core/internal/models"
 
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 
 
 type WorkerPool struct {
 	workers   []*Worker
-	EventChannel chan Event
+	EventChannel chan e.Event
 	wg        sync.WaitGroup
-	redisClient  *redis.Client
+	db *db.DB
+	
 }
 
 type Worker struct {
@@ -27,13 +33,23 @@ type Worker struct {
 
 
 
-func NewWorkerPool(workerCount int,redisClient *redis.Client) *WorkerPool{
+func NewWorkerPool(workerCount int,db *db.DB) *WorkerPool{
 	wp := &WorkerPool{
-		EventChannel: make(chan Event, 100),
-		redisClient: redisClient,
+		EventChannel: make(chan e.Event, 100),
+		db: db,
 	}
 	wp.startPool(workerCount)
 	return wp
+}
+
+func (wp *WorkerPool) ConsumeEvent(event interface{}) {
+    specificEvent, ok := event.(e.Event)
+    if !ok {
+        log.Println("Invalid event type received")
+        return
+    }
+    
+    wp.EventChannel <- specificEvent
 }
 
 func (w *Worker) start() {
@@ -56,10 +72,32 @@ func (wp *WorkerPool) stopPool() {
 	wp.wg.Wait()
 }
 
-func (w *Worker) processJoin(event Event){
-	r := w.pool.redisClient
+func (w *Worker) processEvent(event e.Event) {
+	switch event.Type {
+	case e.Move:
+		// move validation
+		w.processMove(event)
+	case e.Join:
+		w.processJoin(event)
+	case e.DrawAccept:
+		// pdateGameState(event)
+	case e.DrawOffer:
+		// pdateGameState(event)
+	case e.DrawReject:
+		// pdateGameState(event)
+	case e.Resign:
+		// pdateGameState(event)
+	case e.GameOver:
+		// pdateGameState(event)
+	default:
+		fmt.Println("Unknown event type:", event.Type)
+	}
+}
+
+func (w *Worker) processJoin(event e.Event){
+	r := w.pool.db.RedisClient
 	ctx := context.Background()
-	var payload JoinPayload
+	var payload e.JoinPayload
 	if err := json.Unmarshal([]byte(event.Data), &payload); err != nil {
 		log.Println("Invalid move payload:", err)
 		return
@@ -79,15 +117,21 @@ func (w *Worker) processJoin(event Event){
 		return
 	}
 	if activeGame.Players == nil {
-		activeGame.Players = make(map[string]string)
+		activeGame.Players = make(map[string]models.Player)
 	}
 	if payload.Color != "w" && payload.Color != "b" {
 		log.Println("Invalid color:", payload.Color)
 		return
 	}
+	player,err:= w.pool.getUserDetailsFromId(event.UserID)
+	if err!=nil{
+		return
+	}
+	activeGame.Players[payload.Color] = player
+	playerW, okW := activeGame.Players["w"]
+	playerB, okB := activeGame.Players["b"]
+	canStart := okW && okB && playerW != playerB
 
-	activeGame.Players[payload.Color] = event.UserID
-	canStart := activeGame.Players["w"] != "" && activeGame.Players["b"] != ""
 	if canStart{
 		activeGame.State = models.InProgress
 	}
@@ -104,10 +148,10 @@ func (w *Worker) processJoin(event Event){
 	}
 
 	if canStart {
-		startEvent := Event{
+		startEvent := e.Event{
 			GameID: event.GameID,
 			UserID: "",
-			Type:   Start,
+			Type:   e.Start,
 			Data:   updatedGameStateJSON,
 		}
 		eventJSON, err := json.Marshal(startEvent)
@@ -115,7 +159,7 @@ func (w *Worker) processJoin(event Event){
 			log.Println("Error serializing game start event:", err)
 			return
 		}
-		if err := r.Publish(ctx, SystemAction, eventJSON).Err(); err != nil {
+		if err := r.Publish(ctx, e.SystemAction, eventJSON).Err(); err != nil {
 			log.Println("Error publishing game start event:", err)
 		} else {
 			log.Printf("Game %s started: %s", event.GameID, eventJSON)
@@ -124,14 +168,42 @@ func (w *Worker) processJoin(event Event){
 	
 }
 
-func (w *Worker) processMove(event Event){
-	r := w.pool.redisClient
+func (w *Worker) processMove(event e.Event){
+	r := w.pool.db.RedisClient
 	_  = context.Background()
-	var payload MovePayload
+	var payload e.MovePayload
 	if err := json.Unmarshal([]byte(event.Data), &payload); err != nil {
 		log.Println("Invalid move payload:", err)
 		return
 	}
 	//validate move here 
-	r.Publish(context.TODO(), UserAction, payload)
+	r.Publish(context.TODO(), e.UserAction, payload)
+}
+
+func (wp *WorkerPool) getUserDetailsFromId(userId string)(models.Player,error){
+	dbClient := wp.db
+	collection := dbClient.Collection("users")
+	ctx := context.Background()
+	//defer cancel()
+	
+
+	userIdHex, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		return models.Player{}, fmt.Errorf("invalid user ID format: %w", err)
+	}
+	
+
+	var user models.Player
+	
+
+	err = collection.FindOne(ctx, bson.M{"_id": userIdHex}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return models.Player{}, fmt.Errorf("user not found with ID: %s", userId)
+		}
+		return models.Player{}, fmt.Errorf("error finding user: %w", err)
+	}
+	
+	return user, nil
+	
 }

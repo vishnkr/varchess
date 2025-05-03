@@ -1,8 +1,7 @@
-package worker
+package event
 
 import (
 	"encoding/json"
-	"fmt"
 	"vc-server/vc-core/internal/chess"
 )
 
@@ -38,26 +37,4 @@ type JoinPayload struct {
 
 type MovePayload struct{
 	Move chess.Move `json:"m"`
-}
-
-func (w *Worker) processEvent(event Event) {
-	switch event.Type {
-	case Move:
-		// move validation
-		w.processMove(event)
-	case Join:
-		w.processJoin(event)
-	case DrawAccept:
-		// pdateGameState(event)
-	case DrawOffer:
-		// pdateGameState(event)
-	case DrawReject:
-		// pdateGameState(event)
-	case Resign:
-		// pdateGameState(event)
-	case GameOver:
-		// pdateGameState(event)
-	default:
-		fmt.Println("Unknown event type:", event.Type)
-	}
 }

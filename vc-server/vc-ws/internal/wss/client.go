@@ -2,6 +2,7 @@ package wss
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -46,6 +47,10 @@ func (c *Client) listenForWrites() {
 
 
 func (g *Game) handleDisconnect(c *Client) {
+    if g == nil {
+        log.Println("Game is nil in handleDisconnect")
+        return
+    }
     g.mu.Lock()
     defer g.mu.Unlock()
 
@@ -57,7 +62,7 @@ func (g *Game) handleDisconnect(c *Client) {
 
         if g.players[c.userId] == c {
             delete(g.players, c.userId)
-            fmt.Println("Player removed after timeout:", c.userId)
+            log.Println("Player removed after timeout:", c.userId)
         }
     }()
 }
