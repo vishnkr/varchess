@@ -58,7 +58,7 @@
 					token: accessToken,
 					userId: userId,
 				}
-				await wsStore.newWebSocketConnection(url,connectPayload,'join')
+				await wsStore.newWebSocketConnection(url,connectPayload)
 				goto(`/play/${validGameId}`);
 			} catch(err){
 				console.log(err)

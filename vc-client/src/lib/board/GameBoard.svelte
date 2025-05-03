@@ -11,6 +11,8 @@
 	let boardConfig: BoardConfig | null = null;
 	let position: Position | null = null;
 
+  let username = $authStore.username;
+
 	$: if ($fen && $dimensions) {
 		boardConfig = {
 			fen: $fen,
@@ -35,13 +37,19 @@
     }
   }
 
+  const isMyTurn = () => ($gameState.turn === 'w' && players?.playerWhite.name === username) ||
+    ($gameState.turn === 'b' && players?.playerBlack.name === username)
+  
 	$: if($dest && $src && $moveSelectorPiece){
-		console.log('dest ',$dest,$src,$moveSelectorPiece)
+    if( isMyTurn()){
+      console.log('dest ',$dest,$src,$moveSelectorPiece)
     const move:Move = {from:$src,to:$dest,piece:$moveSelectorPiece.color === Color.BLACK ? $moveSelectorPiece.notation : $moveSelectorPiece.notation.toUpperCase()}
    
     // {"t":type,"p":{'m':{'p':piece,'f':from,'t':to,}},}
     wsStore.sendMove(move)
     clearMoveSelectorStores()
+    }
+		
 	}
 </script>
 

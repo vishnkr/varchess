@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType, positionStore, fen, dimensions } from './store/stores';
+import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType, positionStore, fen, dimensions, recentMove } from './store/stores';
 import { camelToSnake } from './utils/index';
 import type { EventType, Move, WSParams} from './types';
 import { EventGameDrawOffer, EventGameResign, EventUserConnect, EventUserDisconnect, EventChatMessage, EventJoinGame, EventStartGame, EventGameMakeMove } from './types';
@@ -56,7 +56,6 @@ function createWebSocketStore() {
 	function newWebSocketConnection(
 		wsServerUrl: string,
 		params: ConnectParams,
-		connectType: ConnectType = 'join'
 	) {
 		const newWs = new WebSocket(wsServerUrl);
 
@@ -97,7 +96,7 @@ function createWebSocketStore() {
 			console.log('Sending move:', msg);
 			ws.send(JSON.stringify(msg));
 		} else {
-			console.warn('WebSocket not open. Cannot send move.');
+			console.warn('[WebSocket] Not open. Cannot send move.');
 		}
 	}
 
@@ -152,6 +151,8 @@ function handleMessage(data: any) {
 			// Handle moves
 			const move = eventData.m
 			positionStore.makeMove(move);
+			recentMove.set(move);
+			gameState.changeTurn()
 			break;
 		default:
 			console.warn('[WebSocket] Unknown event:', data.event);

@@ -7,12 +7,12 @@
 		type IPiece,
 		type SquareColor,
 		type SquareInfo,
-		isEditor,
+		isEditor
 	} from './types';
 	import { editorMaxBoard } from './board';
 	import { pieceEditor, boardEditor } from '$lib/store/editor';
 	import wallSvg from '$lib/assets/svg/wall.svg';
-	import { src,dest,moveSelectorPiece,legalMoves,recentMove } from '$lib/store/stores';
+	import { src, dest, moveSelectorPiece, legalMoves, recentMove } from '$lib/store/stores';
 	//import chessCore from '$lib/chesscoreWrapper';
 
 	export let squareData: SquareInfo;
@@ -25,7 +25,7 @@
 
 	let isDraggable: boolean = doesSupportDragDrop(boardType);
 	export let isMarkedTarget = false;
-	
+
 	export let nonPieceSvg: string | null = null;
 	function getPieceClass(piece: IPiece) {
 		return piece.color.charAt(0).toLowerCase() + piece.notation.toLowerCase();
@@ -35,90 +35,95 @@
 	let squareEl: HTMLElement;
 	let hover: boolean = false;
 	let drag: boolean = false;
-	let isMoveSrc:boolean = false;
+	let isMoveSrc: boolean = false;
 
-	$: isMoveSrc = $src!=null && $src===squareData.squareIndex && isGameBoard(boardType)
+	$: isMoveSrc = $src != null && $src === squareData.squareIndex && isGameBoard(boardType);
 	$: isMarkedTarget = isGameBoard(boardType) && (squareData.isMarkedTarget ?? false);
 
+	$: isRecentSrc = $recentMove && $recentMove.from === squareData.squareIndex;
+	$: isRecentDest = $recentMove && $recentMove.to === squareData.squareIndex;
+
 	function handleDragStart(e: DragEvent) {
-		if (isGameBoard(boardType)){
+		if (isGameBoard(boardType)) {
 			let dragInfo = { idx: squareData.squareIndex, piece };
 			e.dataTransfer?.setData('dragInfo', JSON.stringify(dragInfo));
 			pieceEl.style.opacity = '0.4';
 		}
-		
 	}
 
 	function handleDragEnd(e: DragEvent) {
 		e.preventDefault();
-		if(isGameBoard(boardType)){
+		if (isGameBoard(boardType)) {
 			pieceEl.style.opacity = '1';
 			piece = null;
 		}
-		
 	}
 
 	function handleDrag(e: DragEvent) {
 		e.preventDefault();
 		/*const data = e.dataTransfer?.getData('dragInfo');*/
-		
+
 		if (!piece && !wall && isGameBoard(boardType)) {
 			drag = true;
 		}
-		if (isEditor(boardType)){
-				piece = $pieceEditor.pieceSelection.piece;
-				if($boardEditor.isWallSelectorOn){
-					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {isPiecePresent: false,wall: true,});
-				} else {
-					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+		if (isEditor(boardType)) {
+			piece = $pieceEditor.pieceSelection.piece;
+			if ($boardEditor.isWallSelectorOn) {
+				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+					isPiecePresent: false,
+					wall: true
+				});
+			} else {
+				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 					isPiecePresent: true,
 					piece: piece
-					});
-				}
-				
+				});
 			}
+		}
 	}
 	//async function initWasm(){ await chessCore.initWasm();}
 	//initWasm();
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		const data = e.dataTransfer?.getData('dragInfo');
-		if(data && !wall && isDraggable) {
+		if (data && !wall && isDraggable) {
 			var obj = JSON.parse(data);
 			piece = obj.piece;
 			drag = false;
 			editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
 				isPiecePresent: true,
-				piece  
+				piece
 			});
 		}
 	}
-	function handleEditorClick(){
+	function handleEditorClick() {
 		if ($boardEditor.isWallSelectorOn) {
-					wall = !wall;
-					editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-						isPiecePresent: false,
-						wall,
-						piece: null
-					});
-				} else {
-					if(wall){ 
-						editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-							isPiecePresent: false,
-							wall:false
-						});
-						return;
-					}
-					if ($pieceEditor.pieceSelection)
-					console.log('pp',$pieceEditor.pieceSelection)
-						editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
-							isPiecePresent: piece ? false : true,
-							piece: piece ? null : $pieceEditor.pieceSelection.piece
-						});				}
+			wall = !wall;
+			editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+				isPiecePresent: false,
+				wall,
+				piece: null
+			});
+		} else {
+			if (wall) {
+				editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+					isPiecePresent: false,
+					wall: false
+				});
+				return;
+			}
+			if ($pieceEditor.pieceSelection) console.log('pp', $pieceEditor.pieceSelection);
+			editorMaxBoard.updatePieceInfo(squareData.row, squareData.column, {
+				isPiecePresent: piece ? false : true,
+				piece: piece ? null : $pieceEditor.pieceSelection.piece
+			});
+		}
 	}
 
-	function handleMPEditorClick(){
-		if (piece) {return;}
+	function handleMPEditorClick() {
+		if (piece) {
+			return;
+		}
 		let selectedPiece = $pieceEditor.pieceSelection;
 		let jumpOffset = [squareData.row - 4, squareData.column - 4];
 		if (selectedPiece) {
@@ -134,24 +139,23 @@
 			}
 		}
 	}
-	function handleGameClick(){
-		if ($src){
-			if ($src === squareData.squareIndex){
+	function handleGameClick() {
+		if ($src) {
+			if ($src === squareData.squareIndex) {
 				src.set(null);
 				dest.set(null);
 				moveSelectorPiece.set(null);
-			} else{
-				dest.set(squareData.squareIndex)
+			} else {
+				dest.set(squareData.squareIndex);
 				//chessCore.getLegalMoves();
 			}
-		} else if(piece){
-			
+		} else if (piece) {
 			src.set(squareData.squareIndex);
-			moveSelectorPiece.set(piece)
+			moveSelectorPiece.set(piece);
 		}
 	}
 
-	function handleClick(e: MouseEvent|KeyboardEvent) {
+	function handleClick(e: MouseEvent | KeyboardEvent) {
 		e.preventDefault();
 		switch (boardType) {
 			case BoardType.Editor:
@@ -170,7 +174,7 @@
 
 	function handleMouseEnter(e: MouseEvent) {
 		e.preventDefault();
-		hover=true;
+		hover = true;
 	}
 
 	function handleMouseLeave(e: MouseEvent) {
@@ -188,16 +192,15 @@
 	on:dragstart={handleDragStart}
 	on:drop={onDrop}
 	*/
-	
 </script>
-
 
 <div
 	class={`relative
 	${isMarkedTarget ? 'marked-target' : ''} 
-	${piece?'has-piece':''}
-	${isMoveSrc? 'move-src':''}`
-	}
+	${piece ? 'has-piece' : ''}
+	${isMoveSrc ? 'move-src' : ''}
+	${isRecentSrc ? 'recent-src' : ''}
+	${isRecentDest ? 'recent-dest' : ''}`}
 	style="--x:{squareData.gridX}; --y:{squareData.gridY};"
 	data-square-color={color}
 	data-square
@@ -211,14 +214,13 @@
 			handleClick(e);
 		}
 	}}
-	
 	bind:this={squareEl}
 	on:mouseenter={handleMouseEnter}
 	on:mouseleave={handleMouseLeave}
 	on:click={handleClick}
-	on:mouseup={()=> drag ? handleDrag : handleClick}
-	on:mousedown={()=>drag=false}
-	on:mousemove={()=>drag=true}
+	on:mouseup={() => (drag ? handleDrag : handleClick)}
+	on:mousedown={() => (drag = false)}
+	on:mousemove={() => (drag = true)}
 	on:dragover={handleDrag}
 	on:dragleave={handleDragLeave}
 >
@@ -228,9 +230,10 @@
 				piece
 			)}`}
 			draggable={isDraggable}
-			role="img" aria-label="Game piece"
+			role="img"
+			aria-label="Game piece"
 			id={`${boardId}-p-${squareData.squareIndex}`}
-			bind:this={pieceEl}			
+			bind:this={pieceEl}
 			on:dragstart={handleDragStart}
 			on:dragend={handleDragEnd}
 		/>
@@ -297,20 +300,45 @@
 	}
 	[data-square].marked-target {
 		background: radial-gradient(
-		var(--move-target-marker-color) var(--move-target-marker-radius),
-		var(--square-color) calc(var(--move-target-marker-radius) + 1px)
+			var(--move-target-marker-color) var(--move-target-marker-radius),
+			var(--square-color) calc(var(--move-target-marker-radius) + 1px)
 		);
 	}
 
 	[data-square].move-src {
 		--square-color: var(--square-color-active);
 	}
+	[data-square].recent-src {
+		background-image: linear-gradient(
+			to bottom,
+			var(--recent-move-src-color),
+			var(--recent-move-src-color)
+		);
+		background-color: var(--square-color);
+	}
+
+	[data-square].recent-dest {
+		background-image: linear-gradient(
+			to bottom,
+			var(--recent-move-dest-color),
+			var(--recent-move-dest-color)
+		);
+		background-color: var(--square-color);
+	}
+
+	[data-square]:hover:not(.move-src):not(.recent-src):not(.recent-dest) {
+		background-image: linear-gradient(
+			to bottom,
+			var(--square-color-dark-hover),
+			var(--square-color-dark-hover)
+		);
+		background-color: var(--square-color);
+	}
 
 	[data-square].has-piece.marked-target {
 		background: radial-gradient(
-		var(--square-color) var(--move-target-marker-radius-occupied),
-		var(--move-target-marker-color)
-			calc(var(--move-target-marker-radius-occupied) + 1px)
+			var(--square-color) var(--move-target-marker-radius-occupied),
+			var(--move-target-marker-color) calc(var(--move-target-marker-radius-occupied) + 1px)
 		);
 	}
 

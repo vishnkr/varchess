@@ -4,7 +4,7 @@
 	--default-hover-square: hsl(52deg 98% 70%);
 	--drag-piece-over-square: hsl(221, 75%, 44%);
 	--coords-font-size: 0.7rem;
-  	--coords-font-family: sans-serif;
+	--coords-font-family: sans-serif;
 	--piece-drag-z-index: 9999;
 	--ghost-piece-opacity: 0.35;
 
@@ -12,12 +12,14 @@
 	--move-target-marker-radius: 24%;
 	--move-target-marker-color-dark-square: hsl(144deg 64% 9% / 90%);
 	--move-target-marker-color-light-square: hsl(144deg 64% 9% / 90%);
-	--square-color-dark-hover: hsl(144deg 75% 44%);
-	--square-color-light-hover: hsl(52deg 98% 70%);
-	--square-color-dark-active: hsl(218, 77%, 43%);
-	--square-color-light-active: hsl(218, 77%, 43%);
-	--outline-color-dark-active: hsl(138deg 85% 53% / 95%);
-  	--outline-color-light-active: hsl(66deg 97% 72% / 95%);
+	--square-color-dark-hover: hsla(50, 90%, 60%, 0.35);
+	--square-color-light-hover: hsla(50, 90%, 60%, 0.5);
+	--square-color-dark-active: hsla(210, 100%, 50%, 0.4);
+	--square-color-light-active: hsla(210, 100%, 50%, 0.5);
+	--outline-color-dark-active: hsla(120, 100%, 40%, 0.7);
+	--outline-color-light-active: hsla(60, 100%, 55%, 0.8);
+	--recent-move-dest-color: hsla(0, 100%, 65%, 0.5);
+	--recent-move-src-color: hsla(210, 100%, 65%, 0.5);
 }
 
 .bg-piece {
@@ -82,6 +84,7 @@
 .bv {
 	background-image: url('/src/lib/assets/pieces/black/v.svg');
 }
+
 .bz {
 	background-image: url('/src/lib/assets/pieces/black/z.svg');
 }
