@@ -12,7 +12,7 @@ import type {
 	PiecePositions
 } from './types';
 
-export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean) => {
+export const generateSquareMaps = (dimensions: Dimensions, isFlipped: boolean = false) => {
 	const columns = [
 		'a',
 		'b',

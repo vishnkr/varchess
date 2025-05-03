@@ -12,7 +12,7 @@
 	import { editorMaxBoard } from './board';
 	import { pieceEditor, boardEditor } from '$lib/store/editor';
 	import wallSvg from '$lib/assets/svg/wall.svg';
-	import { moveSelector } from '$lib/store/stores';
+	import { src,dest,moveSelectorPiece,legalMoves,recentMove } from '$lib/store/stores';
 	//import chessCore from '$lib/chesscoreWrapper';
 
 	export let squareData: SquareInfo;
@@ -39,8 +39,6 @@
 
 	$: isMoveSrc = $src!=null && $src===squareData.squareIndex && isGameBoard(boardType)
 	$: isMarkedTarget = isGameBoard(boardType) && (squareData.isMarkedTarget ?? false);
-
-	const { src, dest, piece: moveSelectorPiece } = moveSelector;
 
 	function handleDragStart(e: DragEvent) {
 		if (isGameBoard(boardType)){
@@ -139,16 +137,17 @@
 	function handleGameClick(){
 		if ($src){
 			if ($src === squareData.squareIndex){
-				$src = null
-				$moveSelectorPiece = null
+				src.set(null);
+				dest.set(null);
+				moveSelectorPiece.set(null);
 			} else{
-				$dest = squareData.squareIndex
+				dest.set(squareData.squareIndex)
 				//chessCore.getLegalMoves();
 			}
-		} else{
+		} else if(piece){
 			
-			$src = squareData.squareIndex
-			$moveSelectorPiece = piece
+			src.set(squareData.squareIndex);
+			moveSelectorPiece.set(piece)
 		}
 	}
 

@@ -9,7 +9,7 @@ vc-server/logs
 vc-server/bin
 vc-ws/vc-ws
 vc-server/vc-server
-vc-server/vc-core
+vc-server/vc-core/logs
 vc-core/vc-server
 */mongo-data
 vc-server/script.txt

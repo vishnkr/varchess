@@ -8,8 +8,8 @@
 	import { generateSquareMaps } from './board';
 	import { convertFenToPosition } from './fen';
 	
-	import { moveSelector } from '$lib/store/stores';
-	import { MoveType } from '$lib/types';
+	import { dest, legalMoves, moveSelectorPiece, src } from '$lib/store/stores';
+	import { isGameBoard, MoveType } from '$lib/types';
 
 	export let boardConfig: BoardConfig;
 	export let isFlipped:boolean = false;
@@ -19,25 +19,21 @@
 	).squares;
 
 	export let customBoardId = 'board';
-	export let position: Position = convertFenToPosition(boardConfig.fen)?.position ?? {
-		piecePositions: {},
-		walls: {}
-	};
+	export let position: Position;
 	export let mpSquares: Record<number, MoveType> | null = null;
 	function isCursorBoardType(bType: BoardType): boolean {
 		return bType !== BoardType.MovePatternView && bType != BoardType.View;
 	}
-	const { src, dest, piece, recentMove, legalMoves } = moveSelector;
 	let markedTargets: number[] = [];
 
 	$: squares = generateSquareMaps(boardConfig.dimensions, isFlipped).squares;
 
 	$: {
-		if($src && $piece){
+		if($src && $moveSelectorPiece){
 		//set marked targets
 		markedTargets = $legalMoves
-		.filter((move)=> move.src===$src)// && $piece?.pieceType===move.piece.pieceType})
-		.map((move)=> move.dest)
+		.filter((move: Move)=> move.src===$src)// && $piece?.pieceType===move.piece.pieceType})
+		.map((move:Move)=> move.dest)
 		markedTargets.forEach((target)=>{ squares[target].isMarkedTarget = true;})
 		} else { 
 			markedTargets = []; 
@@ -47,8 +43,8 @@
 		}
 	}
 
-	$: if($dest){
-
+	$: if($dest && isGameBoard(boardConfig.boardType)){
+		console.log('dest ',$dest,$src,$moveSelectorPiece)
 	}
 	
 

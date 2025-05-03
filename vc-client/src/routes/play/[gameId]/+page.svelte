@@ -4,7 +4,7 @@
 	import Chat from '$lib/components/Chat.svelte';
 	import Tabs from '$lib/components/shared/Tabs.svelte';
 	import { onMount } from 'svelte';
-	import { templateStore, gameState, gameId, moveSelector, Status } from '$lib/store/stores';
+	import { templateStore, gameState, gameId, Status, clearMoveSelectorStores } from '$lib/store/stores';
 	import {sendWebsocketMsg, wsStore} from '$lib/websocket';
 	import { camelToSnake } from '$lib/utils/index';
 	import { beforeNavigate, goto } from '$app/navigation';
@@ -17,6 +17,7 @@
 	import { page } from '$app/stores';
 	import { Input } from '$lib/components/ui/input';
 	import { Button } from '$lib/components/ui/button';
+	import GameBoard from '$lib/board/GameBoard.svelte';
 	let boardConfig: BoardConfig;
 	let mpBoardConfig: BoardConfig;
 	let activeItem = 'Chat';
@@ -37,14 +38,14 @@
 	let copiedToClipboard = false;
 	let currentGameId: string|null;
 
-	$: players = $gameState.players;
+	//$: players = $gameState.players;
 
 	$: {
 		if ($authStore?.username && $gameState?.players) {
 			username = $authStore.username;
 			const { playerWhite, playerBlack } = $gameState.players;
-			isPlayer = username === playerWhite || username === playerBlack;
-			isFlipped = username === playerBlack;
+			isPlayer = username === playerWhite.name || username === playerBlack.name;
+			isFlipped = username === playerBlack.name;
 		}
 	}
 	$: authStore.subscribe((state) => (auth = state));
@@ -70,7 +71,7 @@
 		if (!auth || !currentGameId) {
 			goto('/home');
 		}
-		
+		clearMoveSelectorStores()
 		gameId.set(currentGameId);
 	});
 	//let chesscore;
@@ -85,11 +86,11 @@
 				//legalMoves.set(moves)
 			}
 			
-			boardConfig = {
+			/*boardConfig = {
 				fen: $templateStore.fen,
 				dimensions: $templateStore.dimensions,
 				boardType: BoardType.GameBoard
-			};
+			};*/
 		}
 	}
 	
@@ -154,50 +155,61 @@
 	<div class="flex m-4 lg:flex-row flex-col">
 		<div class="text-white rounded-md lg:w-8/12 p-3">
 			<div class="max-w-[90%]">
-				<Board {boardConfig} {isFlipped}/>
+				<GameBoard {isFlipped}/>
 			</div>
 		</div>
-
-		<div class="bg-zinc-700 rounded-md lg:w-4/12 p-3">
-			<div class="p-2 flex flex-grow justify-between text-white">
-				<button
-					on:click={()=> isFlipped = !isFlipped}
-					class="flex gap-1 items-center justify-center rounded-md bg-black text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
+		
+		
+		<div class="bg-lightbg dark:bg-darkbg2 border border-black dark:border-lightbg rounded-md lg:w-4/12 p-3">
+			<div class="flex flex-wrap gap-2 justify-center p-4">
+				<!-- Exit Button -->
+				<Button
+				  on:click={clearStores}
+				  class="w-[calc(50%-0.5rem)] text-lg px-3 py-2 rounded border font-medium 
+					bg-transparent text-orange-600 border-orange-600 hover:bg-orange-500/10 
+					dark:text-orange-400 dark:border-orange-400 dark:hover:bg-orange-500/10"
 				>
-					<i class="fa-solid fa-repeat fa-lg" style="color: #ffffff;" />
-					<span class="text-md md:text-lg"> Flip </span>
-				</button>
-					<a href="/home" data-sveltekit-reload>
-						<button
-						on:click={clearStores}
-						class="flex gap-1 items-center justify-center rounded-md bg-orange-600 text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
-						>
-						<i class="fa-solid fa-right-from-bracket fa-lg" style="color: #ffffff;" />
-						<span class="text-md md:text-lg"> Exit </span>
-						</button>
-					</a>
-				<button
-					on:click={handleDraw}
-					class="bg-blue-600 flex gap-1 items-center justify-center rounded-md text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
+				  <i class="fa-solid fa-right-from-bracket mr-2" />
+				  Exit
+				</Button>
+			  
+				<!-- Draw Button -->
+				<Button
+				  on:click={handleDraw}
+				  class="w-[calc(50%-0.5rem)] text-lg px-3 py-2 rounded border font-medium 
+					bg-transparent text-blue-600 border-blue-600 hover:bg-blue-500/10 
+					dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-500/10"
 				>
-					<i class="fa-solid fa-handshake-simple fa-lg" style="color: #ffffff;" />
-					<span class="text-md md:text-lg"> Draw </span>
-				</button>
-				<button
-					on:click={handleResign}
-					class="bg-red-600 flex gap-1 items-center justify-center rounded-md text-white hover:bg-gray-400 md:px-4 md:py-2 px-2 py-1 shadow-md"
+				  <i class="fa-solid fa-handshake-simple mr-2" />
+				  Draw
+				</Button>
+			  
+				<!-- Resign Button -->
+				<Button
+				  on:click={handleResign}
+				  class="w-[calc(50%-0.5rem)] text-lg px-3 py-2 rounded border font-medium 
+					bg-transparent text-red-600 border-red-600 hover:bg-red-600/10 
+					dark:text-red-400 dark:border-red-400 dark:hover:bg-red-600/10"
 				>
-					<i class="fa-solid fa-flag fa-lg" style="color: #ffffff;" />
-					<span class="text-md md:text-lg"> Resign </span>
-				</button>
-			</div>
+				  <i class="fa-solid fa-flag mr-2" />
+				  Resign
+				</Button>
+			  
+				<!-- Flip Button (Dynamic black/white styling) -->
+				<Button
+				  on:click={() => isFlipped = !isFlipped}
+				  class="w-[calc(50%-0.5rem)] text-lg px-3 py-2 rounded border font-medium 
+					bg-transparent border-black text-black hover:bg-gray-100 
+					dark:border-white dark:text-white dark:hover:bg-white/10"
+				>
+				  <i class="fa-solid fa-repeat mr-2" />
+				  Flip
+				</Button>
+			  </div>
+			  
 			<div
 				class="border-b border-gray-200 bg-black rounded-md dark:border-gray-700 flex flex-col text-center"
 			>
-				<div class="rounded-md bg-gray-600 p-2 mb-4">
-					<h3 class="text-black bg-white rounded-sm m-1 p-1">{players?.playerWhite}</h3>
-					<h3 class="text-white bg-black rounded-sm m-1 p-1">{players?.playerBlack}</h3>
-				</div>
 				<div class="flex justify-center py-4">
 					<Tabs {activeItem} {items} on:tabChange={tabChange} />
 				</div>

@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { fetchTemplates, deleteTemplate } from '$lib/api/template';
 	import Board from '$lib/board/Board.svelte';
+	import ViewBoard from '$lib/board/ViewBoard.svelte';
 	import BoardEditor from '$lib/components/editor/BoardEditor.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { toast } from '$lib/store/alert';
@@ -133,7 +134,7 @@
 				<div
 					class="relative w-full bg-gray-600 rounded-md overflow-hidden mb-4 flex items-center justify-center"
 				>
-					<Board boardConfig={getBoardConfig(template)} />
+					<ViewBoard boardConfig={getBoardConfig(template)} />
 				</div>
 
 				<div class="text-sm space-y-1 mb-4">

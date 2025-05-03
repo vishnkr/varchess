@@ -1,8 +1,9 @@
 import { writable } from 'svelte/store';
-import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType } from './store/stores';
+import { Role, Status, chats, templateStore, gameId, gameState, members, type ConnectParams, type ConnectType, positionStore, fen, dimensions } from './store/stores';
 import { camelToSnake } from './utils/index';
 import type { EventType, WSParams, Move} from './types';
 import { EventGameDrawOffer, EventGameResign, EventUserConnect, EventUserDisconnect, EventChatMessage, EventJoinGame, EventStartGame, EventGameMakeMove } from './types';
+import { convertFenToPosition } from './board/fen';
 
 interface UserJoin {
 	id: number;
@@ -122,9 +123,14 @@ function handleMessage(data: any) {
 			// gameState.setGameConfig(data.result.game_config);
 			break;
 		case EventStartGame:
-			console.log('data',eventData);
 			gameState.setPlayers(eventData.players.b,eventData.players.w);
 			gameState.updateStatus(Status.InProgress)
+			if (eventData.gameConfig.fen) {
+				fen.set(eventData.gameConfig.fen)
+				const result = convertFenToPosition(eventData.gameConfig.fen);
+				if (result?.position) positionStore.set(result.position)
+				if (result?.dimensions) dimensions.set(result.dimensions)
+			}
 			//templateStore.setTemplate(data.gameConfig);
 			break;
 		case EventGameMakeMove:

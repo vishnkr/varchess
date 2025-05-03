@@ -17,7 +17,7 @@
 	$: authStore.subscribe((value) => (auth = value));
 
 	const publicRoutes = ['/login', '/forgot-password', '/'];
-	const authRoutes = ['/home', '/editor', '/games', '/templates', '/settings', '/profile'];
+	const authRoutes = ['/home', '/editor','/play', '/games', '/templates', '/settings', '/profile'];
 
 	onMount(() => {
 		const stored = localStorage.getItem('theme') as 'dark' | 'light' | null;
@@ -70,6 +70,8 @@
 			<div class="flex justify-between items-center h-16">
 				<!-- Logo -->
 				<div class="flex items-center">
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
 					<div class="flex cursor-pointer" on:click={() => goto(auth.accessToken ? '/home' : '/')}>
 						<img
 							src={currentTheme === 'light' ? '/logo-dark.svg' : '/logo.svg'}

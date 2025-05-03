@@ -120,7 +120,6 @@
 				<Motion
 					initial={{ opacity: 0, y: 60 }}
 					transition={{ duration: 0.6, delay: i * 0.1 }}
-					class="flex flex-col gap-10 md:flex-row"
 				>
 					<div class="w-full md:w-1/2 space-y-6 md:pr-8">
 						<h2

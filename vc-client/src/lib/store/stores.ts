@@ -1,6 +1,7 @@
 import { writable, type Writable } from 'svelte/store';
 
-import { type IPiece,type Move, type Template } from '$lib/types';
+import { type IPiece,type Move, type Position, type Template } from '$lib/types';
+import { sequence } from '@sveltejs/kit/hooks';
 
 export enum Role {
 	Viewer,
@@ -115,20 +116,30 @@ export interface MoveSelector {
 	legalMoves: Writable<Move[]>;
 }
 
-const moveSelector: MoveSelector = {
-	src: writable<number | null>(null),
-	dest: writable<number | null>(null),
-	piece: writable<IPiece | null>(null),
-	legalMoves: writable([]),
-	recentMove: writable(null)
-};
 
-
+export const src:Writable<number|null> = writable(null);
+export const dest:Writable<number|null> = writable(null);
+export const moveSelectorPiece: Writable<IPiece | null> = writable(null);
+export const  piece: Writable<IPiece | null> = writable(null);
+export const legalMoves: Writable<Move[]> = writable([]);
+export const recentMove: Writable<Move | null> = writable(null);
+export const clearMoveSelectorStores = () =>{
+	src.set(null);
+	dest.set(null);
+	moveSelectorPiece.set(null);
+	legalMoves.set([]);
+	recentMove.set(null);
+}
 const gameId = writable<string | null>(null);
 
 export interface Players {
-	playerWhite: string;
-	playerBlack: string;
+	playerWhite: Player;
+	playerBlack: Player;
+}
+
+export interface Player{
+	name:string;
+	userId: string;
 }
 
 export enum Status {
@@ -169,7 +180,7 @@ function newGameState() {
 		});
 	};
 
-	const setPlayers = (playerBlack: string, playerWhite: string) => {
+	const setPlayers = (playerBlack: Player, playerWhite: Player) => {
 		update((gameState) => {
 			return {
 				...gameState,
@@ -188,6 +199,22 @@ function newGameState() {
 }
 
 const gameState = newGameState();
+
+export function createPositionStore(initialPosition:Position) {
+	const { subscribe, update, set } = writable(initialPosition);
+  
+	return {
+	  subscribe,
+	  set,
+	  update,
+	  reset: () => set(initialPosition)
+	};
+  }
+  export const positionStore = writable<Position | null>(null);
+
+  export const fen = writable<string|null>(null);
+  export const dimensions = writable<{ ranks: number; files: number }|null>(null);
+
 /*
 function createChessCoreWrapper() {
 	const { subscribe, set } = writable<ChessCoreLib | null>(null);
@@ -224,6 +251,5 @@ export {
 	templateStore,
 	gameId,
 	gameState,
-	moveSelector,
   ////chessCore
 };
