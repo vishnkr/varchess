@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Motion } from 'svelte-motion';
 	import { BoardType, type BoardConfig } from '$lib/board/types';
-	import Board from '$lib/board/Board.svelte';
 	import { isAuthenticated } from '$lib/utils';
 	import { goto } from '$app/navigation';
+	import ViewBoard from '$lib/board/ViewBoard.svelte';
 
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
@@ -110,7 +110,7 @@
 					</button>
 				</div>
 			</div>
-			<Board {boardConfig} />
+			<ViewBoard {boardConfig} />
 		</div>
 	</div>
 
@@ -134,7 +134,7 @@
 
 					{#if feature.boardConfig}
 						<div class="w-full md:w-1/2 max-w-md ml-auto">
-							<Board boardConfig={feature.boardConfig} />
+							<ViewBoard boardConfig={feature.boardConfig} />
 						</div>
 					{/if}
 				</Motion>

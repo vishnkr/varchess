@@ -22,7 +22,7 @@
 	let mpBoardConfig: BoardConfig;
 	let activeItem = 'Chat';
 	let players = $gameState.players;
-	let items = ['Chat', 'Move Patterns'];
+	let items = ['Move Patterns'];
 	const tabChange = (e: CustomEvent<string>) => (activeItem = e.detail);
 	let isFlipped = false;
 	let username: string = "fsdf";
@@ -146,7 +146,7 @@
 		
 		<div class="bg-lightbg dark:bg-darkbg2 border border-black dark:border-lightbg rounded-md lg:w-4/12 p-3">
 			<div class="flex flex-wrap gap-2 justify-center p-4">
-				<!-- Exit Button -->
+				<!-- Exit Button 
 				<Button
 				  on:click={clearStores}
 				  class="w-[calc(50%-0.5rem)] text-lg px-3 py-2 rounded border font-medium 
@@ -155,7 +155,7 @@
 				>
 				  <i class="fa-solid fa-right-from-bracket mr-2" />
 				  Exit
-				</Button>
+				</Button>-->
 			  
 				<!-- Draw Button -->
 				<Button
@@ -199,7 +199,7 @@
 				</div>
 				<div class="p-2 mx-1">
 					{#if activeItem === 'Chat'}
-						<Chat />
+						<!--<Chat />-->
 					{:else if activeItem === 'Move Pattern'}
 						nothing
 					{/if}
