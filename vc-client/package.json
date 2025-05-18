@@ -26,6 +26,7 @@
 		"@storybook/sveltekit": "^7.4.0",
 		"@storybook/testing-library": "0.0.14-next.2",
 		"@sveltejs/adapter-auto": "^2.1.0",
+		"@sveltejs/adapter-cloudflare": "^7.0.3",
 		"@sveltejs/kit": "^1.24.1",
 		"@types/pg": "^8.10.9",
 		"@typescript-eslint/eslint-plugin": "^5.62.0",
