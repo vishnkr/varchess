@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"vc-server/chess"
 	"vc-server/vc-core/internal/db"
 	"vc-server/vc-core/internal/logger"
 	"vc-server/vc-core/internal/middleware"
@@ -21,9 +22,9 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
 		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
 		VariantType string                       `json:"variantType" bson:"variantType"`
-		Dimensions  models.Dimensions            `json:"dimensions" bson:"dimensions"`
+		Dimensions  chess.Dimensions            `json:"dimensions" bson:"dimensions"`
 		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps  map[string]models.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
 		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -108,9 +109,9 @@ func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
 		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
 		VariantType string                       `json:"variantType" bson:"variantType"`
-		Dimensions  models.Dimensions            `json:"dimensions" bson:"dimensions"`
+		Dimensions  chess.Dimensions            `json:"dimensions" bson:"dimensions"`
 		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps  map[string]models.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
 		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
 	}
 

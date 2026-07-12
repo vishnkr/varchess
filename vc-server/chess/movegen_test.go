@@ -68,6 +68,7 @@ func TestGenerateSlideMoves(t *testing.T) {
 
 
 func TestAttackTable(t *testing.T) {
+	t.Skip("debug helper — no assertions; run manually when inspecting attack tables")
     ranks, files := 8, 8
 	largestDim:= max(ranks,files)
     src := SmallToLargeBoardIndex(27, files,largestDim)

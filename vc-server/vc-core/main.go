@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "vc-server/chess/variants" // register variant factory
 	"vc-server/vc-core/internal/api"
 	"vc-server/vc-core/internal/api/handlers"
 	"vc-server/vc-core/internal/config"
@@ -54,9 +55,10 @@ func main(){
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	api := api.NewAPI(&l,dbConn)
-	_ = router.With(mw.AuthMiddleware).Route("/api", func(r chi.Router) {
-		api.RegisterHandlers(r, dbConn)
+	apiServer := api.NewAPI(&l, dbConn)
+	router.Route("/api", func(r chi.Router) {
+		r.Use(mw.AuthMiddleware)
+		apiServer.RegisterHandlers(r, dbConn)
 	})
 
 	server := http.Server{

@@ -2,7 +2,7 @@ package event
 
 import (
 	"encoding/json"
-	"vc-server/vc-core/internal/chess"
+	"vc-server/chess"
 )
 
 type EventType string

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"vc-server/chess"
 	"vc-server/vc-core/internal/db"
 	"vc-server/vc-core/internal/middleware"
 	"vc-server/vc-core/internal/models"
@@ -88,7 +89,7 @@ func HandleGetGame(database *db.DB) http.HandlerFunc {
 func HandleCreateGame(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var request struct {
-			GameConfig *models.GameConfig `json:"gc,omitempty"`
+			GameConfig *chess.GameConfig `json:"gc,omitempty"`
 			TemplateID *string `json:"templateId,omitempty"`
 		}
 	
@@ -101,7 +102,7 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
-		var gameConfig models.GameConfig
+		var gameConfig chess.GameConfig
 		if request.TemplateID != nil {
 			collection := database.Collection("templates")
 			objectID, err := primitive.ObjectIDFromHex(*request.TemplateID)
@@ -112,7 +113,7 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 				return
 			}
 
-			gameConfig = models.GameConfig{
+			gameConfig = chess.GameConfig{
 				VariantType: template.VariantType,
 				Name:    template.Name,
 				PieceProps: template.Position.PieceProps,
@@ -136,9 +137,8 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			Moves: make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)
-		_,err := database.RedisClient.SetEx(context.TODO(), "game."+shortID, gameJSON, 30*time.Minute).Result()
-		if err!=nil{
-			fmt.Println("err creating key")
+		if _, redisErr := database.RedisClient.SetEx(context.TODO(), "game:"+shortID, gameJSON, 30*time.Minute).Result(); redisErr != nil {
+			fmt.Println("err creating key:", redisErr)
 		}
 		response.GameID = shortID
 		json.NewEncoder(w).Encode(response)

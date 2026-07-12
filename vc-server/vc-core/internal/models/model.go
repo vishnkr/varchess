@@ -1,6 +1,10 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"vc-server/chess"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Player struct {
 	UserId primitive.ObjectID `json:"userId" bson:"_id"`
@@ -16,53 +20,13 @@ type Template struct {
 	CustomData   map[string]interface{}          `json:"customData" bson:"customData"`
 }
 
-type GameConfig struct {
-	VariantType string    `json:"variantType" bson:"variantType"`
-	Name string				`json:"name,omitempty"`
-	Dimensions     Dimensions                  `json:"dimensions" bson:"dimensions"`
-	FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
-	PieceProps     map[string]PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
-	PieceLocations map[string]map[string][]int `json:"pieceLocations,omitempty" bson:"pieceLocations,omitempty"` // Maps color -> piece type -> piece locations
-	CustomData   map[string]interface{} `json:"customData" bson:"customData"`
-}
-
 type Position struct {
-	Dimensions     Dimensions                  `json:"dimensions" bson:"dimensions"`
+	Dimensions     chess.Dimensions                  `json:"dimensions" bson:"dimensions"`
 	FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
-	PieceProps     map[string]PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+	PieceProps     map[string]chess.PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
 	PieceLocations map[string]map[string][]int `json:"pieceLocations,omitempty" bson:"pieceLocations,omitempty"` // Maps color -> piece type -> piece locations
 }
 
-type Dimensions struct {
-	Ranks int `json:"ranks" bson:"ranks"`
-	Files int `json:"files" bson:"files"`
-}
-
-type PieceProps struct {
-	SlideOffsets []Coordinate `json:"slideOffsets,omitempty" bson:"slideOffsets,omitempty"`
-	JumpProps    []Coordinate  `json:"jumpOffsets,omitempty" bson:"jumpOffsets,omitempty"`
-	PromoProps   *PromoProps  `json:"promoProps,omitempty" bson:"promoProps,omitempty"`
-}
-
-type Coordinate struct {
-	X int `json:"x" bson:"x"`
-	Y int `json:"y" bson:"y"`
-}
-
-type JumpProps struct {
-	Offset           Coordinate `json:"offset" bson:"offset"`
-	IsCaptureAllowed bool       `json:"isCaptureAllowed" bson:"isCaptureAllowed"`
-}
-
-type PromoProps struct {
-	PromotionSquares []int             `json:"promotionSquares" bson:"promotionSquares"`
-	CanPromoteTo     []PromotionOption `json:"canPromoteTo" bson:"canPromoteTo"`
-}
-
-type PromotionOption struct {
-	PieceType string `json:"pieceType" bson:"pieceType"`
-	Name      string `json:"name" bson:"name"`
-}
 
 type Objective struct {
 	Type           string                 `json:"type" bson:"type"`
@@ -93,12 +57,15 @@ const (
 )
 
 type ActiveGame struct {
-	ID      string                        `json:"id"`
-	Players map[string]Player `json:"players"`
-	Config  GameConfig                    `json:"gameConfig"`
-	Moves   []string                      `json:"moves"`
-	State   ActiveGameState                `json:"state"`
-	Turn    string                        `json:"turn"`
+	ID               string             `json:"id"`
+	Players          map[string]Player  `json:"players"`
+	Config           chess.GameConfig   `json:"gameConfig"`
+	Moves            []string           `json:"moves"`
+	State            ActiveGameState    `json:"state"`
+	Turn             string             `json:"turn"`
+	// VariantStateJSON holds serialised variant-specific state (check counters,
+	// poisoned squares, etc.) so the worker can reconstruct the engine state.
+	VariantStateJSON []byte             `json:"variantState,omitempty"`
 }
 
 

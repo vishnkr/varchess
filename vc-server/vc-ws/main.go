@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	_ "vc-server/chess/variants" // register variant factory
 	"vc-server/vc-ws/internal/config"
 	"vc-server/vc-ws/internal/wss"
 

@@ -1,10 +1,12 @@
 package wss
 
+import "encoding/json"
+
 type Event struct {
-	GameID string    `json:"gid"`
-	UserID string    `json:"uid"`
-	Type   EventType `json:"t"`
-	Data   interface{}    `json:"d"`
+	GameID string          `json:"gid"`
+	UserID string          `json:"uid"`
+	Type   EventType       `json:"t"`
+	Data   json.RawMessage `json:"d"`
 }
 type EventType string
 

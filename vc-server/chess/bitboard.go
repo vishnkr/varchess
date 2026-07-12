@@ -69,13 +69,13 @@ func (b *Bitboard64) HasBit(index int) bool {
 }
 
 func (b *Bitboard64) GetSetBits() []int {
-    var positions []int
-    for i := 0; i < 64; i++ {
-        if b.HasBit(i) {
-            positions = append(positions,63-i)
-        }
-    }
-    return positions
+	var positions []int
+	for i := 0; i < 64; i++ {
+		if b.HasBit(i) {
+			positions = append(positions, i)
+		}
+	}
+	return positions
 }
 
 func (b *Bitboard64) FirstSetBit() int {
