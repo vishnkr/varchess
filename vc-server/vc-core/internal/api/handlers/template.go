@@ -16,24 +16,68 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func HandleGetTemplates(database *db.DB) http.HandlerFunc {
-	type responseItem struct {
-		Name        string                       `json:"name" bson:"name"`
-		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
-		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
-		VariantType string                       `json:"variantType" bson:"variantType"`
-		Dimensions  chess.Dimensions            `json:"dimensions" bson:"dimensions"`
-		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
-		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
+// templateDoc supports both nested `position` (canonical) and legacy flat fields.
+type templateDoc struct {
+	Name        string                       `json:"name" bson:"name"`
+	ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
+	UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
+	VariantType string                       `json:"variantType" bson:"variantType"`
+	Dimensions  chess.Dimensions             `json:"dimensions,omitempty" bson:"dimensions,omitempty"`
+	FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
+	PieceProps  map[string]chess.PieceProps  `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
+	Position    models.Position              `json:"position,omitempty" bson:"position,omitempty"`
+	CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
+}
+
+// flatTemplateResponse is the client-facing shape (flat + nested for compatibility).
+type flatTemplateResponse struct {
+	Name        string                      `json:"name"`
+	ID          primitive.ObjectID          `json:"_id,omitempty"`
+	UserId      primitive.ObjectID          `json:"userId,omitempty"`
+	VariantType string                      `json:"variantType"`
+	Dimensions  chess.Dimensions            `json:"dimensions"`
+	FEN         string                      `json:"fen,omitempty"`
+	PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty"`
+	Position    models.Position             `json:"position"`
+	CustomData  map[string]interface{}      `json:"customData"`
+}
+
+func normalizeTemplate(doc templateDoc) flatTemplateResponse {
+	pos := doc.Position
+	if pos.FEN == "" && doc.FEN != "" {
+		pos.FEN = doc.FEN
 	}
+	if pos.Dimensions.Ranks == 0 && doc.Dimensions.Ranks != 0 {
+		pos.Dimensions = doc.Dimensions
+	}
+	if pos.PieceProps == nil && doc.PieceProps != nil {
+		pos.PieceProps = doc.PieceProps
+	}
+	return flatTemplateResponse{
+		Name:        doc.Name,
+		ID:          doc.ID,
+		UserId:      doc.UserId,
+		VariantType: doc.VariantType,
+		Dimensions:  pos.Dimensions,
+		FEN:         pos.FEN,
+		PieceProps:  pos.PieceProps,
+		Position:    pos,
+		CustomData:  doc.CustomData,
+	}
+}
+
+func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.FromContext(r.Context()).With().Str("handler", "HandleGetTemplates").Logger()
 		page, pageSize := utils.GetPaginationParams(r)
 		opts := utils.GetPaginationOptions(page, pageSize)
 		userID, err := middleware.GetUserObjIDFromContext(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		collection := database.Collection("templates")
-		filter := bson.M{ "userId": userID}
+		filter := bson.M{"userId": userID}
 		cursor, err := collection.Find(r.Context(), filter, opts)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to query templates")
@@ -42,13 +86,18 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 		}
 		defer cursor.Close(r.Context())
 
-		var templates []responseItem
-		if err := cursor.All(r.Context(), &templates); err != nil {
+		var docs []templateDoc
+		if err := cursor.All(r.Context(), &docs); err != nil {
 			http.Error(w, "Failed to decode templates", http.StatusInternalServerError)
 			return
 		}
 
-		totalCount, err := collection.CountDocuments(r.Context(), bson.M{})
+		items := make([]flatTemplateResponse, 0, len(docs))
+		for _, doc := range docs {
+			items = append(items, normalizeTemplate(doc))
+		}
+
+		totalCount, err := collection.CountDocuments(r.Context(), filter)
 		if err != nil {
 			http.Error(w, "Failed to count templates", http.StatusInternalServerError)
 			return
@@ -57,8 +106,8 @@ func HandleGetTemplates(database *db.DB) http.HandlerFunc {
 		totalPages := utils.CalculateTotalPages(totalCount, int64(pageSize))
 
 		log.Info().Int64("totalCount", totalCount).Int("totalPages", totalPages).Msg("Successfully fetched templates")
-		response := models.PaginatedResponse[responseItem]{
-			Items:      templates,
+		response := models.PaginatedResponse[flatTemplateResponse]{
+			Items:      items,
 			TotalCount: totalCount,
 			Page:       page,
 			PageSize:   pageSize,
@@ -90,8 +139,8 @@ func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 
 		collection := database.Collection("templates")
 
-		var template bson.M
-		err = collection.FindOne(context.TODO(), bson.M{"_id": objID, "userId": userID}).Decode(&template)
+		var doc templateDoc
+		err = collection.FindOne(context.TODO(), bson.M{"_id": objID, "userId": userID}).Decode(&doc)
 		if err != nil {
 			log.Warn().Str("templateID", templateID).Msg("Template not found")
 			http.Error(w, "Template not found", http.StatusNotFound)
@@ -99,28 +148,26 @@ func HandleGetTemplate(database *db.DB) http.HandlerFunc {
 		}
 		log.Info().Str("templateID", templateID).Msg("Successfully fetched template")
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(template)
+		json.NewEncoder(w).Encode(normalizeTemplate(doc))
 	}
 }
 
 func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 	type request struct {
-		Name        string                       `json:"name" bson:"name"`
-		ID          primitive.ObjectID           `json:"_id,omitempty" bson:"_id,omitempty"`
-		UserId      primitive.ObjectID           `json:"userId,omitempty" bson:"userId,omitempty"`
-		VariantType string                       `json:"variantType" bson:"variantType"`
-		Dimensions  chess.Dimensions            `json:"dimensions" bson:"dimensions"`
-		FEN         string                       `json:"fen,omitempty" bson:"fen,omitempty"`
-		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
-		CustomData  map[string]interface{}       `json:"customData" bson:"customData"`
+		Name        string                      `json:"name"`
+		VariantType string                      `json:"variantType"`
+		Dimensions  chess.Dimensions            `json:"dimensions"`
+		FEN         string                      `json:"fen,omitempty"`
+		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty"`
+		CustomData  map[string]interface{}      `json:"customData"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserIDFromContext(r)
 		log := logger.FromContext(r.Context()).With().Str("handler", "HandleCreateTemplate").Logger()
 
-		var template request
-		if err := json.NewDecoder(r.Body).Decode(&template); err != nil {
+		var body request
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid template structure", http.StatusBadRequest)
 			return
 		}
@@ -130,11 +177,21 @@ func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 			http.Error(w, "Invalid user id", http.StatusBadRequest)
 			return
 		}
-		template.UserId = userObjectId
-		template.ID = primitive.NewObjectID()
+
+		template := models.Template{
+			Name:        body.Name,
+			ID:          primitive.NewObjectID(),
+			UserId:      userObjectId,
+			VariantType: body.VariantType,
+			Position: models.Position{
+				Dimensions: body.Dimensions,
+				FEN:        body.FEN,
+				PieceProps: body.PieceProps,
+			},
+			CustomData: body.CustomData,
+		}
 
 		collection := database.Collection("templates")
-
 		_, err = collection.InsertOne(context.TODO(), template)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to insert template")
@@ -143,11 +200,27 @@ func HandleCreateTemplate(database *db.DB) http.HandlerFunc {
 		}
 		log.Info().Str("templateID", template.ID.Hex()).Msg("Template created successfully")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(template)
+		json.NewEncoder(w).Encode(normalizeTemplate(templateDoc{
+			Name:        template.Name,
+			ID:          template.ID,
+			UserId:      template.UserId,
+			VariantType: template.VariantType,
+			Position:    template.Position,
+			CustomData:  template.CustomData,
+		}))
 	}
 }
 
 func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
+	type request struct {
+		Name        string                      `json:"name"`
+		VariantType string                      `json:"variantType"`
+		Dimensions  chess.Dimensions            `json:"dimensions"`
+		FEN         string                      `json:"fen,omitempty"`
+		PieceProps  map[string]chess.PieceProps `json:"pieceProps,omitempty"`
+		CustomData  map[string]interface{}      `json:"customData"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.FromContext(r.Context()).With().Str("handler", "HandleUpdateTemplate").Logger()
 		templateID := chi.URLParam(r, "id")
@@ -165,18 +238,34 @@ func HandleUpdateTemplate(database *db.DB) http.HandlerFunc {
 			return
 		}
 
-		var updates bson.M
-		if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		var body request
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		collection := database.Collection("templates")
+		update := bson.M{
+			"$set": bson.M{
+				"name":                   body.Name,
+				"variantType":            body.VariantType,
+				"customData":             body.CustomData,
+				"position.dimensions":    body.Dimensions,
+				"position.fen":           body.FEN,
+				"position.pieceProps":    body.PieceProps,
+			},
+			"$unset": bson.M{
+				// Clear legacy flat fields if present.
+				"dimensions":  "",
+				"fen":         "",
+				"pieceProps":  "",
+			},
+		}
 
 		result, err := collection.UpdateOne(
 			context.TODO(),
 			bson.M{"_id": objID, "userId": userID},
-			bson.M{"$set": updates},
+			update,
 		)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to update template")

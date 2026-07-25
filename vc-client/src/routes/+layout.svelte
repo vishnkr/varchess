@@ -11,26 +11,49 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
 	import { theme } from '$lib/store/theme';
+	import { settings } from '$lib/store/settings';
+	import { unlockSfx } from '$lib/utils/sfx';
 	import { get } from 'svelte/store';
+	import { browser } from '$app/environment';
 
-	let auth: AuthState;
-	$: authStore.subscribe((value) => (auth = value));
+	let auth: AuthState = $authStore;
+	$: auth = $authStore;
 
-	const publicRoutes = ['/login', '/forgot-password', '/'];
-	const authRoutes = ['/home', '/editor','/play', '/games', '/templates', '/settings', '/profile'];
+	const publicRoutes = ['/login', '/'];
+	const authRoutePrefixes = ['/home', '/editor', '/play', '/games', '/templates', '/settings', '/profile'];
 
-	onMount(() => {
-		const stored = localStorage.getItem('theme') as 'dark' | 'light' | null;
-		const initial =
-			stored ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-		theme.set(initial);
-		document.documentElement.classList.toggle('dark', initial === 'dark');
+	let remoteSynced = false;
+
+	onMount(async () => {
+		await settings.load({ syncRemote: false });
+		if (get(authStore).accessToken) {
+			remoteSynced = true;
+			await settings.load({ syncRemote: true });
+		}
+		// Browsers block AudioContext until a user gesture; unlock so move SFX from WS works.
+		const unlock = () => {
+			unlockSfx();
+			window.removeEventListener('pointerdown', unlock);
+			window.removeEventListener('keydown', unlock);
+		};
+		window.addEventListener('pointerdown', unlock, { once: true });
+		window.addEventListener('keydown', unlock, { once: true });
 	});
+
+	$: if (browser && auth.accessToken && !remoteSynced) {
+		remoteSynced = true;
+		settings.load({ syncRemote: true });
+	}
+	$: if (!auth.accessToken) remoteSynced = false;
 	$: {
 		const currentPath = $page.url.pathname;
-		if (!auth.accessToken && authRoutes.includes(currentPath)) {
+		const isAuthRoute = authRoutePrefixes.some(
+			(p) => currentPath === p || currentPath.startsWith(p + '/')
+		);
+		const isPublicRoute = publicRoutes.includes(currentPath);
+		if (!auth.accessToken && isAuthRoute && currentPath !== '/login') {
 			goto('/login');
-		} else if (auth.accessToken && publicRoutes.includes(currentPath)) {
+		} else if (auth.accessToken && isPublicRoute && currentPath !== '/home') {
 			goto('/home');
 		}
 	}
@@ -64,8 +87,8 @@
 	];
 </script>
 
-<div class="flex flex-col min-h-screen">
-	<nav class="sticky top-0 z-50 bg-lightbg2 dark:bg-darkbg">
+<div class="flex flex-col min-h-screen" class:h-screen={$page.url.pathname.startsWith('/play')} class:overflow-hidden={$page.url.pathname.startsWith('/play')}>
+	<nav class="sticky top-0 z-50 bg-lightbg2 dark:bg-darkbg shrink-0">
 		<div class="max-w-8xl mx-auto px-4">
 			<div class="flex justify-between items-center h-16">
 				<!-- Logo -->
@@ -119,11 +142,12 @@
 	</nav>
 
 	<div
-		class="flex-grow bg-lightbg dark:bg-[#0a0c13] bg-gradient-radial dark:from-[#0a0c13] dark:to-[#060709] from-[#f8fafc] to-[#e2e8f0]"
+		class="flex-grow min-h-0 bg-lightbg dark:bg-[#0a0c13] bg-gradient-radial dark:from-[#0a0c13] dark:to-[#060709] from-[#f8fafc] to-[#e2e8f0]"
+		class:overflow-hidden={$page.url.pathname.startsWith('/play')}
 	>
 		<ToastContainer />
-		<main class="flex">
-			{#if auth.accessToken && authRoutes.includes($page.url.pathname)}
+		<main class="flex h-full min-h-0">
+			{#if auth.accessToken}
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div
 			on:mouseenter={handleSidebarHover}
@@ -156,13 +180,19 @@
 				</div>
 			{/if}
 
-			<div class={`flex-grow p-4 transition-all duration-300 ${isSidebarOpen ? 'pl-48' : 'pl-16'}`}>
+			<div
+				class={`flex-grow min-h-0 transition-all duration-300 ${isSidebarOpen ? 'pl-48' : auth.accessToken ? 'pl-16' : 'pl-0'} ${
+					$page.url.pathname.startsWith('/play') ? 'p-0 overflow-hidden h-full' : 'p-4'
+				}`}
+			>
 				<slot />
 			</div>
 			
 		</main>
 	</div>
-	<Footer />
+	{#if !$page.url.pathname.startsWith('/play')}
+		<Footer />
+	{/if}
 </div>
 
 <style>

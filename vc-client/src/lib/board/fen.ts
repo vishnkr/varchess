@@ -17,10 +17,9 @@ const pieceNameMap: Record<string, string> = {
 	d: 'dolphin',
 	i: 'ninja',
 	u: 'unicorn',
-	a: 'tower',
+	a: 'astronaut',
 	g: 'giraffe',
 	j: 'juicer',
-	s: 'astronaut',
 	v: 'phage',
 	z: 'zebra'
 };
@@ -82,7 +81,7 @@ export const convertFenToPosition = (
 			} else {
 				const piece = {
 					color: char.toLowerCase() === char ? Color.BLACK : Color.WHITE,
-					notation: char,
+					notation: char.toLowerCase(),
 					pieceType: pieceNameMap[char.toLowerCase()]
 				};
 				maxBoardState[row][col] = { isPiecePresent: true, piece };

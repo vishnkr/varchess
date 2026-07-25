@@ -17,6 +17,20 @@ func (se *StandardEngine) GetPosition() *Position {
 	return se.Position
 }
 
+func (se *StandardEngine) VariantState() interface{} {
+	if se.rules == nil {
+		return nil
+	}
+	return se.rules.VariantState()
+}
+
+func (se *StandardEngine) LoadVariantState(s interface{}) error {
+	if se.rules == nil || s == nil {
+		return nil
+	}
+	return se.rules.LoadVariantState(s)
+}
+
 func (se *StandardEngine) IsGameOver() (bool, EngineResult) {
 	if se.isGameOverBool && se.gameResult != nil {
 		return true, *se.gameResult
@@ -82,7 +96,9 @@ func (se *StandardEngine) isColorInCheck(color Color) bool {
 // GetLegalMoves returns all fully-legal moves for the side to move,
 // including variant-specific extra/filtered moves.
 func (se *StandardEngine) GetLegalMoves() []Move {
-	pseudoMoves := se.GetPseudoLegalMoves(se.CurrentTurn(), false)
+	// Antichess treats the king as a normal capturable piece.
+	canCaptureKing := relaxesKingSafety(se.rules)
+	pseudoMoves := se.GetPseudoLegalMoves(se.CurrentTurn(), canCaptureKing)
 
 	// Variant may add extra moves (archer shots, teleports, etc.).
 	if se.rules != nil {
@@ -92,6 +108,11 @@ func (se *StandardEngine) GetLegalMoves() []Move {
 	// Variant may filter moves (e.g., force captures in Antichess).
 	if se.rules != nil {
 		pseudoMoves = se.rules.FilterMoves(pseudoMoves, se.Position)
+	}
+
+	// Antichess (and similar) ignore king safety — moving into check is allowed.
+	if canCaptureKing {
+		return pseudoMoves
 	}
 
 	// movedColor is the player making each pseudo-legal move.
@@ -109,8 +130,8 @@ func (se *StandardEngine) GetLegalMoves() []Move {
 			if move.To < move.From {
 				dir = -1
 			}
-			midFile := move.From%lbd + dir
-			midRank := move.From / lbd
+			fromFile, midRank := FileRankFromIndex(move.From, lbd)
+			midFile := fromFile + dir
 			midSq := FileRankToLargeIndex(midFile, midRank, se.Position.Files, lbd)
 			if IsAttacked(midSq, opponent(movedColor), se.Position) {
 				continue
@@ -127,21 +148,76 @@ func (se *StandardEngine) GetLegalMoves() []Move {
 	return legalMoves
 }
 
-// IsLegalMove checks if move is among the legal moves for the current position.
-func (se *StandardEngine) IsLegalMove(move Move) bool {
-	for _, lm := range se.GetLegalMoves() {
-		if lm == move {
-			return true
-		}
+// kingSafetyRelaxed is implemented by variants (e.g. antichess) where leaving
+// the king in check is legal.
+type kingSafetyRelaxed interface {
+	RelaxesKingSafety() bool
+}
+
+func relaxesKingSafety(rules VariantRules) bool {
+	if rules == nil {
+		return false
+	}
+	if r, ok := rules.(kingSafetyRelaxed); ok {
+		return r.RelaxesKingSafety()
 	}
 	return false
 }
 
+// IsLegalMove checks if move is among the legal moves for the current position.
+// Compares core fields only so variant metadata (VariantMoveType / AdditionalData)
+// on generated moves does not reject client payloads that omit them.
+func (se *StandardEngine) IsLegalMove(move Move) bool {
+	return se.resolveLegalMove(move) != nil
+}
+
+func (se *StandardEngine) resolveLegalMove(move Move) *Move {
+	for _, lm := range se.GetLegalMoves() {
+		if lm.From != move.From || lm.Piece != move.Piece || lm.Promotion != move.Promotion {
+			continue
+		}
+		if lm.To == move.To {
+			matched := lm
+			return &matched
+		}
+		// Wormhole: clients click the portal entrance; legal To is the exit.
+		if portal, ok := teleportPortalFromAdditional(lm); ok && portal == move.To {
+			matched := lm
+			return &matched
+		}
+	}
+	return nil
+}
+
+func teleportPortalFromAdditional(m Move) (int, bool) {
+	if m.VariantMoveType != "teleport" {
+		return 0, false
+	}
+	data, ok := m.AdditionalData.(map[string]interface{})
+	if !ok {
+		return 0, false
+	}
+	switch n := data["portal"].(type) {
+	case int:
+		return n, true
+	case float64:
+		return int(n), true
+	case int32:
+		return int(n), true
+	case int64:
+		return int(n), true
+	default:
+		return 0, false
+	}
+}
+
 // PerformMove validates and executes a move, updating all game state.
 func (se *StandardEngine) PerformMove(move Move) (MoveResult, error) {
-	if !se.IsLegalMove(move) {
+	legal := se.resolveLegalMove(move)
+	if legal == nil {
 		return MoveResult{}, fmt.Errorf("illegal move: %+v", move)
 	}
+	move = *legal
 
 	if se.rules != nil {
 		if err := se.rules.OnBeforeMove(move, se.Position); err != nil {
@@ -223,9 +299,10 @@ func (se *StandardEngine) MakeMove(move Move) {
 		if color == Black {
 			dir = 1
 		}
-		// White direction=-1: captured pawn is below target (to + lbd).
-		// Black direction=+1: captured pawn is above target (to - lbd).
-		capturedSquare = to - dir*lbd
+		// White direction=-1: captured pawn is below target (to + stride).
+		// Black direction=+1: captured pawn is above target (to - stride).
+		stride := IndexStride(lbd)
+		capturedSquare = to - dir*stride
 		capturedPiece = se.GetPieceAt(capturedSquare)
 	} else {
 		capturedPiece = se.GetPieceAt(to)
@@ -268,11 +345,10 @@ func (se *StandardEngine) MakeMove(move Move) {
 	se.Position.ColorBitboards[color].SetBit(to)
 	se.Position.PositionBitBoard.SetBit(to)
 
-	// Castling: also move the rook.
+	// Castling: also move the rook (skip if no rook bitboard — custom/miniboards).
 	if move.ClassicMoveType == CastleMove {
-		rank := from / lbd
-		fromFile := from % lbd
-		toFile := to % lbd
+		fromFile, rank := FileRankFromIndex(from, lbd)
+		toFile, _ := FileRankFromIndex(to, lbd)
 		var rookFrom, rookTo int
 		rookPiece := rune('R')
 		if color == Black {
@@ -285,14 +361,16 @@ func (se *StandardEngine) MakeMove(move Move) {
 			rookFrom = FileRankToLargeIndex(0, rank, se.Position.Files, lbd)
 			rookTo = FileRankToLargeIndex(toFile+1, rank, se.Position.Files, lbd)
 		}
-		se.Position.Pieces[rookPiece].ClearBit(rookFrom)
-		se.Position.ColorBitboards[color].ClearBit(rookFrom)
-		se.Position.PositionBitBoard.ClearBit(rookFrom)
-		se.Position.Pieces[rookPiece].SetBit(rookTo)
-		se.Position.ColorBitboards[color].SetBit(rookTo)
-		se.Position.PositionBitBoard.SetBit(rookTo)
-		se.recentMove.castleRookFrom = rookFrom
-		se.recentMove.castleRookTo = rookTo
+		if rookBB, ok := se.Position.Pieces[rookPiece]; ok && rookBB != nil {
+			rookBB.ClearBit(rookFrom)
+			se.Position.ColorBitboards[color].ClearBit(rookFrom)
+			se.Position.PositionBitBoard.ClearBit(rookFrom)
+			rookBB.SetBit(rookTo)
+			se.Position.ColorBitboards[color].SetBit(rookTo)
+			se.Position.PositionBitBoard.SetBit(rookTo)
+			se.recentMove.castleRookFrom = rookFrom
+			se.recentMove.castleRookTo = rookTo
+		}
 	}
 
 	updateGameState(se, move)
@@ -339,12 +417,14 @@ func (se *StandardEngine) UnmakeMove(move Move) {
 			rookPiece = 'r'
 		}
 		_ = lbd
-		se.Position.Pieces[rookPiece].ClearBit(se.recentMove.castleRookTo)
-		se.Position.ColorBitboards[movedColor].ClearBit(se.recentMove.castleRookTo)
-		se.Position.PositionBitBoard.ClearBit(se.recentMove.castleRookTo)
-		se.Position.Pieces[rookPiece].SetBit(se.recentMove.castleRookFrom)
-		se.Position.ColorBitboards[movedColor].SetBit(se.recentMove.castleRookFrom)
-		se.Position.PositionBitBoard.SetBit(se.recentMove.castleRookFrom)
+		if rookBB, ok := se.Position.Pieces[rookPiece]; ok && rookBB != nil {
+			rookBB.ClearBit(se.recentMove.castleRookTo)
+			se.Position.ColorBitboards[movedColor].ClearBit(se.recentMove.castleRookTo)
+			se.Position.PositionBitBoard.ClearBit(se.recentMove.castleRookTo)
+			rookBB.SetBit(se.recentMove.castleRookFrom)
+			se.Position.ColorBitboards[movedColor].SetBit(se.recentMove.castleRookFrom)
+			se.Position.PositionBitBoard.SetBit(se.recentMove.castleRookFrom)
+		}
 	}
 
 	// Restore position state.
@@ -386,8 +466,7 @@ func updateGameState(se *StandardEngine, move Move) {
 			se.Position.Castling &^= (1 << KSCB) | (1 << QSCB)
 		}
 	case 'r':
-		fromFile := move.From % lbd
-		fromRank := move.From / lbd
+		fromFile, fromRank := FileRankFromIndex(move.From, lbd)
 		if color == White {
 			// White rooks start at rank Ranks-1 (bottom of board in rank-from-top).
 			if fromRank == se.Position.Ranks-1 {

@@ -43,7 +43,8 @@ func NewVariantRules(variantType string, customData map[string]interface{}) (che
 		return &ArcherRules{}, nil
 
 	case "wormhole", "teleport":
-		return &TeleportRules{}, nil
+		pairs := parseWormholePairs(customData)
+		return NewTeleportRules(pairs), nil
 
 	case "poisonedpawn":
 		return &PoisonedPawnRules{

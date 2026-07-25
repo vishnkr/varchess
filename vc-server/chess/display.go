@@ -11,9 +11,7 @@ import (
 // Convention: rank 0 is the top of the board (chess rank = Ranks).
 func SquareToAlgebraic(sq, files, ranks int) string {
 	lbd := max(ranks, files)
-	// Convert large-board index → (file, internalRank).
-	internalRank := sq / lbd
-	file := sq % lbd
+	file, internalRank := FileRankFromIndex(sq, lbd)
 	if file >= files || internalRank >= ranks {
 		return "??"
 	}
@@ -27,8 +25,8 @@ func SquareToAlgebraic(sq, files, ranks int) string {
 func FormatMove(m Move, pos *Position) string {
 	if m.ClassicMoveType == CastleMove {
 		// King-side or queen-side based on direction.
-		fromFile := m.From % pos.LargestDimension
-		toFile := m.To % pos.LargestDimension
+		fromFile, _ := FileRankFromIndex(m.From, pos.LargestDimension)
+		toFile, _ := FileRankFromIndex(m.To, pos.LargestDimension)
 		if toFile > fromFile {
 			return "O-O"
 		}
@@ -67,8 +65,7 @@ func PositionToASCII(pos *Position) string {
 	for piece, bb := range pos.Pieces {
 		for _, idx := range bb.GetSetBits() {
 			// idx is in large-board space; convert to small-board (ranks×files).
-			internalRank := idx / pos.LargestDimension
-			file := idx % pos.LargestDimension
+			file, internalRank := FileRankFromIndex(idx, pos.LargestDimension)
 			if internalRank < pos.Ranks && file < pos.Files {
 				board[internalRank*pos.Files+file] = piece
 			}

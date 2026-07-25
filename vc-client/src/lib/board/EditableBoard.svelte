@@ -1,24 +1,36 @@
 <script lang="ts">
 	/* Board wrapper component to handle edit state and abstract board edit logic from board component*/
-	import type { Position, SquareInfo, SquareMaps, PiecePresentInfo, SquareIdx } from './types';
+	import type { Position, PiecePresentInfo } from './types';
 	import './board-styles.css';
 	import type { BoardConfig } from './types';
 	import { generateSquareMaps, updatePiecePositionsFromMaxBoard } from './board';
 	import { convertFenToPosition, createEmptyMaxBoardState } from './fen';
 	import Board from './Board.svelte';
 	import { editorMaxBoard } from './board';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import { get } from 'svelte/store';
 
 	export let boardConfig: BoardConfig;
 
 	let { squares } = generateSquareMaps(boardConfig.dimensions, boardConfig.isFlipped ?? false);
-	const convertedPos = convertFenToPosition(boardConfig.fen);
 	let position: Position = { piecePositions: {}, walls: {} };
+	let maxBoardState: PiecePresentInfo[][] = get(editorMaxBoard);
 
-	let maxBoardState: PiecePresentInfo[][] = $editorMaxBoard;
-	if (convertedPos) {
-		({ position, maxBoardState } = convertedPos);
-		editorMaxBoard.set(maxBoardState);
+	/** True once we have a real 2D board (not the initial `[[]]` placeholder). */
+	function isHydratedMaxBoard(state: PiecePresentInfo[][] | null | undefined): boolean {
+		return !!state && state.length >= 2 && Array.isArray(state[0]) && state[0].length >= 2;
+	}
+
+	// Prefer the live editor store so remounting (e.g. after move-pattern mode)
+	// does not wipe placements by re-applying the original FEN.
+	if (isHydratedMaxBoard(maxBoardState)) {
+		position = updatePiecePositionsFromMaxBoard(maxBoardState, boardConfig.dimensions);
+	} else {
+		const convertedPos = convertFenToPosition(boardConfig.fen);
+		if (convertedPos) {
+			({ position, maxBoardState } = convertedPos);
+			editorMaxBoard.set(maxBoardState);
+		}
 	}
 
 	export let customBoardId = 'board';
@@ -29,7 +41,6 @@
 	}
 
 	$: updateBoardState();
-
 
 	$: {
 		maxBoardState;

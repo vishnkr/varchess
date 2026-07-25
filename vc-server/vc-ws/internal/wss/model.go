@@ -21,7 +21,18 @@ const (
 	DrawAccept EventType = "draw-accept"
 	DrawReject EventType = "draw-reject"
 	GameOver EventType = "over"
+
+	// Hints returns legal destinations for a selected square (targeted to requester).
+	Hints EventType = "hints"
+
+	// WS-only presence (not forwarded to vc-core)
+	Presence EventType = "presence"
 )
+
+type PresencePayload struct {
+	UserID string `json:"userId"`
+	Online bool   `json:"online"`
+}
 
 type JoinPayload struct {
 	Color string `json:"c"`

@@ -1,59 +1,85 @@
-<script lang="ts">/*
-	import { chats, gameId, type ChatMessage, MessageType } from '$lib/store/stores';
-	import {wsStore} from '$lib/websocket';
-	import { EventChatMessage, type ChatParams, type WebSocketMessage } from '$lib/store/types';
-	import { sendWebsocketMsg } from '$lib/websocket';
+<script lang="ts">
+	import { chats, MessageType } from '$lib/store/stores';
+	import { wsStore } from '$lib/websocket';
+	import { tick } from 'svelte';
 
-	let chatMessages: ChatMessage[] = [];
 	let inputMessage = '';
-	
-	function sendMessage() {
-		if (inputMessage.trim() !== '' && $gameId) {
-			const wsMessage:WebSocketMessage = {
-				event: EventChatMessage,
-				params:{
-					gameId: $gameId,
-					message: inputMessage.trim()
-				} as ChatParams
-			}
-			if($wsStore){
-				sendWebsocketMsg($wsStore,wsMessage);
-			}
-			inputMessage = '';
+	let listEl: HTMLDivElement | null = null;
+	let lastChatLen = 0;
+
+	async function sendMessage() {
+		const text = inputMessage.trim();
+		if (!text) return;
+		wsStore.sendChat(text);
+		inputMessage = '';
+		await tick();
+		scrollToBottom();
+	}
+
+	function scrollToBottom() {
+		if (listEl) listEl.scrollTop = listEl.scrollHeight;
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			sendMessage();
 		}
 	}
 
-	$: chatMessages = $chats;
-*/
+	$: {
+		const len = $chats.length;
+		if (listEl && len !== lastChatLen) {
+			lastChatLen = len;
+			tick().then(scrollToBottom);
+		}
+	}
 </script>
-<!--
-<div class="m-2 bg-white">
-	<div class="max-h-60 overflow-y-auto">
-		{#each chatMessages as message}
-			{#if message.messageType === MessageType.ChatMessage}
-				<div class="flex pt-2">
-					<p class="pl-4 font-bold text-red-700">{message.username}:</p>
-					<p class="ml-2">{message.content}</p>
-				</div>
-			{:else}
-				<div class="flex justify-center">
-					<p class="text-blue-500">{message.content}</p>
-				</div>
-			{/if}
-		{/each}
-	</div>
 
-	<div class="p-2 w-full flex">
+<div class="flex flex-col h-full min-h-0 rounded-md border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-black/30">
+	<h3
+		class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 px-3 py-2 border-b border-gray-200 dark:border-gray-700"
+	>
+		Chat
+	</h3>
+	<div bind:this={listEl} class="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-1.5">
+		{#if $chats.length === 0}
+			<p class="text-xs text-gray-500 dark:text-gray-400">No messages yet</p>
+		{:else}
+			{#each $chats as message}
+				{#if message.messageType === MessageType.ChatMessage}
+					<p class="text-sm break-words">
+						<span class="font-semibold text-emerald-700 dark:text-emerald-400"
+							>{message.username}:</span
+						>
+						<span class="text-gray-800 dark:text-gray-100 ml-1">{message.content}</span>
+					</p>
+				{:else if message.messageType === MessageType.UserJoin}
+					<p class="text-xs text-center text-emerald-600 dark:text-emerald-400 italic">
+						{message.content}
+					</p>
+				{:else if message.messageType === MessageType.UserLeave}
+					<p class="text-xs text-center text-amber-600 dark:text-amber-400 italic">
+						{message.content}
+					</p>
+				{:else}
+					<p class="text-xs text-center text-sky-600 dark:text-sky-400 italic">{message.content}</p>
+				{/if}
+			{/each}
+		{/if}
+	</div>
+	<div class="flex gap-1 p-2 border-t border-gray-200 dark:border-gray-700">
 		<input
-			class="border border-gray-300 px-4 py-2 rounded-l flex-grow"
+			class="flex-1 min-w-0 rounded border border-gray-300 dark:border-gray-600 bg-transparent px-2 py-1.5 text-sm dark:text-white"
 			type="text"
 			bind:value={inputMessage}
-			placeholder="Type a message..."
+			placeholder="Type a message…"
+			on:keydown={onKeydown}
 		/>
 		<button
-			class="bg-blue-600 hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-r"
+			type="button"
+			class="shrink-0 rounded bg-gray-900 dark:bg-white text-white dark:text-black px-3 py-1.5 text-sm font-medium"
 			on:click={sendMessage}>Send</button
 		>
 	</div>
 </div>
--->

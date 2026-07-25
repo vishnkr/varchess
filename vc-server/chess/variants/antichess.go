@@ -14,6 +14,9 @@ type AntichessRules struct{}
 
 func (r *AntichessRules) ExtraMoves(_ *chess.Position, _ chess.Color) []chess.Move { return nil }
 
+// RelaxesKingSafety reports that antichess allows leaving (or capturing) the king.
+func (r *AntichessRules) RelaxesKingSafety() bool { return true }
+
 // FilterMoves enforces mandatory captures: if any capture exists, only captures are legal.
 func (r *AntichessRules) FilterMoves(moves []chess.Move, _ *chess.Position) []chess.Move {
 	var captures []chess.Move
@@ -68,7 +71,7 @@ func (r *AntichessRules) isBishopDraw(pos *chess.Position) bool {
 			continue
 		}
 		for _, sq := range bb.GetSetBits() {
-			f, rank := sq%lbd, sq/lbd
+			f, rank := chess.FileRankFromIndex(sq, lbd)
 			isDark := (f+rank)%2 == 0
 			if unicode.IsUpper(p) {
 				if isDark {

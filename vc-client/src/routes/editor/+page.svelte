@@ -16,7 +16,8 @@
 		editorSubTypeSelected,
 		pieceEditor,
 		resetEditorStores,
-		ruleEditor
+		ruleEditor,
+		wormholeEditor
 	} from '$lib/store/editor';
 	import { editorMaxBoard } from '$lib/board/board';
 	import { onMount } from 'svelte';
@@ -34,14 +35,19 @@
 		DialogClose
 	} from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
-	import { type Template } from '$lib/types';
+	import { type Template, VariantType } from '$lib/types';
 	import { get } from 'svelte/store';
 	import { toast } from '$lib/store/alert';
 	import { createTemplate, getTemplate, updateTemplate } from '$lib/api/template';
 	import { page } from '$app/stores';
 	import { createGame } from '$lib/api/games';
-	import { color } from 'echarts';
-
+	import { toWirePieceProps, fromWirePieceProps } from '$lib/utils/pieceProps';
+	import {
+		parseWormholePairs,
+		validateVariantConfig,
+		wormholePairsFromWire,
+		wormholePairsToWire
+	} from '$lib/utils/wormhole';
 	const defaultConfig: BoardConfig = {
 		fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR',
 		dimensions: { ranks: 8, files: 8 },
@@ -60,6 +66,8 @@
 			return;
 		}
 		resetEditorStores();
+		// Placeholder so EditableBoard still hydrates once from this page's FEN.
+		editorMaxBoard.set([[]]);
 		const url = new URL(window.location.href);
 		templateId = url.searchParams.get('tid');
 
@@ -67,14 +75,34 @@
 			isEditMode = true;
 			try {
 				const template: Template = await getTemplate(templateId);
+				const fen = template.fen ?? template.position?.fen ?? defaultConfig.fen;
+				const dimensions =
+					template.dimensions ?? template.position?.dimensions ?? defaultConfig.dimensions;
+				const pieceProps = template.pieceProps ?? template.position?.pieceProps ?? {};
 				if (template.name) templateName = template.name;
 				boardConfig = {
-					fen: template.fen,
-					dimensions: template.dimensions,
+					fen,
+					dimensions,
 					boardType: BoardType.Editor
 				};
-				boardEditor.setDimensions(template.dimensions.ranks, template.dimensions.files);
-				//templateStore.set(template);
+				boardEditor.setDimensions(dimensions.ranks, dimensions.files);
+				if (template.variantType) {
+					ruleEditor.updateVariantType(template.variantType as VariantType);
+				}
+				if (template.customData) {
+					const custom = { ...template.customData };
+					if (template.variantType === VariantType.Wormhole) {
+						const wirePairs = parseWormholePairs(custom.wormholePairs);
+						custom.wormholePairs = wormholePairsFromWire(
+							wirePairs,
+							dimensions.files,
+							dimensions.ranks
+						);
+						custom.cooldownTurns = 1;
+					}
+					ruleEditor.updateCustomData(custom);
+				}
+				pieceEditor.setMovePatterns(fromWirePieceProps(pieceProps));
 			} catch (err) {
 				toast.error('Failed to load template. Please try again.');
 				boardConfig = defaultConfig;
@@ -88,22 +116,31 @@
 	let clearBoard: () => void;
 	let shiftBoard: (direction: string) => void;
 	function exitRoom() {
+		wormholeEditor.stop();
 		goto('/home');
-	}
-
-	let isVariantRulesOn: boolean;
-	$: {
-		isVariantRulesOn = $ruleEditor.isViewVariantRulesOn;
 	}
 
 	let isPopupVisible = false;
 	let playAsWhite = true;
 	let templateName = '';
 
-	const showPopup = () => (isPopupVisible = true);
+	const showPopup = () => {
+		if (!assertVariantReady()) return;
+		isPopupVisible = true;
+	};
 	const hidePopup = () => (isPopupVisible = false);
 
+	function assertVariantReady(): boolean {
+		const err = validateVariantConfig($ruleEditor.variantType, $ruleEditor.customData);
+		if (err) {
+			toast.error(err);
+			return false;
+		}
+		return true;
+	}
+
 	const confirmTemplate = async () => {
+		if (!assertVariantReady()) return;
 		await saveTemplate();
 		hidePopup();
 	};
@@ -158,7 +195,8 @@
 				files: $boardEditor.files
 			},
 			fen,
-			pieceProps: $pieceEditor.movePatterns
+			pieceProps: toWirePieceProps($pieceEditor.movePatterns),
+			customData: $ruleEditor.customData ?? {}
 		};
 		templateStore.setTemplate(gameConfig);
 		return gameConfig;
@@ -200,13 +238,23 @@
 	export function getTemplatePayload(): Omit<Template, 'createdBy'> {
 		const boardData = generateGameTemplate();
 		const rules = get(ruleEditor);
+		const customData = { ...(rules.customData ?? {}) };
+		if (rules.variantType === VariantType.Wormhole) {
+			const pairs = parseWormholePairs(customData.wormholePairs);
+			customData.wormholePairs = wormholePairsToWire(
+				pairs,
+				boardData.dimensions.files,
+				boardData.dimensions.ranks
+			);
+			customData.cooldownTurns = 1;
+		}
 		return {
 			name: templateName,
 			variantType: rules.variantType,
 			dimensions: boardData.dimensions,
 			fen: boardData.fen,
-			pieceProps: {},
-			customData: {}
+			pieceProps: boardData.pieceProps,
+			customData
 		};
 	}
 
@@ -215,6 +263,7 @@
 			toast.error('Template name cannot be empty.');
 			return;
 		}
+		if (!assertVariantReady()) return;
 		const payload = getTemplatePayload();
 		try {
 			if (isEditMode && templateId) {
@@ -231,32 +280,32 @@
 	};
 
 	const playGame = async () => {
-		const authStr = localStorage.getItem('auth');
-		if (!authStr) {
+		const { userId, accessToken } = get(authStore);
+		if (!userId || !accessToken) {
 			goto('/login');
 			return;
 		}
-		const auth = JSON.parse(authStr);
-		const userId = get(authStore).userId;
-		const accessToken = auth?.accessToken;
-		if (!userId || !accessToken) return;
+		if (!assertVariantReady()) return;
 		const gameConfig = getTemplatePayload();
-		const payload = { gc: gameConfig, templateId: templateId };
+		// Prefer the live editor config (includes pieceProps). templateId alone
+		// would ignore unsaved pattern edits.
+		const payload = { gc: gameConfig };
 		try {
 			console.log('cr payload', payload);
-			let { gameId } = await createGame(payload);
-			console.log('ggame', gameId);
+			let { gameId: newGameId } = await createGame(payload);
+			console.log('ggame', newGameId);
 			let colorPref = playAsWhite ? 'w' : 'b';
 			gameState.updateStatus(Status.Waiting);
-			const url = `ws://${import.meta.env.VITE_WS_HOST}/play/${gameId}`;
+			gameId.set(newGameId);
+			const url = `ws://${import.meta.env.VITE_WS_HOST}/play/${newGameId}`;
 
 			const connectPayload = {
 				token: accessToken,
 				userId: userId,
 				colorPref: colorPref
 			};
-			await wsStore.newWebSocketConnection(url, connectPayload, 'create');
-			goto(`/play/${gameId}`);
+			wsStore.newWebSocketConnection(url, connectPayload);
+			goto(`/play/${newGameId}`);
 		} catch (err) {
 			console.log(err);
 			toast.error('Unable to start game. Please try again later.');
@@ -269,9 +318,6 @@
 </svelte:head>
 <div class="font-inter flex-grow">
 	{#if boardConfig}
-		{#if $ruleEditor.isViewVariantRulesOn && $ruleEditor.ruleComponent}
-			<svelte:component this={$ruleEditor.ruleComponent} />
-		{/if}
 		<div class="flex-1 flex m-4 lg:flex-row flex-col">
 			<div class="text-black rounded-md lg:w-5/12 mx-3 p-3 max-h-[45rem] overflow-y-auto">
 				<div class="border-b border-gray-200 dark:border-gray-700 flex flex-col text-center">
@@ -360,14 +406,18 @@
 			<div class="rounded-md lg:w-7/12 mx-3 my-3 p-3">
 				{#if $editorSubTypeSelected === EditorSubType.MovePattern}
 					<MpEditBoard />
-				{:else}
+				{/if}
+				<!-- Keep mounted while editing move patterns so placements aren't wiped on remount. -->
+				<div
+					class={$editorSubTypeSelected === EditorSubType.MovePattern ? 'hidden' : ''}
+				>
 					<EditableBoard
 						{boardConfig}
 						bind:this={boardRef}
 						bind:shift={shiftBoard}
 						bind:clear={clearBoard}
 					/>
-				{/if}
+				</div>
 			</div>
 		</div>
 		<Dialog open={isPopupVisible} onOpenChange={(v) => (isPopupVisible = v)}>

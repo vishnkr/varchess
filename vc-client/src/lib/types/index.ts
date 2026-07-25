@@ -31,26 +31,26 @@ export type File =
 	| 'p';
 export type Rank = `${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16}`;
 
+/** Matches vc-server/chess classicMoveType iota values. */
 export enum ClassicMoveType {
-	Quiet = "Quiet",
-	Capture = "Capture",
-	DoublePawnPush = "DoublePawnPush",
-	EnPassant = "EnPassant",
-	Castle = "Castle",
-	Promotion = "Promotion",
-  }
+	Null = 0,
+	Castle = 1,
+	Capture = 2,
+	Quiet = 3,
+	DoublePawnPush = 4,
+	EnPassant = 5,
+	Promotion = 6
+}
 
-
-export enum VariantMoveType {
-	Duck = "Duck"
-  }
-  
 export interface Move {
-	from: number,
-	to: number,
-	additionalData?: Object,
-	variantMoveType?: VariantMoveType,
-	piece: string
+	from: number;
+	to: number;
+	piece: string;
+	capture?: boolean;
+	promotion?: string;
+	classicMoveType?: ClassicMoveType;
+	variantMoveType?: string;
+	additionalData?: Record<string, unknown>;
 }
 
 export enum BoardType {
@@ -152,13 +152,15 @@ export interface BoardEditorState {
 }
 
 export enum VariantType {
-	Checkmate = 'Checkmate',
-	Antichess = 'AntiChess',
-	NCheck = 'NCheck',
-	DuckChess = 'Duck',
-	ArcherChess = 'ArcherChess',
-	Wormhole = 'Wormhole',
-	GoalChess = 'GoalChess',
+	Checkmate = 'checkmate',
+	Antichess = 'antichess',
+	NCheck = 'ncheck',
+	ArcherChess = 'archerchess',
+	Wormhole = 'wormhole',
+	PoisonedPawn = 'poisonedpawn',
+	HiddenQueen = 'hiddenqueen',
+	FootballChess = 'footballchess',
+	SpyChess = 'spychess'
 }
 
 export enum MoveType {
@@ -168,8 +170,10 @@ export enum MoveType {
 export type RuleEditorState = {
 	variantType: VariantType;
 	isViewVariantRulesOn: boolean;
-	ruleComponent?: typeof SvelteComponent<any> | null
-}
+	ruleComponent?: typeof SvelteComponent<any> | null;
+	/** Variant-specific config (e.g. NCheck targetChecks). */
+	customData: Record<string, unknown>;
+};
 
 export interface MovePattern {
 	slideDirections: number[][];
@@ -195,73 +199,136 @@ export interface EditorState {
 	};
 }
 
+/** Wire event types — must match vc-ws/vc-core EventType short strings. */
 export type EventType =
-	| 'chat.message'
-	| 'game.connect_user'
-	| 'game.create_game'
-	| 'game.join_game'
-	| 'game.disconnect_user'
-	| 'game.set_players'
-	| 'game.result'
-	| 'move'
-	| 'game.offer_draw'
-	| 'game.draw_result'
-	| 'game.resign'
 	| 'start'
-	| 'Error';
+	| 'move'
+	| 'join'
+	| 'resign'
+	| 'draw-offer'
+	| 'draw-accept'
+	| 'draw-reject'
+	| 'over'
+	| 'presence'
+	| 'chat'
+	| 'hints';
 
-export const EventChatMessage: EventType = 'chat.message';
-export const EventUserConnect: EventType = 'game.connect_user';
-export const EventCreateGame: EventType = 'game.create_game';
-export const EventJoinGame: EventType = 'game.join_game';
-export const EventUserDisconnect: EventType = 'game.disconnect_user';
-export const EventSetPlayers: EventType = 'game.set_players';
-export const EventGameResult: EventType = 'game.result';
-export const EventGameMakeMove: EventType = 'move';
-export const EventGameDrawOffer: EventType = 'game.offer_draw';
-export const EventGameDrawResult: EventType = 'game.draw_result';
-export const EventGameResign: EventType = 'game.resign';
 export const EventStartGame: EventType = 'start';
-export const EventError: EventType = 'Error';
+export const EventGameMakeMove: EventType = 'move';
+export const EventJoinGame: EventType = 'join';
+export const EventGameResign: EventType = 'resign';
+export const EventGameDrawOffer: EventType = 'draw-offer';
+export const EventGameDrawAccept: EventType = 'draw-accept';
+export const EventGameDrawReject: EventType = 'draw-reject';
+export const EventGameOver: EventType = 'over';
+export const EventPresence: EventType = 'presence';
+export const EventChat: EventType = 'chat';
+export const EventHints: EventType = 'hints';
 
-export interface WebSocketMessage{
-	event: EventType
-	params: WSParams
+export interface HintsPayload {
+	from: number;
 }
 
-export interface WSParams{
-	gameId: string,
+export interface HintsResultPayload {
+	from: number;
+	to: number[];
 }
 
-export interface ChatParams extends WSParams{
-	message: string
+export interface PresencePayload {
+	userId: string;
+	online: boolean;
 }
 
-export interface MoveParams extends WSParams{
-	move: Move
+export interface ChatPayload {
+	gid?: string;
+	sender: string;
+	msg: string;
+}
+
+export interface WSMessage<T = unknown> {
+	t: EventType;
+	p: T;
+}
+
+export interface ActiveGamePlayer {
+	userId: string;
+	name: string;
+}
+
+export interface ActiveGamePayload {
+	id: string;
+	players: Record<string, ActiveGamePlayer>;
+	gameConfig: {
+		variantType?: string;
+		fen?: string;
+		dimensions?: { ranks: number; files: number };
+		pieceProps?: Record<string, PieceProps>;
+		customData?: Record<string, unknown>;
+	};
+	moves?: string[];
+	state: string;
+	turn: string;
+	variantState?: Record<string, unknown> | null;
+}
+
+export interface MoveWirePayload {
+	m: Move;
+	/** True when the side to move after this ply is in check. */
+	check?: boolean;
+	/** Live variant state after the move (e.g. wormhole cooldowns). */
+	variantState?: Record<string, unknown> | null;
+}
+
+export interface GameOverPayload {
+	winner?: string;
+	reason?: string;
+}
+
+export interface GameConfigSnapshot {
+	variantType?: string;
+	name?: string;
+	fen?: string;
+	dimensions?: { ranks: number; files: number };
+	pieceProps?: Record<string, PieceProps>;
+	customData?: Record<string, unknown>;
 }
 
 export interface Game {
-    id: string;
-    name: string;
-    type: string;
-    createdAt: string;
+	id?: string;
+	_id?: string;
+	shortId?: string;
+	players?: Record<string, string>;
+	playerNames?: Record<string, string>;
+	templateId?: string;
+	config?: GameConfigSnapshot;
+	moves?: string[];
+	result?: { winner: string; reason: string };
+	createdAt?: string;
+	created_at?: string;
+	endedAt?: string;
 }
 export type Offset = { x: number; y: number };
 
+/** Wire piece props — matches vc-server chess.PieceProps JSON. */
 export type PieceProps = {
 	slideOffsets: Offset[];
-	jumpProps: Offset[];
+	jumpOffsets: Offset[];
 };
 
 export type Template = {
-	name?: string,
+	name?: string;
 	variantType: VariantType;
 	dimensions: {
 		ranks: number;
 		files: number;
 	};
 	fen: string;
-	pieceProps: Record<string, MovePattern>;
-	customData?: Record<string,any>;
-}
+	pieceProps: Record<string, PieceProps>;
+	customData?: Record<string, unknown>;
+	/** Nested form returned by some API paths; prefer flat fields above. */
+	position?: {
+		dimensions?: { ranks: number; files: number };
+		fen?: string;
+		pieceProps?: Record<string, PieceProps>;
+	};
+};

@@ -4,6 +4,10 @@
 	import { isAuthenticated } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import ViewBoard from '$lib/board/ViewBoard.svelte';
+	import { COLOR_THEMES } from '$lib/utils/index';
+
+	const defaultBoardTheme = COLOR_THEMES.Default;
+	const boardThemeStyle = `--default-light-square: ${defaultBoardTheme.lightColor}; --default-dark-square: ${defaultBoardTheme.darkColor};`;
 
 	export let boardConfig: BoardConfig = {
 		fen: 'rdbq1bn2/pp..pkpv1/p3ppp1p/9/4P4/P2PDBR.B/R.BQ1BKN1',
@@ -45,8 +49,7 @@
 		},
 		{
 			title: 'Chess with Walls',
-			description:
-				'Block off zones with walls and reshape the battlefield.',
+			description: 'Block off zones with walls and reshape the battlefield.',
 			image: '/images/walls.png',
 			gradient: 'from-[#ff0844] to-[#ffb199]',
 			boardConfig: {
@@ -57,8 +60,7 @@
 		},
 		{
 			title: 'Original Variants',
-			description:
-				'Play experimental game modes like Wormhole and ArcherChess.',
+			description: 'Play experimental game modes like Wormhole and ArcherChess.',
 			image: '/images/variants.png',
 			gradient: 'from-[#f7971e] to-[#ffd200]'
 		},
@@ -78,7 +80,7 @@
 </script>
 
 <svelte:head>
-  <title>Varchess - Create Custom Chess Variants</title>
+	<title>Varchess - Create Custom Chess Variants</title>
 </svelte:head>
 <section
 	class="dark:bg-[#0a0c13] bg-lightbg text-gray-800 dark:text-white font-inter w-full overflow-x-hidden"
@@ -110,17 +112,16 @@
 					</button>
 				</div>
 			</div>
-			<ViewBoard {boardConfig} />
+			<div class="landing-board" style={boardThemeStyle}>
+				<ViewBoard {boardConfig} />
+			</div>
 		</div>
 	</div>
 
 	{#each features as feature, i}
 		<div class="snap-start py-12 border-t border-gray-300/30 dark:border-white/10">
 			<div class="max-w-6xl w-full mx-auto px-4 sm:px-8">
-				<Motion
-					initial={{ opacity: 0, y: 60 }}
-					transition={{ duration: 0.6, delay: i * 0.1 }}
-				>
+				<Motion initial={{ opacity: 0, y: 60 }} transition={{ duration: 0.6, delay: i * 0.1 }}>
 					<div class="w-full md:w-1/2 space-y-6 md:pr-8">
 						<h2
 							class="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r {feature.gradient}"
@@ -133,7 +134,7 @@
 					</div>
 
 					{#if feature.boardConfig}
-						<div class="w-full md:w-1/2 max-w-md ml-auto">
+						<div class="w-full md:w-1/2 max-w-md ml-auto landing-board" style={boardThemeStyle}>
 							<ViewBoard boardConfig={feature.boardConfig} />
 						</div>
 					{/if}

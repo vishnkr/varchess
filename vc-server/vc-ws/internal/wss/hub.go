@@ -155,6 +155,19 @@ func (h *Hub) BroadcastToGame(gameID string, message []byte) {
 	}
 }
 
+// BroadcastPresence notifies all clients in a game of a player's online status.
+func (h *Hub) BroadcastPresence(gameID, userID string, online bool) {
+	payload, err := json.Marshal(PresencePayload{UserID: userID, Online: online})
+	if err != nil {
+		return
+	}
+	msg, err := json.Marshal(WSMessage{Type: string(Presence), Payload: json.RawMessage(payload)})
+	if err != nil {
+		return
+	}
+	h.BroadcastToGame(gameID, msg)
+}
+
 // HandleSystemEvent processes an event arriving from the Redis system_action channel.
 func (h *Hub) HandleSystemEvent(event Event) {
 	switch event.Type {
@@ -164,6 +177,8 @@ func (h *Hub) HandleSystemEvent(event Event) {
 		h.handleMoveEvent(event)
 	case GameOver:
 		h.handleGameOverEvent(event)
+	case Hints:
+		h.handleHintsEvent(event)
 	default:
 		h.BroadcastToGame(event.GameID, marshalEvent(event))
 	}
@@ -187,6 +202,28 @@ func (h *Hub) handleGameOverEvent(event Event) {
 	h.mu.Lock()
 	delete(h.Games, event.GameID)
 	h.mu.Unlock()
+}
+
+// handleHintsEvent sends legal-move hints only to the requesting player.
+func (h *Hub) handleHintsEvent(event Event) {
+	h.mu.RLock()
+	g, ok := h.Games[event.GameID]
+	h.mu.RUnlock()
+	if !ok {
+		return
+	}
+	msg := marshalEvent(event)
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	c, ok := g.Clients[event.UserID]
+	if !ok {
+		return
+	}
+	select {
+	case c.send <- msg:
+	default:
+		log.Printf("send buffer full for hints client %s", c.userId)
+	}
 }
 
 func marshalEvent(event Event) []byte {

@@ -18,12 +18,12 @@ var (
 
 func InitRedis(cfg *config.Config) {
 	redisClient = redis.NewClient(&redis.Options{
-		Addr: cfg.RedisAddr,
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPassword,
 	})
 	_, err := redisClient.Ping(context.Background()).Result()
 	if err != nil {
-		fmt.Printf("Failed to connect to Redis: %v\n", err)
-		return
+		log.Fatalf("Failed to connect to Redis at %s: %v", cfg.RedisAddr, err)
 	}
 	fmt.Println("Connected to Redis")
 	hub = NewHub(redisClient)

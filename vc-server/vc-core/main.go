@@ -50,6 +50,16 @@ func main(){
 	router.Use(middleware.RequestLogger())
 	router.Post("/signup", handlers.HandleSignup(dbConn))
 	router.Post("/login", handlers.HandleLogin(dbConn))
+	// Refresh must be unauthenticated — access token may already be expired.
+	router.Post("/api/refresh", handlers.HandleRefresh(dbConn))
+
+	// OAuth (optional — enabled when provider env vars are set)
+	router.Get("/auth/oauth/providers", handlers.HandleOAuthProviders(cfg))
+	router.Get("/auth/oauth/github", handlers.HandleOAuthStart(cfg, "github"))
+	router.Get("/auth/oauth/github/callback", handlers.HandleOAuthCallback(cfg, dbConn, "github"))
+	router.Get("/auth/oauth/google", handlers.HandleOAuthStart(cfg, "google"))
+	router.Get("/auth/oauth/google/callback", handlers.HandleOAuthCallback(cfg, dbConn, "google"))
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("reached")
 		w.WriteHeader(http.StatusOK)

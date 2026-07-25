@@ -51,3 +51,60 @@ func TestAntichess_NoPiecesWin(t *testing.T) {
 	require.Equal(t, "black", result.Result.Winner, "Black wins in antichess by losing all pieces")
 	require.Equal(t, "no-pieces", result.Result.Reason)
 }
+
+// Castling rights set but no rooks on a small board used to nil-deref in MakeMove
+// while GetLegalMoves simulated castling (seen on antichess minigames).
+func TestAntichess_SmallBoardNoRookCastlingDoesNotPanic(t *testing.T) {
+	eng := antichessEngine(t, "2bqk/3pp/5/2Q2/1NK2 w KQkq - 0 1")
+	require.NotPanics(t, func() {
+		_ = eng.GetLegalMoves()
+	})
+	lm := eng.GetLegalMoves()
+	for _, m := range lm {
+		require.NotEqual(t, chess.CastleMove, m.ClassicMoveType, "no castling without a rook")
+	}
+	require.NotPanics(t, func() {
+		if len(lm) > 0 {
+			_, _ = eng.PerformMove(lm[0])
+		}
+	})
+}
+
+// Non-8 boards pack squares on an 8-wide index grid. Decoding with LargestDimension
+// (e.g. 5 on a 4×5 board) made queen slides illegal — including mandatory captures.
+func TestAntichess_SmallBoardQueenCapture(t *testing.T) {
+	// 4×5: White queen on b2 can capture black bishop on b5 (clear file).
+	eng := antichessEngine(t, "1bqk/2pp/4/1Q2/1NK1 w - - 0 1")
+	pos := eng.GetPosition()
+	from := testutil.MustSquare(t, pos, "b2")
+	to := testutil.MustSquare(t, pos, "b5")
+	lm := eng.GetLegalMoves()
+	found := false
+	for _, m := range lm {
+		if m.From == from && m.To == to && m.Capture {
+			found = true
+			_, err := eng.PerformMove(m)
+			require.NoError(t, err)
+			break
+		}
+	}
+	require.True(t, found, "Qb2xb5 must be legal on 4×5 antichess; legal=%v", lm)
+}
+
+// In antichess the king is a normal piece: adjacent king must be captured when
+// captures are mandatory (quiet moves like Qd2 are illegal).
+func TestAntichess_ForcedKingCapture(t *testing.T) {
+	// Black queen on c3, white king on c2 — only legal move is Qxc2.
+	eng := antichessEngine(t, "5/5/2q2/2K2/4k b - - 0 1")
+	pos := eng.GetPosition()
+	from := testutil.MustSquare(t, pos, "c3")
+	to := testutil.MustSquare(t, pos, "c2")
+
+	lm := eng.GetLegalMoves()
+	require.NotEmpty(t, lm)
+	for _, m := range lm {
+		require.True(t, m.Capture, "must capture when king is en prise: got %v", m)
+		require.Equal(t, from, m.From)
+		require.Equal(t, to, m.To)
+	}
+}

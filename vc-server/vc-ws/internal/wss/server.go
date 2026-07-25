@@ -98,6 +98,7 @@ func (c *Client) handleAuthentication(cfg *config.Config) {
 	}
 
 	c.userId = user.UserID
+	c.username = user.Username
 	c.authenticated = true
 	if connectPayload.ColorPref != "" {
 		c.colorPref = connectPayload.ColorPref
@@ -107,6 +108,11 @@ func (c *Client) handleAuthentication(cfg *config.Config) {
 }
 
 func (c *Client) joinGame() {
+	if hub == nil {
+		log.Println("joinGame: hub not initialized (Redis unavailable)")
+		c.conn.Close()
+		return
+	}
 	game, err := hub.GetOrCreateGame(c.gameID)
 	if err != nil {
 		log.Printf("joinGame: %v", err)
@@ -114,12 +120,41 @@ func (c *Client) joinGame() {
 		return
 	}
 
+	// Reconnect: same user already holds a slot (including during grace window).
+	game.mu.Lock()
+	var old *Client
+	if existing, ok := game.Clients[c.userId]; ok {
+		old = existing
+		if existing.colorPref != "" && c.colorPref == "" {
+			c.colorPref = existing.colorPref
+		}
+		game.Clients[c.userId] = c
+		c.game = game
+		game.mu.Unlock()
+
+		// Close the superseded socket so its disconnect handler cannot
+		// broadcast offline after we've already marked this user online.
+		if old != nil && old != c {
+			_ = old.conn.Close()
+		}
+
+		go c.listenForWrites()
+		go c.listenForMessages()
+		c.sendActiveGameSnapshot()
+		hub.BroadcastPresence(c.gameID, c.userId, true)
+		c.sendPresenceSnapshot()
+		log.Printf("Player %s reconnected to game %s", c.userId, c.gameID)
+		return
+	}
+	game.mu.Unlock()
+
 	assignedColor := getPlayerColor(game, c.colorPref)
 	if assignedColor == "" {
 		log.Printf("Game %s is full, rejecting connection", c.gameID)
 		c.conn.Close()
 		return
 	}
+	c.colorPref = assignedColor
 
 	game.mu.Lock()
 	game.Clients[c.userId] = c
@@ -147,6 +182,48 @@ func (c *Client) joinGame() {
 
 	go c.listenForMessages()
 	go c.listenForWrites()
+	hub.BroadcastPresence(c.gameID, c.userId, true)
+	c.sendPresenceSnapshot()
+}
+
+// sendActiveGameSnapshot pushes the current Redis ActiveGame as a start event
+// so a reconnecting client can rehydrate board/players without waiting for moves.
+func (c *Client) sendActiveGameSnapshot() {
+	gameKey := fmt.Sprintf("game:%s", c.gameID)
+	gameStateJSON, err := redisClient.Get(context.Background(), gameKey).Result()
+	if err != nil {
+		log.Printf("sendActiveGameSnapshot: %v", err)
+		return
+	}
+	msg, err := json.Marshal(WSMessage{Type: string(Start), Payload: json.RawMessage(gameStateJSON)})
+	if err != nil {
+		return
+	}
+	select {
+	case c.send <- msg:
+	default:
+		log.Printf("send buffer full for reconnecting client %s", c.userId)
+	}
+}
+
+// sendPresenceSnapshot tells this client who is currently connected in the game.
+func (c *Client) sendPresenceSnapshot() {
+	if hub == nil || c.game == nil {
+		return
+	}
+	c.game.mu.RLock()
+	defer c.game.mu.RUnlock()
+	for uid := range c.game.Clients {
+		payload, _ := json.Marshal(PresencePayload{UserID: uid, Online: true})
+		msg, err := json.Marshal(WSMessage{Type: string(Presence), Payload: json.RawMessage(payload)})
+		if err != nil {
+			continue
+		}
+		select {
+		case c.send <- msg:
+		default:
+		}
+	}
 }
 
 // getPlayerColor assigns a color to a joining player.

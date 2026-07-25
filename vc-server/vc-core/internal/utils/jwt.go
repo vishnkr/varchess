@@ -34,6 +34,7 @@ func GenerateRefreshToken(userID string) (string, error) {
 	claims := &jwt.RegisteredClaims{
 		Subject:   userID,
 		ExpiresAt: jwt.NewNumericDate(expirationTime),
+		Issuer:    "vc-core-refresh",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(secretKey)
@@ -54,4 +55,25 @@ func ParseToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+// ParseRefreshToken validates a refresh JWT and returns the subject user ID.
+func ParseRefreshToken(tokenString string) (string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+	if err != nil {
+		return "", err
+	}
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok || !token.Valid {
+		return "", fmt.Errorf("invalid refresh token")
+	}
+	if claims.Issuer != "" && claims.Issuer != "vc-core-refresh" {
+		return "", fmt.Errorf("invalid refresh token issuer")
+	}
+	if claims.Subject == "" {
+		return "", fmt.Errorf("missing subject")
+	}
+	return claims.Subject, nil
 }

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+
 	"vc-server/chess"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,14 +41,16 @@ type GameResult struct {
 }
 
 type Game struct {
-	ID         primitive.ObjectID            `json:"_id,omitempty" bson:"_id,omitempty"`
-	Players    map[string]primitive.ObjectID `json:"players" bson:"players"`
-	TemplateID *primitive.ObjectID           `json:"templateId,omitempty" bson:"template_id,omitempty"`
-	Template   interface{}                   `json:"template,omitempty" bson:"template,omitempty"`
-	Moves      []string                      `json:"moves" bson:"moves"`
-	Result     GameResult                    `json:"result" bson:"result"`
-	CreatedAt  primitive.DateTime            `json:"createdAt" bson:"created_at"`
-	EndedAt    *primitive.DateTime           `json:"endedAt,omitempty" bson:"ended_at,omitempty"`
+	ID          primitive.ObjectID            `json:"_id,omitempty" bson:"_id,omitempty"`
+	ShortID     string                        `json:"shortId,omitempty" bson:"short_id,omitempty"`
+	Players     map[string]primitive.ObjectID `json:"players" bson:"players"`
+	PlayerNames map[string]string             `json:"playerNames,omitempty" bson:"player_names,omitempty"`
+	TemplateID  *primitive.ObjectID           `json:"templateId,omitempty" bson:"template_id,omitempty"`
+	Config      chess.GameConfig              `json:"config,omitempty" bson:"config,omitempty"`
+	Moves       []string                      `json:"moves" bson:"moves"`
+	Result      GameResult                    `json:"result" bson:"result"`
+	CreatedAt   primitive.DateTime            `json:"createdAt" bson:"created_at"`
+	EndedAt     *primitive.DateTime           `json:"endedAt,omitempty" bson:"ended_at,omitempty"`
 }
 
 type ActiveGameState string
@@ -57,15 +61,15 @@ const (
 )
 
 type ActiveGame struct {
-	ID               string             `json:"id"`
-	Players          map[string]Player  `json:"players"`
-	Config           chess.GameConfig   `json:"gameConfig"`
-	Moves            []string           `json:"moves"`
-	State            ActiveGameState    `json:"state"`
-	Turn             string             `json:"turn"`
-	// VariantStateJSON holds serialised variant-specific state (check counters,
-	// poisoned squares, etc.) so the worker can reconstruct the engine state.
-	VariantStateJSON []byte             `json:"variantState,omitempty"`
+	ID      string            `json:"id"`
+	Players map[string]Player `json:"players"`
+	Config  chess.GameConfig  `json:"gameConfig"`
+	Moves   []string          `json:"moves"`
+	State   ActiveGameState   `json:"state"`
+	Turn    string            `json:"turn"`
+	// VariantState holds live variant-specific state (e.g. wormhole cooldowns)
+	// as a JSON object for clients and reconnect snapshots.
+	VariantState json.RawMessage `json:"variantState,omitempty"`
 }
 
 

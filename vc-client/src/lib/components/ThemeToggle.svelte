@@ -1,26 +1,11 @@
 <!-- src/lib/components/ThemeToggle.svelte -->
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { theme } from '$lib/store/theme';
-
-	onMount(() => {
-		const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-		const initial = stored ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-		theme.set(initial);
-		updateDOM(initial);
-	});
-
-	function updateDOM(mode: 'light' | 'dark') {
-		document.documentElement.classList.toggle('dark', mode === 'dark');
-		localStorage.setItem('theme', mode);
-	}
+	import { settings } from '$lib/store/settings';
 
 	function toggleTheme() {
-		theme.update(current => {
-			const next = current === 'dark' ? 'light' : 'dark';
-			updateDOM(next);
-			return next;
-		});
+		const next = $theme === 'dark' ? 'light' : 'dark';
+		settings.patch({ appTheme: next });
 	}
 </script>
 <button

@@ -20,25 +20,27 @@ const (
 )
 
 type Config struct {
-    RedisAddr string
-    ServerHost string
-    ServerPort string
+	RedisAddr     string
+	RedisPassword string
+	ServerHost    string
+	ServerPort    string
 }
 
-func Load(file string) (*Config,error) {
-    err := godotenv.Load(file)
+func Load(file string) (*Config, error) {
+	err := godotenv.Load(file)
 	if err != nil {
 		env := os.Getenv(EnvKey)
-		if env==""{
+		if env == "" {
 			return nil, fmt.Errorf("error loading .env file: %w", err)
 		}
 	}
 
-    return &Config{
-        RedisAddr: getEnv("REDIS_ADDR", "localhost:6379"),
-        ServerHost: os.Getenv("SERVER_HOST"),
-        ServerPort: os.Getenv("SERVER_PORT"),
-    },nil
+	return &Config{
+		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		ServerHost:    os.Getenv("SERVER_HOST"),
+		ServerPort:    os.Getenv("SERVER_PORT"),
+	}, nil
 }
 
 func getEnv(key, fallback string) string {

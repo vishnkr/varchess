@@ -4,6 +4,14 @@ vc-client/node_modules/
 vc-client/.DS_store
 .vscode
 *.env
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.env.bak*
+**/.env.bak*
 */*.log
 vc-server/logs
 vc-server/bin

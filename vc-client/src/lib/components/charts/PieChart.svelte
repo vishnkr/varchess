@@ -1,30 +1,31 @@
-<script>
+<script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import * as echarts from 'echarts';
 	import { browser } from '$app/environment';
 
-	export let theme = 'light'; // 👈 allow parent to pass theme
+	export let theme = 'light';
+	export let data: { name: string; value: number }[] = [];
+	export let title = 'Games by variant';
 
-	let chartContainer;
-	let chartInstance;
+	let chartContainer: HTMLDivElement;
+	let chartInstance: echarts.ECharts | null = null;
+	let lastOptionKey = '';
 
-	function getPieChartOptions(theme) {
-		const isDark = theme === 'dark';
+	function getPieChartOptions(currentTheme: string, seriesData: { name: string; value: number }[]) {
+		const isDark = currentTheme === 'dark';
 		const textColor = isDark ? '#ffffff' : '#1f2937';
+		const empty = !seriesData.length || seriesData.every((d) => d.value === 0);
 
 		return {
 			title: {
-				text: 'Games By Variant',
+				text: title,
 				left: 'center',
-				textStyle: { color: textColor }
+				textStyle: { color: textColor, fontSize: 14 }
 			},
-			tooltip: {
-				trigger: 'item'
-			},
+			tooltip: { trigger: 'item' },
 			legend: {
 				orient: 'horizontal',
-				left: 'left',
-				padding: 0,
+				left: 'center',
 				bottom: 0,
 				type: 'scroll',
 				textStyle: { color: textColor },
@@ -34,59 +35,50 @@
 				{
 					name: 'Variant',
 					type: 'pie',
-					radius: ['50%', '70%'],
+					radius: ['45%', '68%'],
+					center: ['50%', '46%'],
 					labelLine: { show: false },
-					data: [
-						{ value: 108, name: 'Checkmate' },
-						{ value: 75, name: 'Antichess' },
-						{ value: 50, name: 'Wormhole' },
-						{ value: 44, name: 'Duck chess' },
-						{ value: 30, name: 'wwwwwwwwwwww' },
-						{ value: 50, name: 'Woole' },
-						{ value: 44, name: 'Dchess' },
-						{ value: 30, name: 'wwwwwww' },
-						{ value: 50, name: 'Wle' },
-						{ value: 44, name: 'Duck ch1ess' }
-					],
-					label: {
-						show: false,
-						position: 'center'
-					}
+					label: { show: false },
+					data: empty
+						? [{ value: 1, name: 'No games yet', itemStyle: { color: '#64748b' } }]
+						: seriesData
 				}
 			]
 		};
 	}
 
+	function applyOptions() {
+		if (!chartInstance) return;
+		const key = `${theme}|${title}|${JSON.stringify(data)}`;
+		if (key === lastOptionKey) return;
+		lastOptionKey = key;
+		chartInstance.setOption(getPieChartOptions(theme, data), true);
+	}
+
 	function resizeChart() {
-		if (chartInstance) chartInstance.resize();
+		chartInstance?.resize();
 	}
 
 	onMount(() => {
 		chartInstance = echarts.init(chartContainer);
-		chartInstance.setOption(getPieChartOptions(theme));
-		if (browser) {
-			window.addEventListener('resize', resizeChart);
-		}
+		applyOptions();
+		if (browser) window.addEventListener('resize', resizeChart);
 	});
 
-	$: if (chartInstance) {
-		chartInstance.setOption(getPieChartOptions(theme), true);
-	}
+	$: theme, data, title, applyOptions();
 
 	onDestroy(() => {
-		if (chartInstance) chartInstance.dispose();
-		if (browser) {
-			window.removeEventListener('resize', resizeChart);
-		}
+		chartInstance?.dispose();
+		chartInstance = null;
+		if (browser) window.removeEventListener('resize', resizeChart);
 	});
 </script>
-
 
 <div bind:this={chartContainer} class="chart-container" />
 
 <style>
 	.chart-container {
 		width: 100%;
-		height: 400px;
+		height: 280px;
 	}
 </style>

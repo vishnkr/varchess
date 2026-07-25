@@ -38,7 +38,7 @@ type Dimensions struct {
 
 type GameConfig struct {
 	VariantType    string                      `json:"variantType" bson:"variantType"`
-	Name           string                      `json:"name,omitempty"`
+	Name           string                      `json:"name,omitempty" bson:"name,omitempty"`
 	Dimensions     Dimensions                  `json:"dimensions" bson:"dimensions"`
 	FEN            string                      `json:"fen,omitempty" bson:"fen,omitempty"`
 	PieceProps     map[string]PieceProps       `json:"pieceProps,omitempty" bson:"pieceProps,omitempty"`
@@ -53,10 +53,7 @@ type Game struct {
 }
 
 func SmallToLargeBoardIndex(sq, smallBoardWidth int, largestDim int) int {
-	var largeBoardWidth int = 8
-	if largestDim > 8 {
-		largeBoardWidth = 16
-	}
+	largeBoardWidth := IndexStride(largestDim)
 	rank := sq / smallBoardWidth
 	file := sq % smallBoardWidth
 	return FileRankToIndex(file, rank, largeBoardWidth)
@@ -68,6 +65,23 @@ func FileRankToIndex(file, rank, width int) int {
 
 func FileRankToLargeIndex(file, rank, smallBoardWidth, largestDim int) int {
 	return SmallToLargeBoardIndex(FileRankToIndex(file, rank, smallBoardWidth), smallBoardWidth, largestDim)
+}
+
+// IndexStride is the width used to pack (file, rank) into square indices.
+// Boards with max(files,ranks) ≤ 8 use an 8-wide grid; larger boards use 16.
+// This MUST match SmallToLargeBoardIndex — never decode with LargestDimension
+// when it is not 8 or 16 (e.g. a 4×5 board has LargestDimension 5).
+func IndexStride(largestDim int) int {
+	if largestDim > 8 {
+		return 16
+	}
+	return 8
+}
+
+// FileRankFromIndex decodes a large-board square index into (file, internalRank).
+func FileRankFromIndex(sq, largestDim int) (file, rank int) {
+	w := IndexStride(largestDim)
+	return sq % w, sq / w
 }
 
 var SlidingAttackTables256 map[MoveOffset]map[int]Bitboard
@@ -243,7 +257,7 @@ func IsAttacked(sq int, byColor Color, p *Position) bool {
 // generateKingMoves generates one-step king moves plus castling pseudo-legals.
 func generateKingMoves(src int, p *Position, canCaptureKing bool, moves *[]Move) Bitboard {
 	lbd := p.LargestDimension
-	x, y := src%lbd, src/lbd
+	x, y := FileRankFromIndex(src, lbd)
 	piece := p.getPieceAt(src)
 	if piece == -1 {
 		return NewBitboard(lbd)
@@ -288,15 +302,21 @@ func generateKingMoves(src int, p *Position, canCaptureKing bool, moves *[]Move)
 	return NewBitboard(lbd)
 }
 
+func hasPieceAt(p *Position, piece rune, sq int) bool {
+	bb, ok := p.Pieces[piece]
+	return ok && bb != nil && bb.HasBit(sq)
+}
+
 // generateCastlingMoves appends castling pseudo-legals. Check/intermediate-square
 // validation happens in GetLegalMoves.
 func generateCastlingMoves(src int, p *Position, color Color, moves *[]Move) {
 	lbd := p.LargestDimension
-	rank := src / lbd
-	kingFile := src % lbd
+	kingFile, rank := FileRankFromIndex(src, lbd)
 	piece := rune('K')
+	rookPiece := rune('R')
 	if color == Black {
 		piece = 'k'
+		rookPiece = 'r'
 	}
 
 	kscBit := uint8(1 << KSCW)
@@ -306,37 +326,43 @@ func generateCastlingMoves(src int, p *Position, color Color, moves *[]Move) {
 		qscBit = 1 << QSCB
 	}
 
-	// King-side castling: squares between king and h-file rook must be empty.
+	// King-side castling: rook must exist on the edge file; path to it must be empty.
 	if p.Castling&kscBit != 0 {
-		clear := true
-		for f := kingFile + 1; f < p.Files-1; f++ {
-			if p.PositionBitBoard.HasBit(FileRankToLargeIndex(f, rank, p.Files, lbd)) {
-				clear = false
-				break
+		rookFrom := FileRankToLargeIndex(p.Files-1, rank, p.Files, lbd)
+		if hasPieceAt(p, rookPiece, rookFrom) {
+			clear := true
+			for f := kingFile + 1; f < p.Files-1; f++ {
+				if p.PositionBitBoard.HasBit(FileRankToLargeIndex(f, rank, p.Files, lbd)) {
+					clear = false
+					break
+				}
 			}
-		}
-		if clear && kingFile+2 < p.Files {
-			castleTo := FileRankToLargeIndex(kingFile+2, rank, p.Files, lbd)
-			*moves = append(*moves, Move{
-				Piece: piece, From: src, To: castleTo, ClassicMoveType: CastleMove,
-			})
+			if clear && kingFile+2 < p.Files {
+				castleTo := FileRankToLargeIndex(kingFile+2, rank, p.Files, lbd)
+				*moves = append(*moves, Move{
+					Piece: piece, From: src, To: castleTo, ClassicMoveType: CastleMove,
+				})
+			}
 		}
 	}
 
-	// Queen-side castling: squares between a-file rook and king must be empty.
+	// Queen-side castling: rook must exist on file 0; path must be empty.
 	if p.Castling&qscBit != 0 {
-		clear := true
-		for f := 1; f < kingFile; f++ {
-			if p.PositionBitBoard.HasBit(FileRankToLargeIndex(f, rank, p.Files, lbd)) {
-				clear = false
-				break
+		rookFrom := FileRankToLargeIndex(0, rank, p.Files, lbd)
+		if hasPieceAt(p, rookPiece, rookFrom) {
+			clear := true
+			for f := 1; f < kingFile; f++ {
+				if p.PositionBitBoard.HasBit(FileRankToLargeIndex(f, rank, p.Files, lbd)) {
+					clear = false
+					break
+				}
 			}
-		}
-		if clear && kingFile-2 >= 0 {
-			castleTo := FileRankToLargeIndex(kingFile-2, rank, p.Files, lbd)
-			*moves = append(*moves, Move{
-				Piece: piece, From: src, To: castleTo, ClassicMoveType: CastleMove,
-			})
+			if clear && kingFile-2 >= 0 {
+				castleTo := FileRankToLargeIndex(kingFile-2, rank, p.Files, lbd)
+				*moves = append(*moves, Move{
+					Piece: piece, From: src, To: castleTo, ClassicMoveType: CastleMove,
+				})
+			}
 		}
 	}
 }
@@ -350,8 +376,7 @@ func generatePawnMoves(src int, p *Position, canCaptureKing bool, moves *[]Move)
 		return
 	}
 	lbd := p.LargestDimension
-	file := src % lbd
-	rank := src / lbd
+	file, rank := FileRankFromIndex(src, lbd)
 
 	color := White
 	if unicode.IsLower(piece) {
@@ -482,7 +507,7 @@ func (p *Position) getPieceAt(src int) rune {
 // Uses p.LargestDimension for correct index extraction on any board size.
 func generateSlideMoves2(src int, piece rune, p *Position, canCaptureKing bool, offsets []*MoveOffset, moves *[]Move) {
 	lbd := p.LargestDimension
-	x, y := src%lbd, src/lbd
+	x, y := FileRankFromIndex(src, lbd)
 
 	srcColor := White
 	if unicode.IsLower(piece) {
@@ -535,7 +560,7 @@ func generateSlideMoves2(src int, piece rune, p *Position, canCaptureKing bool, 
 // generateJumpMoves generates jump (non-sliding) moves.
 func generateJumpMoves(src int, piece rune, p *Position, canCaptureKing bool, offsets []*MoveOffset, moves *[]Move) {
 	lbd := p.LargestDimension
-	x, y := src%lbd, src/lbd
+	x, y := FileRankFromIndex(src, lbd)
 
 	srcColor := White
 	if unicode.IsLower(piece) {

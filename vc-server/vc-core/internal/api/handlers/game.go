@@ -22,22 +22,40 @@ func HandleGetGames(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		page, pageSize := utils.GetPaginationParams(r)
 		opts := utils.GetPaginationOptions(page, pageSize)
+		opts.SetSort(bson.D{{Key: "created_at", Value: -1}})
+		userID := middleware.GetUserIDFromContext(r)
+		oid, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			http.Error(w, "Invalid user", http.StatusUnauthorized)
+			return
+		}
+
+		// Games where this user played white or black.
+		filter := bson.M{
+			"$or": []bson.M{
+				{"players.w": oid},
+				{"players.b": oid},
+			},
+		}
 
 		collection := database.Collection("games")
-		cursor, err := collection.Find(r.Context(), bson.M{}, opts)
+		cursor, err := collection.Find(r.Context(), filter, opts)
 		if err != nil {
-			http.Error(w, "Failed to fetch templates", http.StatusInternalServerError)
+			http.Error(w, "Failed to fetch games", http.StatusInternalServerError)
 			return
 		}
 		defer cursor.Close(r.Context())
 
 		var games []models.Game
 		if err := cursor.All(r.Context(), &games); err != nil {
-			http.Error(w, "Failed to decode templates", http.StatusInternalServerError)
+			http.Error(w, "Failed to decode games", http.StatusInternalServerError)
 			return
 		}
+		if games == nil {
+			games = []models.Game{}
+		}
 
-		totalCount, err := collection.CountDocuments(r.Context(), bson.M{})
+		totalCount, err := collection.CountDocuments(r.Context(), filter)
 		if err != nil {
 			http.Error(w, "Failed to count games", http.StatusInternalServerError)
 			return
@@ -65,6 +83,11 @@ func HandleGetGame(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		gameID := chi.URLParam(r, "id")
 		userID := middleware.GetUserIDFromContext(r)
+		userOID, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			http.Error(w, "Invalid user", http.StatusUnauthorized)
+			return
+		}
 
 		objID, err := primitive.ObjectIDFromHex(gameID)
 		if err != nil {
@@ -74,8 +97,14 @@ func HandleGetGame(database *db.DB) http.HandlerFunc {
 
 		collection := database.Collection("games")
 
-		var game bson.M
-		err = collection.FindOne(context.TODO(), bson.M{"_id": objID, "user_id": userID}).Decode(&game)
+		var game models.Game
+		err = collection.FindOne(context.TODO(), bson.M{
+			"_id": objID,
+			"$or": []bson.M{
+				{"players.w": userOID},
+				{"players.b": userOID},
+			},
+		}).Decode(&game)
 		if err != nil {
 			http.Error(w, "Game not found", http.StatusNotFound)
 			return
@@ -103,38 +132,47 @@ func HandleCreateGame(database *db.DB) http.HandlerFunc {
 			return
 		}
 		var gameConfig chess.GameConfig
-		if request.TemplateID != nil {
+		if request.GameConfig != nil {
+			gameConfig = *request.GameConfig
+		} else if request.TemplateID != nil {
 			collection := database.Collection("templates")
 			objectID, err := primitive.ObjectIDFromHex(*request.TemplateID)
-			var template models.Template
-			err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&template)
+			if err != nil {
+				http.Error(w, "Invalid template ID", http.StatusBadRequest)
+				return
+			}
+			var doc templateDoc
+			err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&doc)
 			if err != nil {
 				http.Error(w, "Template not found", http.StatusNotFound)
 				return
 			}
-
+			flat := normalizeTemplate(doc)
 			gameConfig = chess.GameConfig{
-				VariantType: template.VariantType,
-				Name:    template.Name,
-				PieceProps: template.Position.PieceProps,
-				PieceLocations: template.Position.PieceLocations,
-				FEN: template.Position.FEN,
-				CustomData:   template.CustomData,
+				VariantType:    flat.VariantType,
+				Name:           flat.Name,
+				Dimensions:     flat.Dimensions,
+				PieceProps:     flat.PieceProps,
+				PieceLocations: flat.Position.PieceLocations,
+				FEN:            flat.FEN,
+				CustomData:     flat.CustomData,
 			}
-		} else if request.GameConfig != nil {
-			gameConfig = *request.GameConfig
 		} else {
 			http.Error(w, "Either templateId or gameConfig must be provided", http.StatusBadRequest)
 			return
 		}
-		fmt.Println(userID,"usr")
+		if errMsg := validateGameConfig(gameConfig); errMsg != "" {
+			http.Error(w, errMsg, http.StatusBadRequest)
+			return
+		}
+		fmt.Println(userID, "usr")
 		shortID := utils.GenerateShortID(primitive.NewObjectID())
 		game := models.ActiveGame{
-			ID:    	shortID,
-			Config: gameConfig,
-			State:  models.Waiting,
+			ID:      shortID,
+			Config:  gameConfig,
+			State:   models.Waiting,
 			Players: make(map[string]models.Player),
-			Moves: make([]string, 0),
+			Moves:   make([]string, 0),
 		}
 		gameJSON, _ := json.Marshal(game)
 		if _, redisErr := database.RedisClient.SetEx(context.TODO(), "game:"+shortID, gameJSON, 30*time.Minute).Result(); redisErr != nil {
@@ -203,4 +241,35 @@ func HandleDeleteGame(database *db.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(bson.M{"message": "Game deleted successfully"})
 	}
+}
+
+func validateGameConfig(cfg chess.GameConfig) string {
+	if cfg.FEN == "" {
+		return "Game config fen is required"
+	}
+	vt := cfg.VariantType
+	if vt != "wormhole" && vt != "teleport" {
+		return ""
+	}
+	if cfg.CustomData == nil {
+		return "Wormhole games require at least one wormhole pair"
+	}
+	raw, ok := cfg.CustomData["wormholePairs"]
+	if !ok || raw == nil {
+		return "Wormhole games require at least one wormhole pair"
+	}
+	b, err := json.Marshal(raw)
+	if err != nil {
+		return "Wormhole games require at least one wormhole pair"
+	}
+	var pairs [][]int
+	if err := json.Unmarshal(b, &pairs); err != nil || len(pairs) == 0 {
+		return "Wormhole games require at least one wormhole pair"
+	}
+	for _, p := range pairs {
+		if len(p) < 2 || p[0] == p[1] {
+			return "Each wormhole pair needs two different squares"
+		}
+	}
+	return ""
 }

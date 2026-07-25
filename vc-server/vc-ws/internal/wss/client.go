@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,6 +15,7 @@ import (
 type Client struct {
 	conn          *websocket.Conn
 	userId        string
+	username      string
 	game          *Game
 	send          chan []byte
 	gameID        string
@@ -73,7 +75,7 @@ func processMessage(c *Client, msg []byte) {
 		}
 		resignJSON, _ := json.Marshal(resignEvent)
 		redisClient.Publish(context.Background(), UserAction, resignJSON)
-	case "draw_offer":
+	case "draw-offer":
 		drawEvent := Event{
 			GameID: c.gameID,
 			UserID: c.userId,
@@ -82,8 +84,73 @@ func processMessage(c *Client, msg []byte) {
 		}
 		drawJSON, _ := json.Marshal(drawEvent)
 		redisClient.Publish(context.Background(), UserAction, drawJSON)
+	case "draw-accept":
+		acceptEvent := Event{
+			GameID: c.gameID,
+			UserID: c.userId,
+			Type:   DrawAccept,
+			Data:   nil,
+		}
+		acceptJSON, _ := json.Marshal(acceptEvent)
+		redisClient.Publish(context.Background(), UserAction, acceptJSON)
+	case "draw-reject":
+		rejectEvent := Event{
+			GameID: c.gameID,
+			UserID: c.userId,
+			Type:   DrawReject,
+			Data:   nil,
+		}
+		rejectJSON, _ := json.Marshal(rejectEvent)
+		redisClient.Publish(context.Background(), UserAction, rejectJSON)
+	case "hints":
+		payloadBytes, err := json.Marshal(wsMsg.Payload)
+		if err != nil {
+			log.Println("Failed to marshal hints payload:", err)
+			return
+		}
+		hintsEvent := Event{
+			GameID: c.gameID,
+			UserID: c.userId,
+			Type:   Hints,
+			Data:   payloadBytes,
+		}
+		hintsJSON, err := json.Marshal(hintsEvent)
+		if err != nil {
+			log.Println("Failed to marshal hints event:", err)
+			return
+		}
+		if err := redisClient.Publish(context.Background(), UserAction, hintsJSON).Err(); err != nil {
+			fmt.Println("Error publishing hints event to Redis:", err)
+		}
 	case "chat":
-		// TODO: broadcast chat to other clients in game.
+		payloadBytes, err := json.Marshal(wsMsg.Payload)
+		if err != nil {
+			log.Println("Failed to marshal chat payload:", err)
+			return
+		}
+		var incoming struct {
+			Message string `json:"msg"`
+		}
+		if err := json.Unmarshal(payloadBytes, &incoming); err != nil || strings.TrimSpace(incoming.Message) == "" {
+			return
+		}
+		sender := c.username
+		if sender == "" {
+			sender = c.userId
+		}
+		out := WSMessage{
+			Type: "chat",
+			Payload: ChatMessage{
+				GameId:  c.gameID,
+				Sender:  sender,
+				Message: strings.TrimSpace(incoming.Message),
+			},
+		}
+		msgJSON, err := json.Marshal(out)
+		if err != nil {
+			return
+		}
+		hub.BroadcastToGame(c.gameID, msgJSON)
 	}
 }
 
@@ -104,7 +171,19 @@ func (c *Client) handleDisconnect() {
 		return
 	}
 
+	// If this socket was superseded by a reconnect, do not announce offline
+	// or schedule removal — the new Client owns the slot.
+	c.game.mu.Lock()
+	current, ok := c.game.Clients[c.userId]
+	isCurrent := ok && current == c
+	c.game.mu.Unlock()
+	if !isCurrent {
+		log.Printf("Superseded connection closed for player %s (game %s)", c.userId, c.gameID)
+		return
+	}
+
 	fmt.Println("Player disconnected:", c.userId)
+	hub.BroadcastPresence(c.gameID, c.userId, false)
 
 	// Give a 30-second reconnect window before removing the player.
 	go func() {

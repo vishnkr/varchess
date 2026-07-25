@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { Color } from '$lib/board/types';
-	import { editorSubTypeSelected, pieceEditor } from '$lib/store/editor';
-	import TagInput from '../shared/TagInput.svelte';
+	import { editorSubTypeSelected, jumpPatternEditing, pieceEditor } from '$lib/store/editor';
 	import { EditorSubType } from '../types';
-	import * as RadioGroup from '$lib/components/ui/radio-group/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	// @ts-ignores
+	import { Label } from '$lib/components/ui/label/index.js';
 	import type { PieceSelection } from '$lib/types';
 	import { Button } from '../ui/button';
 	import { Switch } from '../ui/switch';
+	import { get } from 'svelte/store';
+
 	const standardPieces: { name: string; notation: string }[] = [
 		{ name: 'Pawn', notation: 'p' },
 		{ name: 'King', notation: 'k' },
@@ -28,12 +27,9 @@
 		{ name: 'Phage', notation: 'v' },
 		{ name: 'Zebra', notation: 'z' }
 	];
-	let color: Color = Color.WHITE;
-	let selectedPiece: PieceSelection = {
-		piece: { notation: 'p', pieceType: 'pawn', color: color },
-		group: 'standard'
-	};
-	let slideDirections = {
+
+	/** [Δrow, Δcol] on the pattern board (row decreases toward top / "North"). */
+	const slideDirections: Record<string, number[]> = {
 		North: [-1, 0],
 		East: [0, 1],
 		South: [1, 0],
@@ -43,16 +39,42 @@
 		'South East': [1, 1],
 		'South West': [1, -1]
 	};
+
+	let color: Color = Color.WHITE;
+	let selectedPiece: PieceSelection = {
+		piece: { notation: 'p', pieceType: 'pawn', color: color },
+		group: 'standard'
+	};
 	let setMovePattern = false;
+	let selectedSlideDirections: string[] = [];
+
+	function syncSlideSelectionFromStore() {
+		const notation = selectedPiece.piece.notation.toLowerCase();
+		const pat = get(pieceEditor).movePatterns[notation];
+		const dirs = pat?.slideDirections ?? [];
+		selectedSlideDirections = Object.entries(slideDirections)
+			.filter(([, offset]) => dirs.some((d) => d[0] === offset[0] && d[1] === offset[1]))
+			.map(([name]) => name);
+	}
+
 	const toggleSetMP = () => {
 		setMovePattern = !setMovePattern;
-		editorSubTypeSelected.update((val) =>
+		if (setMovePattern) {
+			syncSlideSelectionFromStore();
+			jumpPatternEditing.set(true);
+		}
+		editorSubTypeSelected.update(() =>
 			setMovePattern ? EditorSubType.MovePattern : EditorSubType.Piece
 		);
 	};
 
+	const saveMovePattern = () => {
+		toggleSetMP();
+	};
+
 	const cancel = () => {
 		pieceEditor.deletePiecePattern(selectedPiece.piece.notation);
+		selectedSlideDirections = [];
 		toggleSetMP();
 	};
 
@@ -60,13 +82,12 @@
 		selectedPiece = {
 			...selectedPiece,
 			piece: {
-				notation: notation,
-				pieceType: pieceType,
-				color: color
+				notation,
+				pieceType,
+				color
 			},
-			group: group
+			group
 		};
-		console.log('selected piece', selectedPiece);
 		pieceEditor.update((val) => ({
 			...val,
 			pieceSelection: {
@@ -81,7 +102,7 @@
 	};
 
 	const updateColor = (newColor: Color) => {
-		selectedPiece.piece.color = newColor
+		selectedPiece.piece.color = newColor;
 		pieceEditor.update((val) => ({
 			...val,
 			pieceSelection: {
@@ -96,13 +117,17 @@
 		color = newColor;
 	};
 
-	let selectedSlideDirections: string[] = [];
-
 	function toggleDirection(direction: string) {
-		if (selectedSlideDirections.includes(direction)) {
+		const offset = slideDirections[direction];
+		if (!offset) return;
+		const notation = selectedPiece.piece.notation.toLowerCase();
+		const on = selectedSlideDirections.includes(direction);
+		if (on) {
 			selectedSlideDirections = selectedSlideDirections.filter((d) => d !== direction);
+			pieceEditor.removeSlidePattern(notation, offset);
 		} else {
 			selectedSlideDirections = [...selectedSlideDirections, direction];
+			pieceEditor.addSlidePattern(notation, offset);
 		}
 	}
 </script>
@@ -206,9 +231,10 @@
 				</div>
 			{:else}
 				<div class="px-2 m-1.5 py-2 flex flex-col gap-4">
-					<h1 class="text-xl font-bold dark:text-white">Set Move Pattern</h1>
+					<h1 class="text-xl font-bold dark:text-white">
+						Set Move Pattern — {selectedPiece.piece.pieceType}
+					</h1>
 
-					<!-- Slide Pattern -->
 					<div class="flex flex-col gap-1">
 						<div class="flex items-center gap-2">
 							<span class="w-4 h-4 bg-blue-600 rounded-sm" />
@@ -218,7 +244,9 @@
 								<DropdownMenu.Trigger
 									class="inline-flex items-center justify-center rounded-md bg-white px-3 py-1 text-sm font-medium text-black shadow-sm border border-gray-300 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
 								>
-									Select
+									{selectedSlideDirections.length
+										? `${selectedSlideDirections.length} selected`
+										: 'Select'}
 								</DropdownMenu.Trigger>
 
 								<DropdownMenu.Content
@@ -245,7 +273,6 @@
 						</p>
 					</div>
 
-					<!-- Jump Pattern -->
 					<div class="flex flex-col gap-1">
 						<div class="flex items-center gap-2">
 							<span class="w-4 h-4 bg-red-600 rounded-sm" />
@@ -253,28 +280,38 @@
 								<Label for="jump-pattern" class="text-lg font-semibold dark:text-white">
 									Jump Pattern
 								</Label>
-								<Switch id="jump-pattern" />
+								<Switch
+									id="jump-pattern"
+									checked={$jumpPatternEditing}
+									on:click={(e) => {
+										e.preventDefault();
+										jumpPatternEditing.update((v) => !v);
+									}}
+								/>
 							</div>
 						</div>
 						<p class="text-sm text-gray-600 ml-6 dark:text-gray-400">
-							Enable this to click squares and define custom jump moves.
+							{#if $jumpPatternEditing}
+								Click empty squares on the board to add or remove jump offsets.
+							{:else}
+								Enable this to click squares and define custom jump moves.
+							{/if}
 						</p>
 					</div>
 
-					<!-- Save / Cancel -->
 					<div class="flex gap-2 items-end justify-center mt-4">
 						<Button
-							on:click={toggleSetMP}
+							on:click={saveMovePattern}
 							class="p-2 bg-transparent rounded border font-medium text-md text-green-600 border-green-600 hover:bg-green-600/10"
 						>
-							Save
+							Done
 						</Button>
 
 						<Button
 							on:click={cancel}
 							class="p-2 bg-transparent rounded border font-medium text-md text-red-600 border-red-600 hover:bg-red-600/10"
 						>
-							Cancel
+							Clear & Cancel
 						</Button>
 					</div>
 				</div>

@@ -4,30 +4,55 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
 	"vc-server/vc-core/internal/db"
 	"vc-server/vc-core/internal/middleware"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Settings struct {
-	UserID       string `bson:"user_id" json:"user_id"`
-	BoardTheme   string `bson:"board_theme" json:"board_theme"`
-	ShowMoves    bool   `bson:"show_moves" json:"show_moves"`
-	EnablePremove bool  `bson:"enable_premove" json:"enable_premove"`
+	UserID            string `bson:"user_id" json:"userId"`
+	BoardTheme        string `bson:"board_theme" json:"boardTheme"`
+	ShowPossibleMoves bool   `bson:"show_moves" json:"showPossibleMoves"`
+	EnablePremove     bool   `bson:"enable_premove" json:"enablePremove"`
+	HighlightLastMove bool   `bson:"highlight_last_move" json:"highlightLastMove"`
+	ShowCoordinates   bool   `bson:"show_coordinates" json:"showCoordinates"`
+	ConfirmResign     bool   `bson:"confirm_resign" json:"confirmResign"`
+	HideChat          bool   `bson:"hide_chat" json:"hideChat"`
+	SoundEnabled      bool   `bson:"sound_enabled" json:"soundEnabled"`
+	AppTheme          string `bson:"app_theme" json:"appTheme"`
 }
 
-// HandleGetSettings fetches user-specific settings
+func DefaultSettings(userID string) Settings {
+	return Settings{
+		UserID:            userID,
+		BoardTheme:        "Default",
+		ShowPossibleMoves: true,
+		EnablePremove:     false,
+		HighlightLastMove: true,
+		ShowCoordinates:   false,
+		ConfirmResign:     true,
+		HideChat:          false,
+		SoundEnabled:      false,
+		AppTheme:          "dark",
+	}
+}
+
+// HandleGetSettings fetches user-specific settings (defaults if none stored).
 func HandleGetSettings(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserIDFromContext(r)
-
 		collection := database.Collection("settings")
 
 		var settings Settings
 		err := collection.FindOne(context.TODO(), bson.M{"user_id": userID}).Decode(&settings)
-		if err != nil {
-			http.Error(w, "Settings not found", http.StatusNotFound)
+		if err == mongo.ErrNoDocuments {
+			settings = DefaultSettings(userID)
+		} else if err != nil {
+			http.Error(w, "Failed to fetch settings", http.StatusInternalServerError)
 			return
 		}
 
@@ -48,7 +73,6 @@ func HandleCreateSettings(database *db.DB) http.HandlerFunc {
 		}
 
 		settings.UserID = userID
-
 		collection := database.Collection("settings")
 
 		_, err := collection.InsertOne(context.TODO(), settings)
@@ -62,31 +86,34 @@ func HandleCreateSettings(database *db.DB) http.HandlerFunc {
 	}
 }
 
-// HandleUpdateSettings updates user settings
+// HandleUpdateSettings upserts user settings.
 func HandleUpdateSettings(database *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := middleware.GetUserIDFromContext(r)
 
-		var updates bson.M
-		if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		var body Settings
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
+		body.UserID = userID
 		collection := database.Collection("settings")
 
-		result, err := collection.UpdateOne(
+		opts := options.Update().SetUpsert(true)
+		_, err := collection.UpdateOne(
 			context.TODO(),
 			bson.M{"user_id": userID},
-			bson.M{"$set": updates},
+			bson.M{"$set": body},
+			opts,
 		)
-		if err != nil || result.MatchedCount == 0 {
-			http.Error(w, "Failed to update settings", http.StatusNotFound)
+		if err != nil {
+			http.Error(w, "Failed to update settings", http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(bson.M{"message": "Settings updated successfully"})
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(body)
 	}
 }
 

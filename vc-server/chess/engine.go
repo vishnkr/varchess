@@ -2,8 +2,8 @@ package chess
 
 // EngineResult describes the outcome of a finished game.
 type EngineResult struct {
-	Winner string // "white", "black", or "draw"
-	Reason string // "checkmate", "stalemate", "no-pieces", "n-checks", etc.
+	Winner string `json:"winner"` // "white", "black", or "draw"
+	Reason string `json:"reason"` // "checkmate", "stalemate", "no-pieces", "n-checks", etc.
 }
 
 // Engine is the primary interface for a chess game instance.
@@ -26,4 +26,10 @@ type Engine interface {
 
 	// Clone returns a deep copy of the engine (safe for speculative search).
 	Clone() Engine
+
+	// VariantState returns serialisable variant-specific state (or nil).
+	VariantState() interface{}
+
+	// LoadVariantState restores variant-specific state from a deserialised value.
+	LoadVariantState(s interface{}) error
 }

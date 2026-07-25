@@ -12,7 +12,14 @@ export async function fetchTemplates(page = 1, pageSize = 10): Promise<{
 }> {
 	const res = await customFetch(`${CORE_URL_PROTECTED}/templates?page=${page}&pageSize=${pageSize}`);
 	if (!res.ok) throw new Error('Failed to customFetch templates');
-	return res.json();
+	const data = await res.json();
+	return {
+		items: data.items ?? [],
+		totalCount: data.total_count ?? data.totalCount ?? 0,
+		page: data.page ?? page,
+		pageSize: data.page_size ?? data.pageSize ?? pageSize,
+		totalPages: data.total_pages ?? data.totalPages ?? 0
+	};
 }
 
 export async function getTemplate(id: string): Promise<Template> {

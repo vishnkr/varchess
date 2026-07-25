@@ -145,7 +145,7 @@ func TestGenerateMoveCountForKnight(t *testing.T) {
 	for _, tt := range tests {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
-		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
+		moves := GenerateMovesForPiece(tt.piece, FileRankToLargeIndex(tt.file, tt.rank, pos.Files, pos.LargestDimension), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}
 }
@@ -167,7 +167,7 @@ func TestGenerateMoveCountForBishop(t *testing.T) {
 	for _, tt := range tests {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
-		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
+		moves := GenerateMovesForPiece(tt.piece, FileRankToLargeIndex(tt.file, tt.rank, pos.Files, pos.LargestDimension), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}
 }
@@ -190,7 +190,7 @@ func TestGenerateMoveCountForRook(t *testing.T) {
 	for _, tt := range tests {
 		pos, err := ParseFEN(tt.fen)
 		require.NoError(t, err)
-		moves := GenerateMovesForPiece(tt.piece, FileRankToIndex(tt.file, tt.rank, pos.Files), pos, false)
+		moves := GenerateMovesForPiece(tt.piece, FileRankToLargeIndex(tt.file, tt.rank, pos.Files, pos.LargestDimension), pos, false)
 		require.Len(t, moves, tt.expected, "FEN: %s", tt.fen)
 	}
 }

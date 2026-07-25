@@ -1,6 +1,9 @@
 package chess
 
-import "fmt"
+import (
+	"fmt"
+	"unicode"
+)
 
 // VariantRules is the plug-in interface that each chess variant implements.
 // All methods have sensible defaults via baseVariantRules; variants only override
@@ -141,7 +144,11 @@ func NewEngine(gameConfig GameConfig) (Engine, error) {
 				patterns = append(patterns, MovePattern{MoveType: Jump, MoveOffsets: offsets})
 			}
 			if len(patterns) > 0 {
-				position.CustomPieceRules[pieceRune] = patterns
+				// Register for both colors — FEN uses 'd'/'D' but props are keyed lowercase.
+				lower := unicode.ToLower(pieceRune)
+				upper := unicode.ToUpper(pieceRune)
+				position.CustomPieceRules[lower] = patterns
+				position.CustomPieceRules[upper] = patterns
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"vc-server/chess"
-	_ "vc-server/chess/variants"
+	"vc-server/chess/variants"
 	"vc-server/vc-core/internal/db"
 	e "vc-server/vc-core/internal/event"
 	"vc-server/vc-core/internal/models"
@@ -76,11 +76,16 @@ func (w *Worker) processEvent(event e.Event) {
 		w.processMove(event)
 	case e.Join:
 		w.processJoin(event)
-	case e.DrawAccept:
 	case e.DrawOffer:
+		w.processDrawOffer(event)
+	case e.DrawAccept:
+		w.processDrawAccept(event)
 	case e.DrawReject:
+		w.processDrawReject(event)
 	case e.Resign:
 		w.processResign(event)
+	case e.Hints:
+		w.processHints(event)
 	case e.GameOver:
 	default:
 		fmt.Println("Unknown event type:", event.Type)
@@ -111,6 +116,24 @@ func (w *Worker) processJoin(event e.Event) {
 	}
 	if activeGame.Players == nil {
 		activeGame.Players = make(map[string]models.Player)
+	}
+	// Idempotent reconnect: player already seated — skip reassignment.
+	for color, p := range activeGame.Players {
+		if p.UserId.Hex() == event.UserID {
+			log.Printf("Join ignored for reconnecting player %s as %s", event.UserID, color)
+			if activeGame.State == models.InProgress {
+				startEvent := e.Event{
+					GameID: event.GameID,
+					UserID: "",
+					Type:   e.Start,
+					Data:   json.RawMessage(gameStateJSON),
+				}
+				if eventJSON, err := json.Marshal(startEvent); err == nil {
+					_ = r.Publish(ctx, e.SystemAction, eventJSON).Err()
+				}
+			}
+			return
+		}
 	}
 	if payload.Color != "w" && payload.Color != "b" {
 		log.Println("Invalid color:", payload.Color)
@@ -216,17 +239,7 @@ func (w *Worker) processMove(event e.Event) {
 		return
 	}
 
-	// Restore variant state if present.
-	if len(activeGame.VariantStateJSON) > 0 {
-		var rawState interface{}
-		if err := json.Unmarshal(activeGame.VariantStateJSON, &rawState); err == nil {
-			if pos := engine.GetPosition(); pos != nil {
-				_ = pos // variant state restoration is handled per-engine
-			}
-		}
-	}
-
-	// Replay recorded moves to reach current position.
+	// Replay recorded moves to reach current position (also rebuilds variant state).
 	for _, moveStr := range activeGame.Moves {
 		var mj chess.MoveJSON
 		if err := json.Unmarshal([]byte(moveStr), &mj); err != nil {
@@ -245,11 +258,19 @@ func (w *Worker) processMove(event e.Event) {
 	}
 
 	// Validate and apply the incoming move.
+	// Clients may send incomplete MoveJSON (missing classic_move_type/capture);
+	// resolve against legal moves by from/to/piece when needed.
 	incomingMove, err := payload.Move.ToMove()
 	if err != nil {
 		log.Println("Invalid incoming move:", err)
 		return
 	}
+	resolved := resolveLegalMove(engine, incomingMove)
+	if resolved == nil {
+		log.Printf("Illegal move from %s in game %s: %+v", event.UserID, event.GameID, incomingMove)
+		return
+	}
+	incomingMove = *resolved
 
 	moveResult, err := engine.PerformMove(incomingMove)
 	if err != nil {
@@ -257,8 +278,9 @@ func (w *Worker) processMove(event e.Event) {
 		return
 	}
 
-	// Append move to history.
-	moveJSONBytes, err := json.Marshal(payload.Move)
+	// Append resolved move to history.
+	resolvedJSON := incomingMove.ToJSON()
+	moveJSONBytes, err := json.Marshal(resolvedJSON)
 	if err != nil {
 		log.Println("Failed to serialise move:", err)
 		return
@@ -272,9 +294,15 @@ func (w *Worker) processMove(event e.Event) {
 		activeGame.Turn = "w"
 	}
 
-	// Persist variant state.
-	if varState := engine.(interface{ GetPosition() *chess.Position }).GetPosition(); varState != nil {
-		// Variant state serialisation (engine-specific; no-op for standard).
+	// Persist variant state for reconnects / client UI (wormhole cooldowns, etc.).
+	var variantStateJSON json.RawMessage
+	if state := engine.VariantState(); state != nil {
+		if b, err := json.Marshal(state); err == nil {
+			activeGame.VariantState = b
+			variantStateJSON = b
+		}
+	} else {
+		activeGame.VariantState = nil
 	}
 
 	if moveResult.IsGameOver && moveResult.Result != nil {
@@ -292,17 +320,18 @@ func (w *Worker) processMove(event e.Event) {
 		return
 	}
 
-	// Publish confirmed move to system_action so WS hub can broadcast it.
+	// Always broadcast the confirmed move (incl. check flag) so clients can
+	// apply it and highlight the checked king. Game-over is a follow-up event.
+	confirmedPayload, _ := json.Marshal(e.MovePayload{
+		Move:         resolvedJSON,
+		IsCheck:      moveResult.IsCheck,
+		VariantState: variantStateJSON,
+	})
 	outEvent := e.Event{
 		GameID: event.GameID,
 		UserID: event.UserID,
 		Type:   e.Move,
-		Data:   event.Data,
-	}
-	if moveResult.IsGameOver {
-		outEvent.Type = e.GameOver
-		resultJSON, _ := json.Marshal(moveResult.Result)
-		outEvent.Data = resultJSON
+		Data:   confirmedPayload,
 	}
 	eventJSON, err := json.Marshal(outEvent)
 	if err != nil {
@@ -310,6 +339,22 @@ func (w *Worker) processMove(event e.Event) {
 		return
 	}
 	r.Publish(ctx, e.SystemAction, eventJSON)
+
+	if moveResult.IsGameOver && moveResult.Result != nil {
+		resultJSON, _ := json.Marshal(moveResult.Result)
+		overEvent := e.Event{
+			GameID: event.GameID,
+			UserID: event.UserID,
+			Type:   e.GameOver,
+			Data:   resultJSON,
+		}
+		overJSON, err := json.Marshal(overEvent)
+		if err != nil {
+			log.Println("Error serialising game-over event:", err)
+			return
+		}
+		r.Publish(ctx, e.SystemAction, overJSON)
+	}
 }
 
 func (w *Worker) processResign(event e.Event) {
@@ -355,13 +400,210 @@ func (w *Worker) processResign(event e.Event) {
 	r.Publish(ctx, e.SystemAction, eventJSON)
 }
 
+func (w *Worker) loadActiveGame(ctx context.Context, gameID string) (*models.ActiveGame, string, error) {
+	r := w.pool.db.RedisClient
+	gameKey := fmt.Sprintf("game:%s", gameID)
+	gameStateJSON, err := r.Get(ctx, gameKey).Result()
+	if err != nil {
+		return nil, gameKey, err
+	}
+	var activeGame models.ActiveGame
+	if err := json.Unmarshal([]byte(gameStateJSON), &activeGame); err != nil {
+		return nil, gameKey, err
+	}
+	return &activeGame, gameKey, nil
+}
+
+func (w *Worker) isPlayerInGame(activeGame *models.ActiveGame, userID string) bool {
+	for _, p := range activeGame.Players {
+		if p.UserId.Hex() == userID {
+			return true
+		}
+	}
+	return false
+}
+
+// processDrawOffer relays a draw offer to the opponent via the WS hub.
+func (w *Worker) processDrawOffer(event e.Event) {
+	r := w.pool.db.RedisClient
+	ctx := context.Background()
+	activeGame, _, err := w.loadActiveGame(ctx, event.GameID)
+	if err != nil || activeGame.State != models.InProgress {
+		return
+	}
+	if !w.isPlayerInGame(activeGame, event.UserID) {
+		return
+	}
+	outEvent := e.Event{
+		GameID: event.GameID,
+		UserID: event.UserID,
+		Type:   e.DrawOffer,
+		Data:   nil,
+	}
+	eventJSON, err := json.Marshal(outEvent)
+	if err != nil {
+		return
+	}
+	r.Publish(ctx, e.SystemAction, eventJSON)
+}
+
+// processDrawAccept ends the game as a draw and notifies both clients.
+func (w *Worker) processDrawAccept(event e.Event) {
+	r := w.pool.db.RedisClient
+	ctx := context.Background()
+	activeGame, gameKey, err := w.loadActiveGame(ctx, event.GameID)
+	if err != nil || activeGame.State != models.InProgress {
+		return
+	}
+	if !w.isPlayerInGame(activeGame, event.UserID) {
+		return
+	}
+
+	activeGame.State = models.Complete
+	result := chess.MoveResult{
+		IsGameOver: true,
+		Result:     &chess.EngineResult{Winner: "draw", Reason: "agreement"},
+	}
+	w.persistCompletedGame(ctx, activeGame, result)
+
+	updatedJSON, err := json.Marshal(activeGame)
+	if err == nil {
+		_ = r.Set(ctx, gameKey, updatedJSON, 30*time.Minute).Err()
+	}
+
+	resultJSON, _ := json.Marshal(result.Result)
+	// Broadcast draw-accept first so FE can clear UI, then game-over.
+	acceptEvent := e.Event{
+		GameID: event.GameID,
+		UserID: event.UserID,
+		Type:   e.DrawAccept,
+		Data:   resultJSON,
+	}
+	if b, err := json.Marshal(acceptEvent); err == nil {
+		r.Publish(ctx, e.SystemAction, b)
+	}
+	overEvent := e.Event{
+		GameID: event.GameID,
+		UserID: event.UserID,
+		Type:   e.GameOver,
+		Data:   resultJSON,
+	}
+	if b, err := json.Marshal(overEvent); err == nil {
+		r.Publish(ctx, e.SystemAction, b)
+	}
+}
+
+// processDrawReject relays a declined draw offer to the offering player.
+func (w *Worker) processDrawReject(event e.Event) {
+	r := w.pool.db.RedisClient
+	ctx := context.Background()
+	activeGame, _, err := w.loadActiveGame(ctx, event.GameID)
+	if err != nil || activeGame.State != models.InProgress {
+		return
+	}
+	if !w.isPlayerInGame(activeGame, event.UserID) {
+		return
+	}
+	outEvent := e.Event{
+		GameID: event.GameID,
+		UserID: event.UserID,
+		Type:   e.DrawReject,
+		Data:   nil,
+	}
+	eventJSON, err := json.Marshal(outEvent)
+	if err != nil {
+		return
+	}
+	r.Publish(ctx, e.SystemAction, eventJSON)
+}
+
+// processHints returns legal destination squares for a selected piece (requester only).
+func (w *Worker) processHints(event e.Event) {
+	r := w.pool.db.RedisClient
+	ctx := context.Background()
+
+	var payload e.HintsPayload
+	if err := json.Unmarshal(event.Data, &payload); err != nil {
+		log.Println("Invalid hints payload:", err)
+		return
+	}
+
+	activeGame, _, err := w.loadActiveGame(ctx, event.GameID)
+	if err != nil || activeGame.State != models.InProgress {
+		return
+	}
+	if !w.isPlayerInGame(activeGame, event.UserID) {
+		return
+	}
+
+	engine, err := w.engineAtCurrentPosition(activeGame)
+	if err != nil {
+		log.Println("hints engine:", err)
+		return
+	}
+
+	tos := make([]int, 0)
+	for _, lm := range engine.GetLegalMoves() {
+		if lm.From != payload.From {
+			continue
+		}
+		// For wormhole teleports, hint the portal entrance (what the player clicks),
+		// not the exit square the piece ends on.
+		if portal, ok := variants.TeleportPortalOf(lm); ok {
+			tos = append(tos, portal)
+			continue
+		}
+		tos = append(tos, lm.To)
+	}
+
+	result := e.HintsResultPayload{From: payload.From, To: tos}
+	resultJSON, err := json.Marshal(result)
+	if err != nil {
+		return
+	}
+	outEvent := e.Event{
+		GameID: event.GameID,
+		UserID: event.UserID,
+		Type:   e.Hints,
+		Data:   resultJSON,
+	}
+	eventJSON, err := json.Marshal(outEvent)
+	if err != nil {
+		return
+	}
+	r.Publish(ctx, e.SystemAction, eventJSON)
+}
+
+func (w *Worker) engineAtCurrentPosition(activeGame *models.ActiveGame) (chess.Engine, error) {
+	engine, err := chess.NewEngine(activeGame.Config)
+	if err != nil {
+		return nil, err
+	}
+	for _, moveStr := range activeGame.Moves {
+		var mj chess.MoveJSON
+		if err := json.Unmarshal([]byte(moveStr), &mj); err != nil {
+			return nil, err
+		}
+		m, err := mj.ToMove()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := engine.PerformMove(m); err != nil {
+			return nil, err
+		}
+	}
+	return engine, nil
+}
+
 func (w *Worker) persistCompletedGame(ctx context.Context, activeGame *models.ActiveGame, result chess.MoveResult) {
 	dbClient := w.pool.db
 	collection := dbClient.Collection("games")
 
 	players := make(map[string]primitive.ObjectID)
+	playerNames := make(map[string]string)
 	for color, p := range activeGame.Players {
 		players[color] = p.UserId
+		playerNames[color] = p.Name
 	}
 
 	winner := ""
@@ -371,11 +613,16 @@ func (w *Worker) persistCompletedGame(ctx context.Context, activeGame *models.Ac
 		reason = result.Result.Reason
 	}
 
+	now := primitive.NewDateTimeFromTime(time.Now())
 	game := models.Game{
-		Players: players,
-		Moves:   activeGame.Moves,
-		Result:  models.GameResult{Winner: winner, Reason: reason},
-		CreatedAt: primitive.NewDateTimeFromTime(time.Now()),
+		ShortID:     activeGame.ID,
+		Players:     players,
+		PlayerNames: playerNames,
+		Config:      activeGame.Config,
+		Moves:       activeGame.Moves,
+		Result:      models.GameResult{Winner: winner, Reason: reason},
+		CreatedAt:   now,
+		EndedAt:     &now,
 	}
 	if _, err := collection.InsertOne(ctx, game); err != nil {
 		log.Println("Failed to persist completed game:", err)
@@ -401,4 +648,32 @@ func (wp *WorkerPool) getUserDetailsFromId(userId string) (models.Player, error)
 		return models.Player{}, fmt.Errorf("error finding user: %w", err)
 	}
 	return user, nil
+}
+
+// resolveLegalMove finds a legal move matching from/to (and piece when set).
+// Lets thin clients omit classic_move_type / capture and still play.
+// Wormhole: clients send To = portal entrance; legal moves use To = exit.
+func resolveLegalMove(engine chess.Engine, incoming chess.Move) *chess.Move {
+	var fromToMatch *chess.Move
+	for _, lm := range engine.GetLegalMoves() {
+		if lm.From != incoming.From {
+			continue
+		}
+		toMatch := lm.To == incoming.To
+		if !toMatch {
+			if portal, ok := variants.TeleportPortalOf(lm); ok && portal == incoming.To {
+				toMatch = true
+			}
+		}
+		if !toMatch {
+			continue
+		}
+		if incoming.Piece == 0 || lm.Piece == incoming.Piece {
+			matched := lm
+			return &matched
+		}
+		matched := lm
+		fromToMatch = &matched
+	}
+	return fromToMatch
 }

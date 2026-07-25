@@ -40,6 +40,9 @@ func (api *API) RegisterHandlers(r chi.Router, db *db.DB) {
 		r.Get("/", handlers.HandleGetSettings(db))
 		r.Put("/", handlers.HandleUpdateSettings(db))
 	})
+	r.Route("/account", func(r chi.Router) {
+		r.Delete("/", handlers.HandleDeleteAccount(db))
+	})
 	r.Route("/auth",func(r chi.Router){
 		r.Get("/validate",handlers.HandleValidateAuth(db))
 	})

@@ -4,12 +4,13 @@
 	import RightIcon from '$lib/assets/svg/RightIcon.svelte';
 	import LeftIcon from '$lib/assets/svg/LeftIcon.svelte';
 	import type { Dimensions } from '$lib/board/types';
-	import { createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { COLOR_THEMES } from '$lib/utils/index';
 	// @ts-ignore
 	import { boardEditor } from '../../store/editor';
 	import { Button } from '../ui/button';
 	import { Switch } from '../ui/switch';
+	import { settings } from '$lib/store/settings';
 	let checkedValue = false;
 	export let dimensions: Dimensions;
 	const dispatch = createEventDispatcher();
@@ -17,23 +18,11 @@
 
 	let maxDimension = 16;
 
-	let boardTheme: string;
-	onMount(() => {
-		boardTheme = localStorage.getItem("board-theme") ?? 'Default';
-		updateColors();
-	});
-	
 	$:boardEditor.update((val) => ({ ...val, isWallSelectorOn: checkedValue }));
-	const changeTheme = () => {
-		sessionStorage.setItem("board-theme", boardTheme);
-		updateColors();
-	}
 
-	function updateColors() {
-		const light = COLOR_THEMES[boardTheme].lightColor;
-		const dark = COLOR_THEMES[boardTheme].darkColor;
-		document.documentElement.style.setProperty('--default-light-square', light);
-		document.documentElement.style.setProperty('--default-dark-square', dark);
+	function changeTheme(e: Event) {
+		const value = (e.currentTarget as HTMLSelectElement).value;
+		settings.patch({ boardTheme: value });
 	}
 
 	function updateBoardDimensions() {
@@ -144,7 +133,7 @@
 		<span class="p-3 text-md font-medium text-gray-900 dark:text-white">Theme: </span>
 		<select
 			class="bg-white dark:bg-darkbg2 dark:text-white appearance-none cursor-pointer border rounded-md py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring focus:border-blue-500"
-			bind:value={boardTheme}
+			value={$settings.boardTheme}
 			on:change={changeTheme}
 		>
 			{#each Object.keys(COLOR_THEMES) as theme}
@@ -152,15 +141,15 @@
 			{/each}
 		</select>
 
-		{#if boardTheme}
+		{#if $settings.boardTheme}
 			<div class="m-1 flex items-center">
 				<div
 					class="w-6 h-6 rounded-sm"
-					style="background-color: {COLOR_THEMES[boardTheme].lightColor}"
+					style="background-color: {COLOR_THEMES[$settings.boardTheme].lightColor}"
 				/>
 				<div
 					class="w-6 h-6 rounded-sm ml-2"
-					style="background-color: {COLOR_THEMES[boardTheme].darkColor}"
+					style="background-color: {COLOR_THEMES[$settings.boardTheme].darkColor}"
 				/>
 			</div>
 		{/if}

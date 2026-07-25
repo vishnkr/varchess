@@ -29,12 +29,24 @@ const (
 	DrawAccept EventType = "draw-accept"
 	DrawReject EventType = "draw-reject"
 	GameOver EventType = "over"
+	Hints EventType = "hints"
 )
 
 type JoinPayload struct {
 	Color string `json:"c"`
 }
 
-type MovePayload struct{
-	Move chess.MoveJSON `json:"m"`
+type MovePayload struct {
+	Move         chess.MoveJSON  `json:"m"`
+	IsCheck      bool            `json:"check,omitempty"`
+	VariantState json.RawMessage `json:"variantState,omitempty"`
+}
+
+type HintsPayload struct {
+	From int `json:"from"`
+}
+
+type HintsResultPayload struct {
+	From int   `json:"from"`
+	To   []int `json:"to"`
 }

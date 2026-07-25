@@ -167,6 +167,21 @@ func TestCastling_BlockedWhenInCheck(t *testing.T) {
 	}
 }
 
+func TestCastling_RightsWithoutRookDoesNotPanic(t *testing.T) {
+	// Custom 5x5-ish board: FEN still claims KQkq but there is no rook bitboard.
+	// GetLegalMoves used to MakeMove castling candidates and nil-deref on Pieces['R'].
+	eng := testutil.MustNewEngine(t, chess.GameConfig{
+		VariantType: "checkmate",
+		FEN:         "2bqk/3pp/5/2Q2/1NK2 w KQkq - 0 1",
+	})
+	require.NotPanics(t, func() {
+		_ = eng.GetLegalMoves()
+	})
+	for _, m := range eng.GetLegalMoves() {
+		require.NotEqual(t, chess.CastleMove, m.ClassicMoveType)
+	}
+}
+
 // --- Clone isolation (deep) ---
 
 func TestClone_DoesNotShareBitboards(t *testing.T) {

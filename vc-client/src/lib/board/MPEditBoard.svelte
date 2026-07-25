@@ -1,53 +1,43 @@
 <script lang="ts">
 	import { pieceEditor } from '$lib/store/editor';
-	import { MoveType } from '$lib/types';
-
+	import type { Position } from '$lib/types';
 	import Board from './Board.svelte';
 	import { BoardType, type BoardConfig, Color } from './types';
+	import { convertFenToPosition } from './fen';
+	import { buildMpSquares } from '$lib/utils/customPieces';
 
-	let getMovePatternBoardConfig: () => BoardConfig = () => {
-		const piece = $pieceEditor.pieceSelection!;
-		const pieceType = piece.color === Color.WHITE ? piece.pieceType.toUpperCase() : piece.pieceType;
-		return {
-			fen: `9/9/9/9/4${pieceType}4/9/9/9/9`,
-			dimensions: { ranks: 9, files: 9 },
-			editable: false,
-			interactive: false,
-			isFlipped: false,
-			boardType: BoardType.MovePatternEditor
-		};
-	};
-	let center = 4;
-	const piece = $pieceEditor.pieceSelection;
-	let movePatterns = null;
-	let mpSquares: Record<number, MoveType> = {};
+	$: selection = $pieceEditor.pieceSelection;
+	$: notation = selection?.piece?.notation?.toLowerCase() ?? 'd';
+	$: fenChar =
+		selection?.piece?.color === Color.BLACK ? notation : notation.toUpperCase();
 
-	function isSquareInBounds(row: number, col: number): boolean {
-		return row >= 0 && row < 9 && col >= 0 && col < 9;
-	}
-	$: if (piece) {
-		movePatterns = $pieceEditor.movePatterns[piece.pieceType];
-		mpSquares = {};
-		if (movePatterns) {
-			movePatterns.jumpOffsets?.forEach((offset) => {
-				let newId = (center + offset[0]) * 9 + (center + offset[1]);
-				if (newId >= 0 && newId < 81) {
-					mpSquares[newId] = MoveType.Jump;
-				}
-			});
-			movePatterns.slideDirections?.forEach((offset) => {
-				let x = offset[0];
-				let y = offset[1];
-				let newId = (center + x) * 9 + (center + y);
-				while (isSquareInBounds(center + x, center + y)) {
-					mpSquares[newId] = MoveType.Slide;
-					x += offset[0];
-					y += offset[1];
-					newId = (center + x) * 9 + (center + y);
-				}
-			});
-		}
-	}
+	$: boardConfig = {
+		fen: `9/9/9/9/4${fenChar}4/9/9/9/9 w - - 0 1`,
+		dimensions: { ranks: 9, files: 9 },
+		isFlipped: false,
+		boardType: BoardType.MovePatternEditor
+	} satisfies BoardConfig;
+
+	$: fenResult = convertFenToPosition(boardConfig.fen);
+	$: position = (fenResult?.position ?? {
+		piecePositions: {},
+		walls: {}
+	}) as Position;
+
+	$: pattern = $pieceEditor.movePatterns[notation];
+	$: mpSquares = buildMpSquares(pattern);
 </script>
 
-<Board customBoardId="board" {mpSquares} boardConfig={getMovePatternBoardConfig()} />
+<Board
+	customBoardId="mp-board"
+	{mpSquares}
+	{boardConfig}
+	{position}
+/>
+
+<style>
+	:global(#wrapper:has(#mp-board)) {
+		min-height: min(70vh, 560px);
+		padding: 0.5rem;
+	}
+</style>
